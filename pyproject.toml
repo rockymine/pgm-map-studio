@@ -1,15 +1,26 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "pgm-map-studio"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "anvil-parser",
+    "numpy",
+    "pandas",
+]
 
 [project.scripts]
 pgm-map-studio = "pgm_map_studio.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=short"
 
 [tool.setuptools.packages.find]
 where = ["src"]
