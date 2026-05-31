@@ -10,6 +10,8 @@ dependencies = [
     "anvil-parser",
     "numpy",
     "pandas",
+    "pyarrow",
+    "shapely",
 ]
 
 [project.scripts]
