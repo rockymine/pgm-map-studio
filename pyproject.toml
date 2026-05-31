@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "pgm-map-studio"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+pgm-map-studio = "pgm_map_studio.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
