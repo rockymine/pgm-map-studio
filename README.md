@@ -17,7 +17,7 @@ pip install -e .
 ## Usage
 
 ```bash
-pgm-map-studio viewer        # open the map editor in your browser
+pgm-map-studio editor        # open the map editor in your browser
 pgm-map-studio import <path> # import a map from a folder or ZIP
 pgm-map-studio --help        # list all commands
 ```
