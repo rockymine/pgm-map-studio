@@ -12,40 +12,20 @@ from pgm_map_studio.symmetry import serializer
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _result_with(entries, status='skipped', center=None):
+def _result_with(entries, status='unconfirmed', center=None):
     return SymmetryResult(
-        symmetry_status=status,
-        global_symmetry=entries,
+        status=status,
+        modes=entries,
         center=center or {'center_x': 0.0, 'center_z': 0.0},
     )
 
 
 def _detected_entry(sym_type, confidence=0.95):
-    desc_map = {
-        'rot_180': '180-degree rotational symmetry',
-        'rot_90': '90-degree rotational symmetry',
-        'mirror_x': 'Mirror symmetry across X axis',
-        'mirror_z': 'Mirror symmetry across Z axis',
-    }
-    return GlobalSymmetryEntry(
-        type=sym_type,
-        detected=True,
-        confidence=confidence,
-        description=desc_map.get(sym_type, sym_type),
-    )
+    return GlobalSymmetryEntry(type=sym_type, detected=True, confidence=confidence)
 
 
 def _undetected_entry(sym_type, confidence=0.10):
-    desc_map = {
-        'rot_180': '180-degree rotational symmetry',
-        'mirror_x': 'Mirror symmetry across X axis',
-        'mirror_z': 'Mirror symmetry across Z axis',
-        'rot_90': '90-degree rotational symmetry',
-    }
-    return GlobalSymmetryEntry(
-        type=sym_type, detected=False, confidence=confidence,
-        description=desc_map.get(sym_type, sym_type),
-    )
+    return GlobalSymmetryEntry(type=sym_type, detected=False, confidence=confidence)
 
 
 # ---------------------------------------------------------------------------
@@ -55,8 +35,8 @@ def _undetected_entry(sym_type, confidence=0.10):
 def test_required_keys_present():
     result = _result_with([_detected_entry('rot_180')])
     d = serializer.to_dict(result)
-    assert 'symmetry_status' in d
-    assert 'global_symmetry' in d
+    assert 'status' in d
+    assert 'modes' in d
     assert 'center' in d
     assert 'primary' in d
 
@@ -68,44 +48,44 @@ def test_intra_team_symmetry_absent():
 
 
 # ---------------------------------------------------------------------------
-# symmetry_status
+# status
 # ---------------------------------------------------------------------------
 
-def test_status_skipped_by_default():
+def test_status_unconfirmed_by_default():
     result = _result_with([])
     d = serializer.to_dict(result)
-    assert d['symmetry_status'] == 'skipped'
+    assert d['status'] == 'unconfirmed'
 
 
 def test_status_confirmed():
     result = _result_with([], status='confirmed')
     d = serializer.to_dict(result)
-    assert d['symmetry_status'] == 'confirmed'
+    assert d['status'] == 'confirmed'
 
 
 # ---------------------------------------------------------------------------
-# global_symmetry entries
+# modes entries
 # ---------------------------------------------------------------------------
 
-def test_global_symmetry_entries():
+def test_modes_entries():
     entries = [
         _detected_entry('rot_180', 1.0),
         _undetected_entry('mirror_x', 0.31),
     ]
     result = _result_with(entries)
     d = serializer.to_dict(result)
-    assert len(d['global_symmetry']) == 2
+    assert len(d['modes']) == 2
 
 
-def test_global_symmetry_entry_fields():
+def test_modes_entry_fields():
     entries = [_detected_entry('rot_180', 0.92)]
     result = _result_with(entries)
     d = serializer.to_dict(result)
-    e = d['global_symmetry'][0]
+    e = d['modes'][0]
     assert e['type'] == 'rot_180'
     assert e['detected'] is True
     assert e['confidence'] == pytest.approx(0.92)
-    assert 'description' in e
+    assert 'description' not in e
 
 
 # ---------------------------------------------------------------------------
@@ -176,4 +156,4 @@ def test_save_creates_file(tmp_path):
     serializer.save(result, out)
     assert out.exists()
     d = json.loads(out.read_text())
-    assert d['symmetry_status'] == 'skipped'
+    assert d['status'] == 'unconfirmed'

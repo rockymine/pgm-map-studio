@@ -55,10 +55,10 @@ def detect_from_data(
 
     if not islands:
         return SymmetryResult(
-            symmetry_status='skipped',
-            global_symmetry=[
-                GlobalSymmetryEntry(t, False, 0.0, d)
-                for t, d in _CANDIDATES
+            status='unconfirmed',
+            modes=[
+                GlobalSymmetryEntry(t, False, 0.0)
+                for t in _CANDIDATES
             ],
             center={'center_x': 0.0, 'center_z': 0.0},
         )
@@ -69,11 +69,11 @@ def detect_from_data(
     cx, cz = center_info['center_x'], center_info['center_z']
 
     pair_analysis = _aggregate_pair_transforms(islands, cx, cz)
-    global_symmetry = _detect_global_symmetry(islands, cx, cz, pair_analysis)
+    modes = _detect_modes(islands, cx, cz, pair_analysis)
 
     return SymmetryResult(
-        symmetry_status='skipped',
-        global_symmetry=global_symmetry,
+        status='unconfirmed',
+        modes=modes,
         center={'center_x': cx, 'center_z': cz},
     )
 
@@ -134,12 +134,7 @@ def _classify_center(
 # Symmetry candidates
 # ---------------------------------------------------------------------------
 
-_CANDIDATES = [
-    ("mirror_x", "Mirror symmetry across X axis"),
-    ("mirror_z", "Mirror symmetry across Z axis"),
-    ("rot_180", "180-degree rotational symmetry"),
-    ("rot_90", "90-degree rotational symmetry"),
-]
+_CANDIDATES = ["mirror_x", "mirror_z", "rot_180", "rot_90"]
 
 
 # ---------------------------------------------------------------------------
@@ -379,17 +374,17 @@ def _geometric_pair_support(
 _GROUP_IOU_THRESHOLD = 0.85
 
 
-def _detect_global_symmetry(
+def _detect_modes(
     islands: list[dict], cx: float, cz: float, pair_analysis: dict
 ) -> list[GlobalSymmetryEntry]:
     n_pairs = pair_analysis['total_pairs']
     counts = pair_analysis['transform_counts']
     pairs = pair_analysis['pairs']
 
-    ious = {t: _verify_polygon_symmetry(islands, cx, cz, t) for t, _ in _CANDIDATES}
+    ious = {t: _verify_polygon_symmetry(islands, cx, cz, t) for t in _CANDIDATES}
 
     results = []
-    for sym_type, description in _CANDIDATES:
+    for sym_type in _CANDIDATES:
         iou = ious[sym_type]
 
         if sym_type == 'rot_90':
@@ -417,7 +412,6 @@ def _detect_global_symmetry(
             type=sym_type,
             detected=confidence >= 0.60,
             confidence=confidence,
-            description=description,
         ))
 
     return results

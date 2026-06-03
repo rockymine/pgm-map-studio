@@ -12,15 +12,14 @@ from .datatypes import SymmetryResult
 def to_dict(result: SymmetryResult) -> dict[str, Any]:
     """Serialize SymmetryResult to a JSON-serializable dict."""
     return {
-        'symmetry_status': result.symmetry_status,
-        'global_symmetry': [
+        'status': result.status,
+        'modes': [
             {
                 'type': e.type,
                 'detected': e.detected,
                 'confidence': e.confidence,
-                'description': e.description,
             }
-            for e in result.global_symmetry
+            for e in result.modes
         ],
         'center': result.center,
         'primary': result.primary,

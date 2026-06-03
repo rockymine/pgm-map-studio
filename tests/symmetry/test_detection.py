@@ -10,7 +10,7 @@ from pgm_map_studio.symmetry.detection import (
     _classify_center,
     _detect_pair_transform,
     _aggregate_pair_transforms,
-    _detect_global_symmetry,
+    _detect_modes,
     _verify_polygon_symmetry,
     _geometric_pair_support,
 )
@@ -130,7 +130,7 @@ def _build_rot180_islands():
 def test_rot180_detected():
     islands = _build_rot180_islands()
     result = detect_from_data(islands)
-    rot180 = next(e for e in result.global_symmetry if e.type == 'rot_180')
+    rot180 = next(e for e in result.modes if e.type == 'rot_180')
     assert rot180.detected is True
     assert rot180.confidence >= 0.60
 
@@ -138,7 +138,7 @@ def test_rot180_detected():
 def test_rot180_not_mirror_x():
     islands = _build_rot180_islands()
     result = detect_from_data(islands)
-    mirror_x = next(e for e in result.global_symmetry if e.type == 'mirror_x')
+    mirror_x = next(e for e in result.modes if e.type == 'mirror_x')
     assert mirror_x.detected is False
 
 
@@ -168,7 +168,7 @@ def _build_mirror_x_islands():
 def test_mirror_x_detected():
     islands = _build_mirror_x_islands()
     result = detect_from_data(islands)
-    mirror_x = next(e for e in result.global_symmetry if e.type == 'mirror_x')
+    mirror_x = next(e for e in result.modes if e.type == 'mirror_x')
     assert mirror_x.detected is True
 
 
@@ -191,7 +191,7 @@ def _build_mirror_z_islands():
 def test_mirror_z_detected():
     islands = _build_mirror_z_islands()
     result = detect_from_data(islands)
-    mirror_z = next(e for e in result.global_symmetry if e.type == 'mirror_z')
+    mirror_z = next(e for e in result.modes if e.type == 'mirror_z')
     assert mirror_z.detected is True
 
 
@@ -216,7 +216,7 @@ def _build_rot90_islands():
 def test_rot90_detected():
     islands = _build_rot90_islands()
     result = detect_from_data(islands)
-    rot90 = next(e for e in result.global_symmetry if e.type == 'rot_90')
+    rot90 = next(e for e in result.modes if e.type == 'rot_90')
     assert rot90.detected is True
     assert rot90.confidence >= 0.80
 
@@ -224,7 +224,7 @@ def test_rot90_detected():
 def test_rot180_also_detected_on_rot90_map():
     islands = _build_rot90_islands()
     result = detect_from_data(islands)
-    rot180 = next(e for e in result.global_symmetry if e.type == 'rot_180')
+    rot180 = next(e for e in result.modes if e.type == 'rot_180')
     assert rot180.detected is True
 
 
@@ -239,7 +239,7 @@ def test_asymmetric_no_symmetry():
         _make_island(3, -20, -5, 30, 40),
     ]
     result = detect_from_data(islands)
-    for entry in result.global_symmetry:
+    for entry in result.modes:
         assert entry.confidence <= 0.60 or not entry.detected
 
 
@@ -250,7 +250,7 @@ def test_asymmetric_no_symmetry():
 def test_confidence_scores_in_range():
     islands = _build_rot180_islands()
     result = detect_from_data(islands)
-    for entry in result.global_symmetry:
+    for entry in result.modes:
         assert 0.0 <= entry.confidence <= 1.0
 
 
@@ -261,7 +261,7 @@ def test_confidence_scores_in_range():
 def test_primary_is_highest_confidence_detected():
     islands = _build_rot180_islands()
     result = detect_from_data(islands)
-    detected = [e for e in result.global_symmetry if e.detected]
+    detected = [e for e in result.modes if e.detected]
     if detected:
         best = max(detected, key=lambda e: e.confidence)
         assert result.primary['type'] == best.type
@@ -290,14 +290,14 @@ def test_exclude_islands_changes_result():
     with_obs = detect_from_data(with_observer)
     # Just verify the exclusion path runs without error and returns valid result
     assert isinstance(without_obs, SymmetryResult)
-    assert len(without_obs.global_symmetry) == 4
+    assert len(without_obs.modes) == 4
 
 
-def test_exclude_all_islands_returns_skipped():
+def test_exclude_all_islands_returns_unconfirmed():
     islands = _build_rot180_islands()
     ids = [isl['id'] for isl in islands]
     result = detect_from_data(islands, exclude_islands=ids)
-    assert result.symmetry_status == 'skipped'
+    assert result.status == 'unconfirmed'
     assert result.primary is None
 
 
@@ -305,10 +305,10 @@ def test_exclude_all_islands_returns_skipped():
 # Empty island list
 # ---------------------------------------------------------------------------
 
-def test_empty_islands_returns_skipped():
+def test_empty_islands_returns_unconfirmed():
     result = detect_from_data([])
-    assert result.symmetry_status == 'skipped'
-    assert len(result.global_symmetry) == 4
+    assert result.status == 'unconfirmed'
+    assert len(result.modes) == 4
     assert result.primary is None
 
 
@@ -342,5 +342,5 @@ def test_detect_from_file(tmp_path):
     path.write_text(json.dumps(islands))
     result = detect(path)
     assert isinstance(result, SymmetryResult)
-    rot180 = next(e for e in result.global_symmetry if e.type == 'rot_180')
+    rot180 = next(e for e in result.modes if e.type == 'rot_180')
     assert rot180.detected is True
