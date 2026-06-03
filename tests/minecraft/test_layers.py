@@ -29,25 +29,25 @@ def test_y0_extractor_empty_world():
 
 def test_surface_extractor_empty_world():
     df = SurfaceExtractor(_mock_reader()).extract()
-    assert list(df.columns) == ['world_x', 'world_z', 'y', 'block_id', 'block_data']
+    assert list(df.columns) == ['world_x', 'world_z', 'world_y', 'block_id', 'block_data']
     assert len(df) == 0
 
 
 def test_bedrock_extractor_empty_world():
     df = BedrockExtractor(_mock_reader()).extract()
-    assert list(df.columns) == ['world_x', 'world_z', 'y', 'block_data']
+    assert list(df.columns) == ['world_x', 'world_z', 'world_y', 'block_id', 'block_data']
     assert len(df) == 0
 
 
 def test_base_extractor_empty_world():
     df = BaseExtractor(_mock_reader()).extract()
-    assert list(df.columns) == ['world_x', 'world_z', 'y', 'block_id', 'block_data']
+    assert list(df.columns) == ['world_x', 'world_z', 'world_y', 'block_id', 'block_data']
     assert len(df) == 0
 
 
 def test_segments_extractor_empty_world():
     df = SegmentsExtractor(_mock_reader()).extract()
-    assert list(df.columns) == ['world_x', 'world_z', 'y_start', 'y_end']
+    assert list(df.columns) == ['world_x', 'world_z', 'world_y_start', 'world_y_end']
     assert len(df) == 0
 
 

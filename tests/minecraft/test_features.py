@@ -23,20 +23,20 @@ def _mock_reader(chunks=()):
 
 def test_wool_extractor_empty_world():
     df = WoolExtractor(_mock_reader()).extract()
-    assert list(df.columns) == ['world_x', 'world_z', 'y', 'color']
+    assert list(df.columns) == ['world_x', 'world_z', 'world_y', 'color']
     assert len(df) == 0
 
 
 def test_resource_extractor_empty_world():
     df = ResourceExtractor(_mock_reader()).extract()
-    assert list(df.columns) == ['world_x', 'world_z', 'y', 'resource_type']
+    assert list(df.columns) == ['world_x', 'world_z', 'world_y', 'resource_type']
     assert len(df) == 0
 
 
 def test_chest_extractor_empty_world():
     df = ChestExtractor(_mock_reader()).extract()
     assert list(df.columns) == [
-        'world_x', 'world_z', 'y', 'chest_type',
+        'world_x', 'world_z', 'world_y', 'chest_type',
         'slot', 'item_id', 'item_damage', 'count',
     ]
     assert len(df) == 0
@@ -45,6 +45,7 @@ def test_chest_extractor_empty_world():
 def test_spawner_extractor_empty_world():
     df = SpawnerExtractor(_mock_reader()).extract()
     assert 'world_x' in df.columns
+    assert 'world_y' in df.columns
     assert 'spawns_wool' in df.columns
     assert 'entity_id' in df.columns
     assert len(df) == 0
@@ -75,12 +76,12 @@ def test_default_resources_contains_ore_blocks():
 def _chest_df(*positions):
     """Build a minimal chest DataFrame from (x, z, y) tuples."""
     return pd.DataFrame(
-        [{'world_x': x, 'world_z': z, 'y': y} for x, z, y in positions]
+        [{'world_x': x, 'world_z': z, 'world_y': y} for x, z, y in positions]
     )
 
 
 def test_detect_double_chests_empty():
-    df = detect_double_chests(pd.DataFrame(columns=['world_x', 'world_z', 'y']))
+    df = detect_double_chests(pd.DataFrame(columns=['world_x', 'world_z', 'world_y']))
     assert 'is_double' in df.columns
     assert 'chest_group_id' in df.columns
     assert len(df) == 0

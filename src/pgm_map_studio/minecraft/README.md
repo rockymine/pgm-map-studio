@@ -19,22 +19,26 @@ Low-level Minecraft file I/O and block scanning. This package has no knowledge o
 
 | Class | Output columns | Description |
 |---|---|---|
-| `Y0Extractor` | `world_x, world_z, block_id, block_data` | Non-air blocks at y=0 |
-| `SurfaceExtractor` | `world_x, world_z, y, block_id, block_data` | Highest qualifying block per column |
-| `BedrockExtractor` | `world_x, world_z, y, block_data` | Lowest bedrock per column |
-| `BaseExtractor` | `world_x, world_z, y, block_id, block_data` | Lowest solid block per column |
-| `SegmentsExtractor` | `world_x, world_z, y_start, y_end` | All contiguous solid runs per column |
+| `Y0Extractor` | `world_x, world_z, block_id, block_data` | Non-air blocks at world_y=0 |
+| `SurfaceExtractor` | `world_x, world_z, world_y, block_id, block_data` | Highest qualifying block per column |
+| `BedrockExtractor` | `world_x, world_z, world_y, block_id, block_data` | Lowest bedrock per column |
+| `BaseExtractor` | `world_x, world_z, world_y, block_id, block_data` | Lowest solid block per column |
+| `SegmentsExtractor` | `world_x, world_z, world_y_start, world_y_end` | All contiguous solid runs per column |
 
 **Feature extractors** (`features.py`) locate specific block types and return per-instance data. Each maps to a named parquet file written by the pipeline.
 
 | Class | Output file | Output columns |
 |---|---|---|
-| `WoolExtractor` | `wools.parquet` | `world_x, world_z, y, color` |
-| `ResourceExtractor` | `resources.parquet` | `world_x, world_z, y, resource_type` |
-| `ChestExtractor` | `chests.parquet` | `world_x, world_z, y, chest_type, slot, item_id, item_damage, count` |
-| `SpawnerExtractor` | `spawners.parquet` | `world_x, world_z, y, entity_id, spawns_wool, …` |
+| `WoolExtractor` | `wools.parquet` | `world_x, world_z, world_y, color` |
+| `ResourceExtractor` | `resources.parquet` | `world_x, world_z, world_y, resource_type` |
+| `ChestExtractor` | `chests.parquet` | `world_x, world_z, world_y, chest_type, slot, item_id, item_damage, count` |
+| `SpawnerExtractor` | `spawners.parquet` | `world_x, world_z, world_y, entity_id, spawns_wool, …` |
 
 `detect_double_chests()` is a post-processing helper that annotates `ChestExtractor` output with `is_double` and `chest_group_id` columns.
+
+## Coordinate convention
+
+All DataFrame columns use the `world_` prefix to distinguish world coordinates from the section-local (0–15) and chunk-local (0–255) values used internally during extraction. Every spatial axis is covered: `world_x`, `world_z`, `world_y` (or `world_y_start`/`world_y_end` for segment ranges).
 
 ## Map discovery
 

@@ -9,6 +9,10 @@ and are the first step in the geometry pipeline.
 - BedrockExtractor  — lowest bedrock block per column
 - BaseExtractor     — lowest non-excluded non-air block per column
 - SegmentsExtractor — all contiguous solid Y-ranges per column
+
+All coordinate columns use the ``world_`` prefix to distinguish world
+coordinates from section-local (0–15) or chunk-local (0–255) values used
+internally during extraction.
 """
 
 import logging
@@ -70,7 +74,7 @@ class SurfaceExtractor:
     Optionally caps at max_build_height to ignore structures above the
     playable ceiling (observer islands, decorative birds, etc.).
 
-    Returns DataFrame: world_x, world_z, y, block_id, block_data
+    Returns DataFrame: world_x, world_z, world_y, block_id, block_data
     """
 
     def __init__(
@@ -133,11 +137,11 @@ class SurfaceExtractor:
                 all_dt.append(found_dt[zz, xx])
 
         if not all_wx:
-            return pd.DataFrame(columns=['world_x', 'world_z', 'y', 'block_id', 'block_data'])
+            return pd.DataFrame(columns=['world_x', 'world_z', 'world_y', 'block_id', 'block_data'])
         return pd.DataFrame({
             'world_x': np.concatenate(all_wx),
             'world_z': np.concatenate(all_wz),
-            'y': np.concatenate(all_y),
+            'world_y': np.concatenate(all_y),
             'block_id': np.concatenate(all_id),
             'block_data': np.concatenate(all_dt),
         })
@@ -146,7 +150,7 @@ class SurfaceExtractor:
 class BedrockExtractor:
     """Lowest bedrock block (block_id=7) per column.
 
-    Returns DataFrame: world_x, world_z, y, block_data
+    Returns DataFrame: world_x, world_z, world_y, block_id, block_data
     """
 
     def __init__(self, region_reader: RegionReader) -> None:
@@ -180,11 +184,13 @@ class BedrockExtractor:
                 all_dt.append(found_dt[zz, xx])
 
         if not all_wx:
-            return pd.DataFrame(columns=['world_x', 'world_z', 'y', 'block_data'])
+            return pd.DataFrame(columns=['world_x', 'world_z', 'world_y', 'block_id', 'block_data'])
+        n = sum(len(a) for a in all_wx)
         return pd.DataFrame({
             'world_x': np.concatenate(all_wx),
             'world_z': np.concatenate(all_wz),
-            'y': np.concatenate(all_y),
+            'world_y': np.concatenate(all_y),
+            'block_id': np.full(n, 7, dtype=np.uint16),
             'block_data': np.concatenate(all_dt),
         })
 
@@ -198,7 +204,7 @@ class BaseExtractor:
     Works for bedrock-based maps, raised-floor maps, and floating-island
     maps — unlike BedrockExtractor it also returns the block_id.
 
-    Returns DataFrame: world_x, world_z, y, block_id, block_data
+    Returns DataFrame: world_x, world_z, world_y, block_id, block_data
     """
 
     def __init__(
@@ -244,11 +250,11 @@ class BaseExtractor:
                 all_dt.append(found_dt[zz, xx])
 
         if not all_wx:
-            return pd.DataFrame(columns=['world_x', 'world_z', 'y', 'block_id', 'block_data'])
+            return pd.DataFrame(columns=['world_x', 'world_z', 'world_y', 'block_id', 'block_data'])
         return pd.DataFrame({
             'world_x': np.concatenate(all_wx),
             'world_z': np.concatenate(all_wz),
-            'y': np.concatenate(all_y),
+            'world_y': np.concatenate(all_y),
             'block_id': np.concatenate(all_id),
             'block_data': np.concatenate(all_dt),
         })
@@ -258,10 +264,10 @@ class SegmentsExtractor:
     """All contiguous solid Y-ranges per column.
 
     For each (x, z) column records every unbroken run of non-excluded,
-    non-air blocks as an inclusive interval [y_start, y_end]. A column
-    with a bedrock floor and an elevated platform yields two rows.
+    non-air blocks as an inclusive interval [world_y_start, world_y_end].
+    A column with a bedrock floor and an elevated platform yields two rows.
 
-    Returns DataFrame: world_x, world_z, y_start, y_end
+    Returns DataFrame: world_x, world_z, world_y_start, world_y_end
     """
 
     def __init__(
@@ -320,10 +326,10 @@ class SegmentsExtractor:
             all_ye.append(y_end)
 
         if not all_wx:
-            return pd.DataFrame(columns=['world_x', 'world_z', 'y_start', 'y_end'])
+            return pd.DataFrame(columns=['world_x', 'world_z', 'world_y_start', 'world_y_end'])
         return pd.DataFrame({
             'world_x': np.concatenate(all_wx),
             'world_z': np.concatenate(all_wz),
-            'y_start': np.concatenate(all_ys),
-            'y_end': np.concatenate(all_ye),
+            'world_y_start': np.concatenate(all_ys),
+            'world_y_end': np.concatenate(all_ye),
         })

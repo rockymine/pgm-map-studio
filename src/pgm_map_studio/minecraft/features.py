@@ -36,7 +36,7 @@ def _nbt_val(tag):
 class WoolExtractor:
     """Wool blocks (block_id=35) with color name derived from damage value.
 
-    Returns DataFrame: world_x, world_z, y, color
+    Returns DataFrame: world_x, world_z, world_y, color
     """
 
     def __init__(self, region_reader: RegionReader) -> None:
@@ -59,11 +59,11 @@ class WoolExtractor:
                 )
 
         if not all_wx:
-            return pd.DataFrame(columns=['world_x', 'world_z', 'y', 'color'])
+            return pd.DataFrame(columns=['world_x', 'world_z', 'world_y', 'color'])
         return pd.DataFrame({
             'world_x': np.concatenate(all_wx),
             'world_z': np.concatenate(all_wz),
-            'y':       np.concatenate(all_y),
+            'world_y': np.concatenate(all_y),
             'color':   np.concatenate(all_color),
         })
 
@@ -82,7 +82,7 @@ DEFAULT_RESOURCE_BLOCKS: dict[int, str] = {
 class ResourceExtractor:
     """Iron, gold, and diamond blocks with resource type label.
 
-    Returns DataFrame: world_x, world_z, y, resource_type
+    Returns DataFrame: world_x, world_z, world_y, resource_type
     """
 
     def __init__(
@@ -108,11 +108,11 @@ class ResourceExtractor:
                     all_rt.append(np.full(len(yy), label, dtype=object))
 
         if not all_wx:
-            return pd.DataFrame(columns=['world_x', 'world_z', 'y', 'resource_type'])
+            return pd.DataFrame(columns=['world_x', 'world_z', 'world_y', 'resource_type'])
         return pd.DataFrame({
-            'world_x':      np.concatenate(all_wx),
-            'world_z':      np.concatenate(all_wz),
-            'y':            np.concatenate(all_y),
+            'world_x':       np.concatenate(all_wx),
+            'world_z':       np.concatenate(all_wz),
+            'world_y':       np.concatenate(all_y),
             'resource_type': np.concatenate(all_rt),
         })
 
@@ -127,7 +127,7 @@ _CHEST_TILE_IDS = frozenset({'Chest', 'TrappedChest'})
 class ChestExtractor:
     """Chest and trapped chest inventory from tile entity NBT.
 
-    Returns DataFrame: world_x, world_z, y, chest_type, slot, item_id, item_damage, count
+    Returns DataFrame: world_x, world_z, world_y, chest_type, slot, item_id, item_damage, count
     """
 
     def __init__(self, region_reader: RegionReader) -> None:
@@ -155,7 +155,7 @@ class ChestExtractor:
                         rows.append({
                             'world_x':    wx,
                             'world_z':    wz,
-                            'y':          wy,
+                            'world_y':    wy,
                             'chest_type': chest_type,
                             'slot':       int(_nbt_val(item.get('Slot'))),
                             'item_id':    str(_nbt_val(item.get('id', ''))),
@@ -167,7 +167,7 @@ class ChestExtractor:
 
         if not rows:
             return pd.DataFrame(columns=[
-                'world_x', 'world_z', 'y', 'chest_type',
+                'world_x', 'world_z', 'world_y', 'chest_type',
                 'slot', 'item_id', 'item_damage', 'count',
             ])
         return pd.DataFrame(rows)
@@ -176,9 +176,9 @@ class ChestExtractor:
 def detect_double_chests(chest_df: pd.DataFrame) -> pd.DataFrame:
     """Annotate a chest DataFrame with double-chest grouping.
 
-    Two chests form a double chest when they share the same Y level and
-    are exactly 1 block apart in X or Z. Returns a copy of chest_df with
-    two extra columns:
+    Two chests form a double chest when they share the same world_y level
+    and are exactly 1 block apart in X or Z. Returns a copy of chest_df
+    with two extra columns:
 
         is_double      — True if this chest is part of a double chest
         chest_group_id — integer ID shared by both halves of a double;
@@ -191,8 +191,8 @@ def detect_double_chests(chest_df: pd.DataFrame) -> pd.DataFrame:
         return result
 
     pos_set: set[tuple[int, int, int]] = {
-        (int(r.world_x), int(r.world_z), int(r.y))
-        for r in chest_df[['world_x', 'world_z', 'y']].drop_duplicates().itertuples()
+        (int(r.world_x), int(r.world_z), int(r.world_y))
+        for r in chest_df[['world_x', 'world_z', 'world_y']].drop_duplicates().itertuples()
     }
 
     group_id: dict[tuple[int, int, int], int] = {}
@@ -221,10 +221,10 @@ def detect_double_chests(chest_df: pd.DataFrame) -> pd.DataFrame:
 
     result = chest_df.copy()
     result['is_double'] = result.apply(
-        lambda r: is_double.get((int(r.world_x), int(r.world_z), int(r.y)), False), axis=1
+        lambda r: is_double.get((int(r.world_x), int(r.world_z), int(r.world_y)), False), axis=1
     )
     result['chest_group_id'] = result.apply(
-        lambda r: group_id.get((int(r.world_x), int(r.world_z), int(r.y)), -1), axis=1
+        lambda r: group_id.get((int(r.world_x), int(r.world_z), int(r.world_y)), -1), axis=1
     ).astype('Int64')
     return result
 
@@ -240,7 +240,7 @@ _NULLABLE_INT_COLS = [
 ]
 
 _SPAWNER_COLUMNS = [
-    'world_x', 'world_z', 'y', 'entity_id',
+    'world_x', 'world_z', 'world_y', 'entity_id',
     'spawns_wool', 'spawn_item_id', 'spawn_item_damage',
     'spawn_count', 'spawn_range', 'min_spawn_delay', 'max_spawn_delay',
     'required_player_range', 'max_nearby_entities',
@@ -253,7 +253,7 @@ class SpawnerExtractor:
     The spawns_wool flag is True when SpawnData.Item.id == 'minecraft:wool',
     identifying spawners used as wool respawn mechanisms in CTW maps.
 
-    Returns DataFrame: world_x, world_z, y, entity_id, spawns_wool,
+    Returns DataFrame: world_x, world_z, world_y, entity_id, spawns_wool,
                        spawn_item_id, spawn_item_damage, spawn_count,
                        spawn_range, min_spawn_delay, max_spawn_delay,
                        required_player_range, max_nearby_entities
@@ -300,7 +300,7 @@ class SpawnerExtractor:
             row: dict = {
                 'world_x':               int(_nbt_val(x_raw)),
                 'world_z':               int(_nbt_val(z_raw)),
-                'y':                     int(_nbt_val(y_raw)),
+                'world_y':               int(_nbt_val(y_raw)),
                 'entity_id':             self._str(te.get('EntityId')),
                 'spawns_wool':           False,
                 'spawn_item_id':         None,
