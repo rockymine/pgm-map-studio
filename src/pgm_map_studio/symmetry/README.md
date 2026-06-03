@@ -28,6 +28,24 @@ Detects global geometric symmetry from island polygon data and writes `symmetry.
 
 **`symmetry_status`:** Written as `"skipped"` by the pipeline. The viewer lets the user confirm or reject the detection (`"confirmed"` / `"none"`).
 
+## Output schema (`symmetry.json`)
+
+```json
+{
+  "status": "unconfirmed",
+  "modes": [
+    {"type": "mirror_x", "detected": false, "confidence": 0.34},
+    {"type": "mirror_z", "detected": false, "confidence": 0.34},
+    {"type": "rot_180",  "detected": true,  "confidence": 1.0},
+    {"type": "rot_90",   "detected": false, "confidence": 0.11}
+  ],
+  "center": {"center_x": -90.5, "center_z": -42.5},
+  "primary": {"type": "rot_180", "confidence": 1.0}
+}
+```
+
+`status` is written as `"unconfirmed"` by the pipeline. The viewer lets the user set it to `"confirmed"` or `"none"`. `primary` is `null` when no mode is detected.
+
 ## Usage
 
 ```python
@@ -41,5 +59,5 @@ result = detect("output/map_slug/islands.json")
 result = detect_from_data(islands_data, exclude_islands=[3])
 
 serializer.save(result, "output/map_slug/symmetry.json")
-print(result.primary)  # {'type': 'rot_180', 'confidence': 1.0, ...}
+print(result.primary)  # {'type': 'rot_180', 'confidence': 1.0}
 ```
