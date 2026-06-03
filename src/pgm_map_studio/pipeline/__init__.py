@@ -133,6 +133,29 @@ def run_layout(
     scan_cfg = ScanConfig(layer=cfg.scan_layer, exclude_ids=list(cfg.exclude_blocks))
     logger.info(f"[{source.slug}] Step 1: Layout (layer={cfg.scan_layer}, exclude_blocks={cfg.exclude_blocks})")
     layout = _layout_pipeline.run(source, output_dir, config=scan_cfg, force=force)
+    if not layout.islands:
+        layer_path = Path(output_dir) / 'layer.parquet'
+        import pandas as _pd
+        try:
+            n_blocks = len(_pd.read_parquet(layer_path))
+        except Exception:
+            n_blocks = 0
+        if n_blocks == 0 and cfg.exclude_blocks:
+            logger.warning(
+                f"[{source.slug}] Layer is empty after applying exclude_blocks={cfg.exclude_blocks}. "
+                f"All blocks in layer '{cfg.scan_layer}' may have been excluded — "
+                f"check exclude_blocks in map_config.json."
+            )
+        elif n_blocks == 0:
+            logger.warning(
+                f"[{source.slug}] Layer '{cfg.scan_layer}' returned no blocks. "
+                f"The map's region files may be empty or the layer choice may be incorrect."
+            )
+        else:
+            logger.warning(
+                f"[{source.slug}] No islands detected from {n_blocks} blocks "
+                f"(min_island_size={scan_cfg.min_island_size})."
+            )
     return layout.islands
 
 
