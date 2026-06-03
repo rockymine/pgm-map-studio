@@ -21,12 +21,22 @@ from pgm_map_studio.symmetry.datatypes import GlobalSymmetryEntry, SymmetryResul
 def test_map_config_defaults():
     cfg = MapConfig()
     assert cfg.exclude_islands == []
+    assert cfg.exclude_blocks == []
     assert cfg.scan_layer == 'surface'
 
 
 def test_map_config_round_trip():
-    cfg = MapConfig(exclude_islands=[3, 7], scan_layer='y0')
+    cfg = MapConfig(exclude_islands=[3, 7], exclude_blocks=[36, 166], scan_layer='y0')
     assert MapConfig.from_dict(cfg.to_dict()) == cfg
+
+
+def test_map_config_exclude_blocks_in_json(tmp_path):
+    cfg = MapConfig(exclude_blocks=[36, 166])
+    save_map_config(cfg, tmp_path)
+    d = json.loads((tmp_path / 'map_config.json').read_text())
+    assert d['exclude_blocks'] == [36, 166]
+    loaded = load_map_config(tmp_path)
+    assert loaded.exclude_blocks == [36, 166]
 
 
 def test_save_and_load_map_config(tmp_path):
@@ -226,6 +236,28 @@ def test_run_creates_map_config(tmp_path):
     d = json.loads((out / 'mymap' / 'map_config.json').read_text())
     assert d['scan_layer'] == 'surface'
     assert d['exclude_islands'] == []
+
+
+def test_run_layout_passes_exclude_blocks_to_scan_config(tmp_path):
+    source = _make_source(tmp_path)
+    out = tmp_path
+    map_out = out / 'mymap'
+    map_out.mkdir(parents=True, exist_ok=True)
+    save_map_config(MapConfig(exclude_blocks=[36, 166]), map_out)
+
+    captured = []
+
+    with patch('pgm_map_studio.pipeline._layout_pipeline.run') as mock_layout:
+        from pgm_map_studio.layout.datatypes import MapLayout
+
+        def capture(source, output_dir, config, force):
+            captured.append(config)
+            return MapLayout(islands=[], bounds=(0, 0, 0, 0))
+
+        mock_layout.side_effect = capture
+        run(source, out)
+
+    assert set(captured[0].exclude_ids) == {36, 166}
 
 
 def test_run_respects_existing_map_config(tmp_path):

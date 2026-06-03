@@ -18,11 +18,13 @@ from pgm_map_studio.layout.config import LayerChoice
 class MapConfig:
     """Per-map overrides for pipeline behaviour."""
     exclude_islands: list[int] = field(default_factory=list)
+    exclude_blocks: list[int] = field(default_factory=list)
     scan_layer: LayerChoice = 'surface'
 
     def to_dict(self) -> dict:
         return {
             'exclude_islands': self.exclude_islands,
+            'exclude_blocks': self.exclude_blocks,
             'scan_layer': self.scan_layer,
         }
 
@@ -30,6 +32,7 @@ class MapConfig:
     def from_dict(cls, d: dict) -> 'MapConfig':
         return cls(
             exclude_islands=d.get('exclude_islands', []),
+            exclude_blocks=d.get('exclude_blocks', []),
             scan_layer=d.get('scan_layer', 'surface'),
         )
 

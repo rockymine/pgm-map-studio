@@ -41,6 +41,7 @@ Written with defaults on the first run. Edit to tune per-map behaviour:
 | Field | Default | Description |
 |---|---|---|
 | `exclude_islands` | `[]` | Island IDs excluded from symmetry detection (e.g. observer platforms) |
+| `exclude_blocks` | `[]` | Block IDs treated as air during the scan (e.g. `[36]` for PISTON_MOVING_PIECE boundary markers) |
 | `scan_layer` | `"surface"` | Layer extractor: `"surface"`, `"y0"`, `"bedrock"`, `"base"` |
 
 After editing `exclude_islands`, re-run only Step 2 with `force_symmetry=True` — no need to rescan the world.

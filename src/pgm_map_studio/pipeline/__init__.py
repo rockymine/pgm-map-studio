@@ -130,8 +130,8 @@ def run_layout(
 ) -> list[Island]:
     """Step 1 — Layout: region scan → parquet files + islands.json."""
     cfg = config or MapConfig()
-    scan_cfg = ScanConfig(layer=cfg.scan_layer)
-    logger.info(f"[{source.slug}] Step 1: Layout (layer={cfg.scan_layer})")
+    scan_cfg = ScanConfig(layer=cfg.scan_layer, exclude_ids=list(cfg.exclude_blocks))
+    logger.info(f"[{source.slug}] Step 1: Layout (layer={cfg.scan_layer}, exclude_blocks={cfg.exclude_blocks})")
     layout = _layout_pipeline.run(source, output_dir, config=scan_cfg, force=force)
     return layout.islands
 
