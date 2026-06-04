@@ -165,7 +165,7 @@
   background: var(--bg-panel);
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 4px 14px;
   font-size: 12px;
   font-family: inherit;
@@ -173,7 +173,8 @@
   flex-shrink: 0;
   text-decoration: none;
 }
-.action-btn:hover { background: var(--border); color: var(--text-bright); }
+.action-btn:hover           { background: var(--border); color: var(--text-bright); }
+.action-btn:disabled        { opacity: 0.35; cursor: default; }
 .action-btn--primary {
   background: var(--bg-selected);
   border-color: var(--accent);
@@ -321,19 +322,142 @@
 
 
 /* ══════════════════════════════════════════════════════════════════════════
-   STATUS BADGE (unified)
+   BADGE
+   Single chip system for status, validation, and type labels.
+   Variants are named by meaning — pick the one that fits semantically.
+   Works both inline (in text) and standalone (in list rows, panel headers).
    ══════════════════════════════════════════════════════════════════════════ */
 
-.status-badge {
+.badge {
   display: inline-block;
   font-size: 10px;
+  font-weight: 600;
   padding: 2px 7px;
   border-radius: var(--radius-sm);
-  font-weight: 600;
   flex-shrink: 0;
 }
-.status-badge--confirmed { color: var(--color-success); background: var(--color-success-bg); }
-.status-badge--pending   { color: var(--color-warning); background: #451a0344; }
-.status-badge--skipped   { color: var(--text-dim);      background: var(--bg-base); }
-.status-badge--none      { color: var(--text-muted);    background: var(--bg-base); }
-.status-badge--neutral   { color: var(--text-secondary); background: var(--bg-panel); border: 1px solid var(--border); }
+.badge--success { color: var(--color-success);  background: var(--color-success-bg); }
+.badge--warning { color: var(--color-warning);  background: #451a0344; }
+.badge--error   { color: var(--color-error);    background: var(--color-error-bg); }
+.badge--neutral { color: var(--text-secondary); background: var(--bg-panel); border: 1px solid var(--border); }
+.badge--dim     { color: var(--text-dim);       background: var(--bg-base); }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   STEP ROW  (pipeline status lists)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.step-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.step-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: var(--border);
+}
+.step-dot--done    { background: var(--color-success); }
+.step-dot--running { background: var(--accent); animation: step-pulse 1s ease-in-out infinite; }
+.step-dot--error   { background: var(--color-error); }
+@keyframes step-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+.step-label  { color: var(--text-secondary); min-width: 70px; }
+.step-detail { color: var(--text-muted); font-size: 11px; flex: 1; }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONSOLE  (pipeline log output — shared across dashboard, configure, etc.)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.console-wrap { display: flex; flex-direction: column; gap: var(--space-2); }
+.console-header { display: flex; align-items: center; gap: var(--space-2); }
+.console-title {
+  font-size: 10px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.console-clear-btn {
+  background: none; border: none; color: var(--text-muted); font-size: 11px;
+  cursor: pointer; font-family: inherit; padding: 0;
+}
+.console-clear-btn:hover { color: var(--text-secondary); }
+.console-output {
+  background: var(--bg-base);
+  border: 1px solid var(--bg-panel);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) 10px;
+  height: 160px; overflow-y: auto;
+  font-size: 12px; line-height: 1.6;
+}
+.console-line          { color: var(--text-dim);      white-space: pre-wrap; }
+.console-line--success { color: var(--color-success); }
+.console-line--error   { color: var(--color-error); }
+.console-line--warning { color: var(--color-warning); }
+.console-line--info    { color: var(--text-dim); }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   VISIBILITY TOGGLE BUTTON  (island list, region sidebar)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.vis-btn {
+  background: none; border: none; cursor: pointer; padding: 4px 3px;
+  color: var(--text-primary); flex-shrink: 0;
+  display: flex; align-items: center; line-height: 0;
+  opacity: 0; transition: opacity var(--transition-fast);
+}
+/* In region-row context the button must stretch the full row height */
+.region-row .vis-btn {
+  align-self: stretch;
+  margin-top: -4px;
+  margin-bottom: -4px;
+}
+.list-row:hover .vis-btn,
+.region-row:hover .vis-btn { opacity: 1; }
+.vis-btn:hover   { background: var(--bg-vis-hover); }
+.vis-btn--always { opacity: 1; }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SECTION DESCRIPTION  (body text inside a panel section)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.section-desc {
+  font-size: 12px; color: var(--text-secondary);
+  line-height: 1.6; margin-bottom: var(--space-2);
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PREVIEW GRID + CARD  (layer selection, any multi-image picker)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  padding: var(--space-4);
+  overflow: auto;
+}
+
+.preview-card {
+  display: flex; flex-direction: column;
+  border: 2px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-deep); padding: 10px;
+  cursor: pointer; transition: border-color var(--transition-fast);
+  overflow: hidden;
+}
+.preview-card:hover          { border-color: var(--text-muted); }
+.preview-card--selected      { border-color: var(--color-success); }
+
+.preview-card-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; flex-shrink: 0;
+}
+.preview-card-title { font-size: 12px; color: var(--text-primary); cursor: pointer; }
+
+.preview-img {
+  display: block; flex: 1; min-height: 0; width: 100%;
+  object-fit: contain; image-rendering: pixelated; border-radius: var(--radius-sm);
+}
+.preview-placeholder {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text-muted); text-align: center;
+}
+
+

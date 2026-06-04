@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PGM Map Studio</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}"/>
 </head>
@@ -23,7 +24,7 @@
       <span class="topbar-error-text"></span>
       <button class="topbar-error-dismiss" id="error-dismiss-btn" title="Dismiss">✕</button>
     </div>
-    <button class="topbar-btn" id="settings-btn" title="Settings">⚙ Settings</button>
+    <button class="action-btn" id="settings-btn" title="Settings">⚙ Settings</button>
   </div>
 
   <!-- Settings dropdown -->
@@ -75,7 +76,7 @@
           <div class="map-detail-name" id="detail-name"></div>
           <div class="map-detail-meta" id="detail-meta"></div>
           <div id="detail-open-wrap">
-            <a id="open-editor-btn" class="open-editor-btn" hidden>Open in Editor →</a>
+            <a id="open-editor-btn" class="action-btn action-btn--primary" hidden>Open in Editor →</a>
             <button id="run-pipeline-btn" class="action-btn" style="margin-left:8px" hidden>Run Pipeline</button>
           </div>
         </div>
