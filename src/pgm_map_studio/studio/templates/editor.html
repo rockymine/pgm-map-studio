@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PGM Map Studio — Editor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}"/>
+</head>
+<body>
+
+<div id="topbar">
+  <a href="/" class="topbar-breadcrumb-home" title="Back to dashboard">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Maps</span>
+  </a>
+  <span class="topbar-sep">›</span>
+  <span id="topbar-map-name" class="topbar-crumb"></span>
+  <span class="topbar-sep">›</span>
+  <span id="topbar-version"  class="topbar-crumb topbar-crumb--dim"></span>
+
+  <div class="topbar-right">
+    <div id="topbar-error" role="alert">
+      <span class="topbar-error-text"></span>
+      <button class="topbar-error-dismiss" id="error-dismiss-btn">✕</button>
+    </div>
+    <button id="export-xml-btn" class="topbar-btn" disabled>Export XML</button>
+  </div>
+</div>
+
+<div id="main">
+  <nav id="activity-rail">
+    <div class="activity-logo">
+      <div class="activity-logo-box">
+        <span class="activity-logo-pgm">pgm</span>
+        <span class="activity-logo-sub">STUDIO</span>
+      </div>
+    </div>
+    <button class="activity-btn active" id="activity-overview"  title="Overview"  disabled data-status="">
+      <i data-lucide="book-open-text"></i>
+    </button>
+    <button class="activity-btn" id="activity-teams"     title="Teams"     disabled data-status="">
+      <i data-lucide="users"></i>
+    </button>
+    <button class="activity-btn" id="activity-objective" title="Objective" disabled data-status="">
+      <i data-lucide="goal"></i>
+    </button>
+    <button class="activity-btn" id="activity-regions"   title="Regions"   disabled data-status="">
+      <i data-lucide="layout-dashboard"></i>
+    </button>
+    <button class="activity-btn" disabled title="Filters">
+      <i data-lucide="gavel"></i>
+    </button>
+    <button class="activity-btn" disabled title="Export">
+      <i data-lucide="archive"></i>
+    </button>
+  </nav>
+
+  <div id="activity-viewport">
+
+    <!-- Overview workspace -->
+    <div id="overview-workspace">
+      <div id="ov-left">
+        <div id="ov-left-scroll">
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Map Identity</h2>
+            </div>
+            <div class="field">
+              <label class="field-label" for="ov-name">Map Name <span class="field-required">*</span></label>
+              <input id="ov-name" class="field-input" type="text" placeholder="My CTW Map"/>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="ov-version">Version <span class="field-required">*</span></label>
+                <input id="ov-version" class="field-input" type="text" placeholder="1.0.0"/>
+              </div>
+              <div class="field">
+                <label class="field-label" for="ov-gamemode">Gamemode <span class="field-required">*</span></label>
+                <input id="ov-gamemode" class="field-input" type="text" placeholder="ctw"/>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="ov-objective">Objective</label>
+              <textarea id="ov-objective" class="field-input field-input--textarea" rows="2" placeholder="Capture all enemy wools!"></textarea>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Authors</h2>
+            </div>
+            <div id="ov-authors-list"></div>
+            <button id="ov-add-author" class="action-btn">+ Add author</button>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Contributors</h2>
+            </div>
+            <div id="ov-contributors-list"></div>
+            <button id="ov-add-contributor" class="action-btn">+ Add contributor</button>
+          </section>
+
+          <div class="panel-actions">
+            <button id="ov-save-btn" class="action-btn action-btn--primary" disabled>Save changes</button>
+            <span id="ov-save-status" class="panel-save-status"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="ov-left-handle"></div>
+      <div id="ov-canvas-wrap">
+        <svg id="ov-map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+    <!-- Teams workspace -->
+    <div id="pt-workspace" hidden>
+      <div id="pt-left">
+        <div id="pt-teams-section">
+          <div class="section-header section-header--list">
+            <h2 class="section-title">Teams</h2>
+            <button id="pt-add-team-btn" class="action-btn">+ Add team</button>
+          </div>
+          <div id="pt-teams-list"></div>
+        </div>
+        <div class="panel-divider"></div>
+        <div id="pt-spawns-section">
+          <div class="section-header section-header--list">
+            <h2 class="section-title">Spawn Regions</h2>
+          </div>
+          <div id="pt-spawn-list"></div>
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="pt-left-handle"></div>
+
+      <div id="pt-canvas-wrap">
+        <div id="pt-canvas-subbar" class="canvas-subbar">
+          <div class="canvas-toolbar" id="pt-draw-toolbar">
+            <button id="pt-tool-move"     class="draw-tool-btn" title="Move (M)">
+              <i data-lucide="hand"></i>
+            </button>
+            <button id="pt-tool-select"   class="draw-tool-btn" title="Select">
+              <i data-lucide="mouse-pointer-2"></i>
+            </button>
+            <button id="pt-tool-cylinder" class="draw-tool-btn" title="Cylinder (Y)">
+              <i data-lucide="cylinder"></i>
+            </button>
+            <button id="pt-tool-point"    class="draw-tool-btn" title="Point (P)">
+              <i data-lucide="dot"></i>
+            </button>
+          </div>
+          <div id="pt-cursor-coords" class="canvas-cursor"></div>
+          <div class="canvas-subbar-right">
+            <span id="pt-zoom-level" class="canvas-zoom">—</span>
+          </div>
+        </div>
+        <div id="pt-svg-area">
+          <svg id="pt-map-svg" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                  fill="var(--text-muted)" font-size="14">Loading map…</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="pt-right-handle"></div>
+
+      <div id="pt-right">
+        <div id="pt-right-scroll">
+          <div id="pt-team-inspector" hidden>
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Team</h2>
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-team-id">ID <span class="field-required">*</span></label>
+                <input id="pt-team-id" class="field-input" type="text" placeholder="e.g. blue-team" spellcheck="false"/>
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-team-name">Display Name</label>
+                <input id="pt-team-name" class="field-input" type="text" placeholder="e.g. Blue"/>
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-team-color">Chat Color <span class="field-required">*</span></label>
+                <div class="field-pick-row">
+                  <span id="pt-team-color-swatch" class="field-swatch"></span>
+                  <select id="pt-team-color" class="field-input"></select>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-team-dye-color">Dye Color</label>
+                <div class="field-pick-row">
+                  <span id="pt-team-dye-color-swatch" class="field-swatch"></span>
+                  <select id="pt-team-dye-color" class="field-input"></select>
+                </div>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label" for="pt-team-max">Max Players</label>
+                  <input id="pt-team-max" class="field-input" type="number" min="1" max="500" value="20"/>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="pt-team-min">Min Players</label>
+                  <input id="pt-team-min" class="field-input" type="number" min="0" max="500" value="0"/>
+                </div>
+              </div>
+              <div class="panel-actions">
+                <button id="pt-delete-team-btn" class="action-btn action-btn--danger">Delete team</button>
+              </div>
+            </section>
+          </div>
+
+          <div id="pt-spawn-inspector" hidden>
+            <div id="pt-spawn-region-detail"></div>
+            <section class="panel-section" id="pt-spawn-assignment">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Spawn Assignment</h2>
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-spawn-team">Team</label>
+                <select id="pt-spawn-team" class="field-input"></select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-spawn-yaw">Yaw (°)</label>
+                <input id="pt-spawn-yaw" class="field-input" type="number" step="1" min="-180" max="180" placeholder="0"/>
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-spawn-kit">Kit</label>
+                <input id="pt-spawn-kit" class="field-input" type="text" placeholder="e.g. spawn-kit" spellcheck="false"/>
+              </div>
+              <div class="panel-actions">
+                <button id="pt-spawn-unlink-btn" class="action-btn action-btn--danger">Remove spawn link</button>
+              </div>
+            </section>
+          </div>
+
+          <div id="pt-inspector-empty" class="panel-empty">
+            <p class="panel-empty-msg">Select a team or spawn region to inspect.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placeholder for future activities -->
+    <div id="obj-workspace"     hidden style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Objective editor — coming soon</div>
+    <div id="regions-workspace" hidden style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Regions editor — coming soon</div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<script type="module" src="{{ url_for('static', filename='main.js') }}"></script>
+<script>
+(function() {
+  function resizeSidebar(handle, sidebar, side, min, max) {
+    handle.addEventListener("mousedown", function(e) {
+      e.preventDefault();
+      handle.classList.add("sidebar-handle--dragging");
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "ew-resize";
+      var startX = e.clientX, startW = sidebar.offsetWidth;
+      function onMove(e) {
+        var delta = side === "left" ? e.clientX - startX : startX - e.clientX;
+        sidebar.style.width = Math.max(min, Math.min(max, startW + delta)) + "px";
+      }
+      function onUp() {
+        handle.classList.remove("sidebar-handle--dragging");
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      }
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+  }
+  resizeSidebar(document.getElementById("ov-left-handle"), document.getElementById("ov-left"), "left", 200, 480);
+  resizeSidebar(document.getElementById("pt-left-handle"), document.getElementById("pt-left"), "left", 180, 420);
+  resizeSidebar(document.getElementById("pt-right-handle"), document.getElementById("pt-right"), "right", 240, 480);
+}());
+</script>
+</body>
+</html>

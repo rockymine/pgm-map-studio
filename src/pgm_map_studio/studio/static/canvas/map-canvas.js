@@ -1,0 +1,1051 @@
+/**
+ * MapCanvas — SVG rendering engine for the editor activities.
+ *
+ * Public surface:
+ *   render(ctx, groups)           full repaint + zoom reset
+ *   refreshRegions(groups)        swap region layer without resetting zoom
+ *   setSelectedRegions(ids)       highlight the given id set
+ *   showAnchors(node)             highlight anchor blocks for focused region
+ *   clearAnchors()                remove anchor highlights
+ *   setBlocksVisible(v)           toggle block layer
+ *   setPoisVisible(v)             toggle POI markers
+ *   loadBlockLayer(data)          load top-surface block data
+ *   addRegion(node)               add a region without repaint
+ *   removeRegion(id)              remove a region
+ *   setActiveTool(tool)           null | "move" | "rectangle" | "cylinder" | "circle" | "point" | "block"
+ *   focusRegion(node)             pan+zoom to fit region in viewport
+ *   resize()                      re-render at new dimensions (preserves zoom)
+ *
+ * ctx shape: { bounding_box: {min_x,min_z,max_x,max_z}, islands: [...] }
+ * groups shape: [{name, label, color, regions: [node, ...]}]
+ * node shape: { id, type, label, color, bounds?: {min_x,min_z,max_x,max_z}, children?, polygon_2d? }
+ */
+
+import { buildTransform, buildInverseTransform, svgEl, polyToPath } from "./transform.js";
+import { chatColorHex, dyeColorHex } from "../shared/game-colors.js";
+
+const ZOOM_FACTOR = 1.15;
+const ZOOM_MIN    = 0.5;
+const ZOOM_MAX    = 200;
+
+const HANDLE_SIZE = 7;
+const HANDLE_DEFS = [
+  { key: "nw", pos: sb => [sb.left,  sb.top   ], cursor: "nw-resize" },
+  { key: "n",  pos: sb => [sb.midX,  sb.top   ], cursor: "n-resize"  },
+  { key: "ne", pos: sb => [sb.right, sb.top   ], cursor: "ne-resize" },
+  { key: "w",  pos: sb => [sb.left,  sb.midY  ], cursor: "w-resize"  },
+  { key: "e",  pos: sb => [sb.right, sb.midY  ], cursor: "e-resize"  },
+  { key: "sw", pos: sb => [sb.left,  sb.bottom], cursor: "sw-resize" },
+  { key: "s",  pos: sb => [sb.midX,  sb.bottom], cursor: "s-resize"  },
+  { key: "se", pos: sb => [sb.right, sb.bottom], cursor: "se-resize" },
+];
+
+const COMPOSITE_TYPES = new Set(["union", "intersect", "negative", "complement"]);
+const RESIZABLE_TYPES = new Set(["rectangle", "cuboid"]);
+
+function darkenHex(hex, factor = 0.55) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
+}
+
+/** Convert a GeoJSON polygon {type,coordinates} to {exterior,holes} for polyToPath(). */
+function geojsonToSimplified(polygon) {
+  if (!polygon?.coordinates?.length) return null;
+  return {
+    exterior: polygon.coordinates[0] || [],
+    holes:    polygon.coordinates.slice(1),
+  };
+}
+
+export class MapCanvas {
+  #svg;
+  #wrap;
+  #ctx    = null;
+  #groups = [];
+  #toSvg  = null;
+  #toWorld= null;
+  #callbacks;
+
+  // zoom/pan
+  #scale = 1;
+  #panX  = 0;
+  #panY  = 0;
+
+  // drag/click state
+  #isDragging   = false;
+  #midDragging  = false;
+  #dragAnchor   = null;
+  #didDrag      = false;
+  #clickWasDrag = false;
+
+  // DOM caches
+  #regionGroupMap = new Map();
+  #shapeMap       = new Map();
+  #nodeMap        = new Map();
+  #viewportG      = null;
+  #overlayLayer   = null;
+  #highlightRect  = null;
+  #anchorLayer    = null;
+  #buildLayerEl   = null;
+  #blockLayerEl   = null;
+  #islandLayerEl  = null;
+  #spawnLayerEl   = null;
+  #woolLayerEl    = null;
+  #monumentLayerEl= null;
+  #regionsLayerEl = null;
+  #drawLayerEl    = null;
+  #addedNodes     = [];
+
+  // draw tool
+  #activeTool = null;
+  #drawState  = null;
+
+  // resize
+  #resizeState = null;
+
+  // visibility/selection
+  #visibilityMap      = new Map();
+  #currentSelectedIds = new Set();
+  #resolvedMode       = false;
+
+  // layer state
+  #showPois   = false;
+  #showBuild  = false;
+  #showBlocks = false;
+  #blockData  = null;
+  #selectedNode = null;
+
+  constructor(svgEl_, wrapEl, callbacks = {}) {
+    this.#svg       = svgEl_;
+    this.#wrap      = wrapEl;
+    this.#callbacks = callbacks;
+    this.#setupEvents();
+  }
+
+  // ── public API ─────────────────────────────────────────────────────────────
+
+  render(ctx, groups) {
+    this.#ctx    = ctx;
+    this.#groups = groups || [];
+    this.#addedNodes = [];
+    this.#selectedNode = null;
+    this.#regionGroupMap.clear();
+    this.#shapeMap.clear();
+    this.#nodeMap.clear();
+    this.#visibilityMap.clear();
+    this.#currentSelectedIds.clear();
+    this.#scale = 1;
+    this.#panX  = 0;
+    this.#panY  = 0;
+    this.#repaint();
+    this.#callbacks.onZoom?.(this.#scale);
+  }
+
+  showAnchors(node) {
+    this.#selectedNode = node;
+    if (this.#anchorLayer) {
+      while (this.#anchorLayer.firstChild) this.#anchorLayer.removeChild(this.#anchorLayer.firstChild);
+      this.#renderAnchors();
+    }
+    this.#updateOverlay();
+  }
+
+  clearAnchors() {
+    this.#selectedNode = null;
+    if (this.#anchorLayer) {
+      while (this.#anchorLayer.firstChild) this.#anchorLayer.removeChild(this.#anchorLayer.firstChild);
+    }
+    this.#updateOverlay();
+  }
+
+  setPoisVisible(v) {
+    this.#showPois = v;
+    if (this.#spawnLayerEl)    this.#spawnLayerEl.style.display    = v ? "" : "none";
+    if (this.#woolLayerEl)     this.#woolLayerEl.style.display     = v ? "" : "none";
+    if (this.#monumentLayerEl) this.#monumentLayerEl.style.display = v ? "" : "none";
+  }
+
+  setBuildVisible(v) {
+    this.#showBuild = v;
+    if (this.#buildLayerEl) this.#buildLayerEl.style.display = v ? "" : "none";
+  }
+
+  setResolvedMode(v) {
+    this.#resolvedMode = v;
+    this.refreshRegions(this.#groups);
+  }
+
+  focusRegion(node) {
+    if (!this.#toSvg) return;
+    let min_x, max_x, min_z, max_z;
+    if (node.bounds) {
+      ({ min_x, max_x, min_z, max_z } = node.bounds);
+    } else if (node.polygon_2d?.exterior?.length) {
+      const pts = node.polygon_2d.polygons
+        ? node.polygon_2d.polygons.flatMap(p => p.exterior)
+        : node.polygon_2d.exterior;
+      const xs = pts.map(([x]) => x);
+      const zs = pts.map(([, z]) => z);
+      min_x = Math.min(...xs); max_x = Math.max(...xs);
+      min_z = Math.min(...zs); max_z = Math.max(...zs);
+    } else {
+      return;
+    }
+    const w  = this.#wrap.clientWidth  - 24;
+    const h  = this.#wrap.clientHeight - 24;
+    const p1 = this.#toSvg(min_x, min_z);
+    const p2 = this.#toSvg(max_x, max_z);
+    const sx1 = Math.min(p1.x, p2.x), sx2 = Math.max(p1.x, p2.x);
+    const sy1 = Math.min(p1.y, p2.y), sy2 = Math.max(p1.y, p2.y);
+    const bw = sx2 - sx1, bh = sy2 - sy1;
+    const newScale = (bw > 0 || bh > 0)
+      ? Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.min(bw > 0 ? w / bw : Infinity, bh > 0 ? h / bh : Infinity) * 0.75))
+      : this.#scale;
+    this.#scale = newScale;
+    this.#panX  = w / 2 - ((sx1 + sx2) / 2) * newScale;
+    this.#panY  = h / 2 - ((sy1 + sy2) / 2) * newScale;
+    this.#applyViewportTransform();
+    this.#callbacks.onZoom?.(this.#scale);
+  }
+
+  setBlocksVisible(v) {
+    this.#showBlocks = v;
+    if (this.#blockLayerEl) this.#blockLayerEl.style.display = v ? "" : "none";
+    if (this.#islandLayerEl) this.#islandLayerEl.setAttribute("fill-opacity", v ? "0" : "0.25");
+  }
+
+  loadBlockLayer(data) {
+    this.#blockData = data;
+    if (this.#blockLayerEl && this.#toSvg) {
+      while (this.#blockLayerEl.firstChild) this.#blockLayerEl.removeChild(this.#blockLayerEl.firstChild);
+      this.#renderBlockImage(this.#blockLayerEl);
+    }
+  }
+
+  setSelectedRegions(ids) {
+    this.#currentSelectedIds = new Set(ids);
+    for (const id of this.#regionGroupMap.keys()) this.#refreshRegionDisplay(id);
+  }
+
+  setRegionVisible(id, visible) {
+    if (visible) this.#visibilityMap.delete(id);
+    else         this.#visibilityMap.set(id, false);
+    this.#refreshRegionDisplay(id);
+  }
+
+  updateRegionBounds(node, newBounds) {
+    Object.assign(node.bounds, newBounds);
+    const entry = this.#shapeMap.get(node.id);
+    if (entry && this.#toSvg) {
+      const { min_x, min_z, max_x, max_z } = node.bounds;
+      const p1 = this.#toSvg(min_x, min_z);
+      const p2 = this.#toSvg(max_x, max_z);
+      if (["cylinder", "circle", "sphere"].includes(entry.type)) {
+        const cx = (p1.x + p2.x) / 2, cy = (p1.y + p2.y) / 2;
+        entry.shape.setAttribute("cx", cx);
+        entry.shape.setAttribute("cy", cy);
+        entry.shape.setAttribute("rx", Math.abs(p2.x - p1.x) / 2);
+        entry.shape.setAttribute("ry", Math.abs(p2.y - p1.y) / 2);
+      } else {
+        entry.shape.setAttribute("x",      Math.min(p1.x, p2.x));
+        entry.shape.setAttribute("y",      Math.min(p1.y, p2.y));
+        entry.shape.setAttribute("width",  Math.abs(p2.x - p1.x));
+        entry.shape.setAttribute("height", Math.abs(p2.y - p1.y));
+      }
+    }
+    if (this.#selectedNode?.id === node.id) {
+      if (this.#anchorLayer) {
+        while (this.#anchorLayer.firstChild) this.#anchorLayer.removeChild(this.#anchorLayer.firstChild);
+        this.#renderAnchors();
+      }
+      this.#updateOverlay();
+    }
+  }
+
+  setActiveTool(tool) {
+    this.#cancelDraw();
+    this.#activeTool = tool;
+    this.#refreshCursor();
+  }
+
+  #refreshCursor() {
+    if (this.#activeTool === "move")    this.#svg.style.cursor = "grab";
+    else if (this.#activeTool !== null) this.#svg.style.cursor = "crosshair";
+    else                               this.#svg.style.cursor = "default";
+  }
+
+  addRegion(node) {
+    if (!this.#regionsLayerEl || !this.#toSvg) return;
+    const stale = this.#regionGroupMap.get(node.id);
+    if (stale?.parentNode) stale.parentNode.removeChild(stale);
+    const regionG = this.#regionGroup(node);
+    this.#regionGroupMap.set(node.id, regionG);
+    this.#nodeMap.set(node.id, node);
+    this.#regionsLayerEl.appendChild(regionG);
+    if (!this.#addedNodes.some(n => n.id === node.id)) this.#addedNodes.push(node);
+  }
+
+  removeRegion(id) {
+    const g = this.#regionGroupMap.get(id) ?? this.#svg.querySelector(`[id="region-${id}"]`);
+    if (g?.parentNode) g.parentNode.removeChild(g);
+    this.#regionGroupMap.delete(id);
+    this.#shapeMap.delete(id);
+    this.#nodeMap.delete(id);
+    this.#visibilityMap.delete(id);
+    this.#currentSelectedIds.delete(id);
+    this.#addedNodes = this.#addedNodes.filter(n => n.id !== id);
+    if (this.#selectedNode?.id === id) { this.#selectedNode = null; this.#updateOverlay(); }
+  }
+
+  renameNode(oldId, newId) {
+    const g = this.#regionGroupMap.get(oldId);
+    if (g) {
+      this.#regionGroupMap.delete(oldId);
+      this.#regionGroupMap.set(newId, g);
+      g.setAttribute("id", `region-${newId}`);
+      const titleEl = g.querySelector("title");
+      if (titleEl) {
+        const type = titleEl.textContent.replace(/^.*\(/, "").replace(/\)$/, "");
+        titleEl.textContent = `${newId} (${type})`;
+      }
+    }
+    const shape = this.#shapeMap.get(oldId);
+    if (shape) { this.#shapeMap.delete(oldId); this.#shapeMap.set(newId, shape); }
+    const node = this.#nodeMap.get(oldId);
+    if (node) { this.#nodeMap.delete(oldId); this.#nodeMap.set(newId, node); }
+    if (this.#visibilityMap.has(oldId)) {
+      this.#visibilityMap.set(newId, this.#visibilityMap.get(oldId));
+      this.#visibilityMap.delete(oldId);
+    }
+    if (this.#currentSelectedIds.has(oldId)) { this.#currentSelectedIds.delete(oldId); this.#currentSelectedIds.add(newId); }
+  }
+
+  resize() {
+    if (!this.#ctx) return;
+    const nW = this.#wrap.clientWidth  - 24;
+    const nH = this.#wrap.clientHeight - 24;
+    if (nW <= 0 || nH <= 0) return;
+    if (nW === +this.#svg.getAttribute("width") && nH === +this.#svg.getAttribute("height")) return;
+    this.#repaint();
+  }
+
+  refreshRegions(groups) {
+    this.#groups = groups || [];
+    this.#addedNodes = [];
+    this.#selectedNode = null;
+    this.#currentSelectedIds.clear();
+    this.#visibilityMap.clear();
+    const oldLayer = this.#regionsLayerEl;
+    const newLayer = this.#buildXmlRegions();
+    if (oldLayer?.parentNode) oldLayer.parentNode.replaceChild(newLayer, oldLayer);
+    this.#updateOverlay();
+  }
+
+  // ── rendering ──────────────────────────────────────────────────────────────
+
+  #repaint() {
+    this.#cancelDraw();
+    const w = this.#wrap.clientWidth  - 24;
+    const h = this.#wrap.clientHeight - 24;
+    this.#svg.setAttribute("width",   w);
+    this.#svg.setAttribute("height",  h);
+    this.#svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    this.#toSvg   = buildTransform(this.#ctx.bounding_box, w, h);
+    this.#toWorld = buildInverseTransform(this.#ctx.bounding_box, w, h);
+
+    while (this.#svg.firstChild) this.#svg.removeChild(this.#svg.firstChild);
+
+    const viewport = svgEl("g");
+    this.#viewportG = viewport;
+    this.#applyViewportTransform();
+
+    viewport.appendChild(this.#buildBuildRegion());
+    viewport.appendChild(this.#buildBlockLayer());
+    viewport.appendChild(this.#buildIslands());
+    viewport.appendChild(this.#buildSpawnLayer());
+    viewport.appendChild(this.#buildXmlRegions());
+    viewport.appendChild(this.#buildWoolLayer());
+    viewport.appendChild(this.#buildMonumentLayer());
+    viewport.appendChild(this.#buildAnchorLayer());
+    viewport.appendChild(this.#buildDrawLayer());
+    viewport.appendChild(this.#buildBlockHighlight());
+
+    const overlayG = svgEl("g", { id: "layer-overlay" });
+    this.#overlayLayer = overlayG;
+
+    this.#svg.appendChild(viewport);
+    this.#svg.appendChild(overlayG);
+    this.#updateOverlay();
+  }
+
+  #applyViewportTransform() {
+    if (!this.#viewportG) return;
+    this.#viewportG.setAttribute("transform", `matrix(${this.#scale},0,0,${this.#scale},${this.#panX},${this.#panY})`);
+    this.#updateOverlay();
+  }
+
+  #clientToSvg(clientX, clientY) {
+    const rect = this.#svg.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left  - this.#panX) / this.#scale,
+      y: (clientY - rect.top - this.#panY) / this.#scale,
+    };
+  }
+
+  // ── event wiring ──────────────────────────────────────────────────────────
+
+  #setupEvents() {
+    this.#svg.addEventListener("wheel", (e) => {
+      if (!this.#viewportG) return;
+      e.preventDefault();
+      const factor   = e.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+      const newScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, this.#scale * factor));
+      const rect     = this.#svg.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      this.#panX = mx - (mx - this.#panX) * (newScale / this.#scale);
+      this.#panY = my - (my - this.#panY) * (newScale / this.#scale);
+      this.#scale = newScale;
+      this.#applyViewportTransform();
+      this.#callbacks.onZoom?.(this.#scale);
+    }, { passive: false });
+
+    this.#svg.addEventListener("mousedown", (e) => {
+      if (!this.#viewportG) return;
+      if (e.button === 1) {
+        e.preventDefault();
+        this.#midDragging = true;
+        this.#dragAnchor = { x: e.clientX, y: e.clientY, panX: this.#panX, panY: this.#panY };
+        return;
+      }
+      if (e.button !== 0) return;
+
+      const svgPt = this.#clientToSvg(e.clientX, e.clientY);
+      const world = this.#toWorld ? this.#toWorld(svgPt.x, svgPt.y) : null;
+      const bx = world ? Math.floor(world.x) : 0;
+      const bz = world ? Math.floor(world.z) : 0;
+
+      if (this.#activeTool === "move") {
+        this.#isDragging = true;
+        this.#didDrag    = false;
+        this.#dragAnchor = { x: e.clientX, y: e.clientY, panX: this.#panX, panY: this.#panY };
+      } else if (this.#activeTool === "rectangle" || this.#activeTool === "cuboid") {
+        this.#startDraw(bx, bz);
+      } else if (this.#activeTool === "cylinder" || this.#activeTool === "circle") {
+        if (!this.#drawState) this.#startRadialDraw(bx, bz);
+        else                  this.#completeRadialDraw(bx, bz);
+      } else if (this.#activeTool === "point" || this.#activeTool === "block") {
+        const type = this.#activeTool;
+        const bounds = { min_x: bx, min_z: bz, max_x: bx + 1, max_z: bz + 1 };
+        this.#callbacks.onRegionDraw?.({ type, ...bounds });
+      } else {
+        // select / null tool
+        this.#isDragging = true;
+        this.#didDrag    = false;
+        this.#dragAnchor = { x: e.clientX, y: e.clientY, panX: this.#panX, panY: this.#panY };
+      }
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (this.#resizeState) { this.#doResize(e.clientX, e.clientY); return; }
+      if (!this.#viewportG) return;
+
+      if (this.#midDragging && this.#dragAnchor) {
+        this.#panX = this.#dragAnchor.panX + (e.clientX - this.#dragAnchor.x);
+        this.#panY = this.#dragAnchor.panY + (e.clientY - this.#dragAnchor.y);
+        this.#applyViewportTransform();
+        return;
+      }
+
+      if (this.#isDragging && this.#dragAnchor) {
+        const dx = e.clientX - this.#dragAnchor.x;
+        const dy = e.clientY - this.#dragAnchor.y;
+        if (!this.#didDrag && Math.sqrt(dx*dx + dy*dy) > 4) this.#didDrag = true;
+        if (this.#didDrag && (this.#activeTool === "move" || !this.#activeTool)) {
+          this.#panX = this.#dragAnchor.panX + dx;
+          this.#panY = this.#dragAnchor.panY + dy;
+          this.#applyViewportTransform();
+        }
+      }
+
+      if (this.#toWorld) {
+        const svgPt = this.#clientToSvg(e.clientX, e.clientY);
+        const world = this.#toWorld(svgPt.x, svgPt.y);
+        const bx = Math.floor(world.x);
+        const bz = Math.floor(world.z);
+        this.#callbacks.onCoords?.(bx, bz);
+        if (this.#drawState && (this.#activeTool === "rectangle" || this.#activeTool === "cuboid")) {
+          this.#updateDrawPreview(bx, bz);
+        }
+        if (this.#drawState && (this.#activeTool === "cylinder" || this.#activeTool === "circle")) {
+          this.#updateRadialPreview(bx, bz);
+        }
+      }
+    });
+
+    document.addEventListener("mouseup", (e) => {
+      if (this.#resizeState) {
+        if (e.button === 0) {
+          this.#callbacks.onBoundsSave?.(this.#resizeState.node, { ...this.#resizeState.node.bounds });
+          this.#resizeState = null;
+          this.#refreshCursor();
+          this.#updateOverlay();
+        }
+        return;
+      }
+      if (e.button === 1) { this.#midDragging = false; this.#dragAnchor = null; return; }
+      if (e.button !== 0) return;
+
+      if (this.#isDragging) {
+        this.#clickWasDrag = this.#didDrag;
+        this.#isDragging   = false;
+        this.#didDrag      = false;
+        this.#dragAnchor   = null;
+      }
+
+      if (this.#activeTool === "rectangle" || this.#activeTool === "cuboid") {
+        if (this.#drawState) this.#completeDraw();
+      }
+    });
+
+    this.#svg.addEventListener("click", (e) => {
+      if (this.#clickWasDrag) { this.#clickWasDrag = false; return; }
+      if (this.#activeTool !== null && this.#activeTool !== "move") return;
+      if (!this.#toWorld) return;
+
+      const svgPt = this.#clientToSvg(e.clientX, e.clientY);
+      const world = this.#toWorld(svgPt.x, svgPt.y);
+      const hit   = this.#hitTest(world.x, world.z);
+      this.#callbacks.onCanvasClick?.(hit);
+    });
+
+    this.#svg.addEventListener("mouseleave", () => {
+      this.#callbacks.onCoords?.(null, null);
+    });
+  }
+
+  // ── hit test ──────────────────────────────────────────────────────────────
+
+  #hitTest(worldX, worldZ) {
+    let best = null;
+    let bestArea = Infinity;
+    for (const [id, node] of this.#nodeMap) {
+      if (!node.bounds) continue;
+      if (this.#visibilityMap.get(id) === false) continue;
+      const { min_x, min_z, max_x, max_z } = node.bounds;
+      if (worldX >= min_x && worldX <= max_x && worldZ >= min_z && worldZ <= max_z) {
+        const area = (max_x - min_x) * (max_z - min_z);
+        if (area < bestArea) { bestArea = area; best = node; }
+      }
+    }
+    return best;
+  }
+
+  // ── layers ────────────────────────────────────────────────────────────────
+
+  #buildBuildRegion() {
+    const g = svgEl("g", { id: "layer-build" });
+    this.#buildLayerEl = g;
+    if (!this.#showBuild) g.style.display = "none";
+    // Build region overlay not implemented in M1
+    return g;
+  }
+
+  #buildBlockLayer() {
+    const g = svgEl("g", { id: "layer-blocks" });
+    this.#blockLayerEl = g;
+    if (!this.#showBlocks) g.style.display = "none";
+    if (this.#blockData && this.#toSvg) this.#renderBlockImage(g);
+    return g;
+  }
+
+  #renderBlockImage(g) {
+    const { xs, zs, colors, min_x, min_z, max_x, max_z } = this.#blockData;
+    const imgW = max_x - min_x + 1;
+    const imgH = max_z - min_z + 1;
+    const offscreen = document.createElement("canvas");
+    offscreen.width  = imgW;
+    offscreen.height = imgH;
+    const ctx2d  = offscreen.getContext("2d");
+    const pixels = ctx2d.createImageData(imgW, imgH);
+    const data   = pixels.data;
+    for (let i = 0; i < xs.length; i++) {
+      const rgb = parseInt(colors[i].slice(1), 16);
+      const idx = ((zs[i] - min_z) * imgW + (xs[i] - min_x)) * 4;
+      data[idx] = (rgb >> 16) & 0xff; data[idx+1] = (rgb >> 8) & 0xff;
+      data[idx+2] = rgb & 0xff;       data[idx+3] = 255;
+    }
+    ctx2d.putImageData(pixels, 0, 0);
+    const p1 = this.#toSvg(min_x,     min_z);
+    const p2 = this.#toSvg(max_x + 1, max_z + 1);
+    const img = svgEl("image");
+    img.setAttribute("href",   offscreen.toDataURL("image/png"));
+    img.setAttribute("x",      Math.min(p1.x, p2.x));
+    img.setAttribute("y",      Math.min(p1.y, p2.y));
+    img.setAttribute("width",  Math.abs(p2.x - p1.x));
+    img.setAttribute("height", Math.abs(p2.y - p1.y));
+    img.setAttribute("pointer-events", "none");
+    img.style.imageRendering = "pixelated";
+    g.appendChild(img);
+  }
+
+  #buildIslands() {
+    const g = svgEl("g", { id: "layer-islands", "fill-opacity": "0.25" });
+    this.#islandLayerEl = g;
+    if (this.#showBlocks) g.setAttribute("fill-opacity", "0");
+    for (const island of (this.#ctx.islands || [])) {
+      const poly = island.simplified_polygon ?? geojsonToSimplified(island.polygon);
+      if (!poly?.exterior?.length) continue;
+      const color = "#6b7280";
+      g.appendChild(svgEl("path", {
+        d: polyToPath(poly, this.#toSvg),
+        fill: color, stroke: darkenHex(color), "stroke-width": "1.2", "fill-rule": "evenodd",
+      }));
+    }
+    return g;
+  }
+
+  #buildSpawnLayer() {
+    const g = svgEl("g", { id: "layer-spawns" });
+    this.#spawnLayerEl = g;
+    if (!this.#showPois) g.style.display = "none";
+    for (const spawn of (this.#ctx.spawns || [])) {
+      if (!spawn.x && spawn.x !== 0) continue;
+      const p = this.#toSvg(spawn.x, spawn.z);
+      const t = svgEl("text", {
+        x: p.x, y: p.y, "text-anchor": "middle", "dominant-baseline": "middle",
+        "font-size": "12", fill: chatColorHex(spawn.team_color ?? ""), "font-weight": "bold",
+      });
+      t.textContent = "★";
+      g.appendChild(t);
+    }
+    return g;
+  }
+
+  #buildWoolLayer() {
+    const g = svgEl("g", { id: "layer-wools" });
+    this.#woolLayerEl = g;
+    if (!this.#showPois) g.style.display = "none";
+    for (const wool of (this.#ctx.wools || [])) {
+      if (!wool.x && wool.x !== 0) continue;
+      const p = this.#toSvg(wool.x, wool.z);
+      const t = svgEl("text", {
+        x: p.x, y: p.y, "text-anchor": "middle", "dominant-baseline": "middle",
+        "font-size": "11", fill: dyeColorHex(wool.color ?? ""),
+      });
+      t.textContent = "◆";
+      g.appendChild(t);
+    }
+    return g;
+  }
+
+  #buildMonumentLayer() {
+    const g = svgEl("g", { id: "layer-monuments" });
+    this.#monumentLayerEl = g;
+    if (!this.#showPois) g.style.display = "none";
+    for (const mon of (this.#ctx.monuments || [])) {
+      if (!mon.x && mon.x !== 0) continue;
+      const p = this.#toSvg(mon.x, mon.z);
+      const t = svgEl("text", {
+        x: p.x, y: p.y, "text-anchor": "middle", "dominant-baseline": "middle",
+        "font-size": "13", fill: dyeColorHex(mon.color ?? ""),
+      });
+      t.textContent = "⊕";
+      g.appendChild(t);
+    }
+    return g;
+  }
+
+  #buildAnchorLayer() {
+    const g = svgEl("g", { id: "layer-anchors" });
+    this.#anchorLayer = g;
+    this.#renderAnchors();
+    return g;
+  }
+
+  #buildBlockHighlight() {
+    const rect = svgEl("rect", {
+      id: "block-highlight",
+      x: 0, y: 0, width: 0, height: 0, rx: 1, visibility: "hidden",
+      fill: "white", "fill-opacity": "0.06",
+      stroke: "white", "stroke-opacity": "0.4", "stroke-width": "1",
+      "vector-effect": "non-scaling-stroke", "pointer-events": "none",
+    });
+    this.#highlightRect = rect;
+    return rect;
+  }
+
+  // ── overlay ────────────────────────────────────────────────────────────────
+
+  #updateOverlay() {
+    if (!this.#overlayLayer) return;
+    while (this.#overlayLayer.firstChild) this.#overlayLayer.removeChild(this.#overlayLayer.firstChild);
+
+    const node = this.#selectedNode;
+    if (!node?.bounds || node.is_negative || !this.#toSvg) return;
+
+    const { min_x, min_z, max_x, max_z } = node.bounds;
+    const color = node.color || "#94a3b8";
+
+    const p1b = this.#toSvg(min_x, min_z);
+    const p2b = this.#toSvg(max_x, max_z);
+    const toScr = (bx, by) => ({ x: bx * this.#scale + this.#panX, y: by * this.#scale + this.#panY });
+    const s1 = toScr(p1b.x, p1b.y), s2 = toScr(p2b.x, p2b.y);
+    const left = Math.min(s1.x, s2.x), right = Math.max(s1.x, s2.x);
+    const top  = Math.min(s1.y, s2.y), bottom = Math.max(s1.y, s2.y);
+    const mid  = (left + right) / 2;
+
+    const maxChars = 36;
+    const labelText = node.label.length > maxChars ? node.label.slice(0, maxChars-1) + "…" : node.label;
+    const nameEl = svgEl("text", {
+      x: left, y: top - 5,
+      "text-anchor": "start", "dominant-baseline": "alphabetic",
+      "font-size": "11", "font-family": "ui-monospace, monospace",
+      fill: color, "pointer-events": "none",
+    });
+    nameEl.textContent = labelText;
+    this.#overlayLayer.appendChild(nameEl);
+
+    const fmtDim = v => Number.isInteger(v) ? String(v) : v.toFixed(1);
+    const dimText = `${fmtDim(max_x - min_x)} × ${fmtDim(max_z - min_z)}`;
+    const FONT_SZ = 10, PAD_X = 6, PAD_Y = 3;
+    const pillH = FONT_SZ + PAD_Y * 2;
+    const pillW = dimText.length * (FONT_SZ * 0.6) + PAD_X * 2;
+    const pillX = mid - pillW / 2;
+    const pillY = bottom + 5;
+    this.#overlayLayer.appendChild(svgEl("rect", {
+      x: pillX, y: pillY, width: pillW, height: pillH, rx: 3,
+      fill: color, "fill-opacity": "0.85", "pointer-events": "none",
+    }));
+    const dimEl = svgEl("text", {
+      x: mid, y: pillY + PAD_Y + FONT_SZ - 1,
+      "text-anchor": "middle", "dominant-baseline": "auto",
+      "font-size": FONT_SZ, "font-family": "ui-monospace, monospace",
+      fill: "#0f172a", "font-weight": "600", "pointer-events": "none",
+    });
+    dimEl.textContent = dimText;
+    this.#overlayLayer.appendChild(dimEl);
+
+    if (RESIZABLE_TYPES.has(node.type)) this.#renderHandles(node);
+  }
+
+  // ── anchors ────────────────────────────────────────────────────────────────
+
+  #renderAnchors() {
+    const node = this.#selectedNode;
+    if (!node?.bounds || !this.#toSvg || node.is_negative || COMPOSITE_TYPES.has(node.type)) return;
+    const { min_x, min_z, max_x, max_z } = node.bounds;
+    const color = node.color || "#ffffff";
+    const isCircular = ["cylinder", "circle", "sphere"].includes(node.type);
+    if (isCircular) {
+      const cx = (min_x + max_x) / 2, cz = (min_z + max_z) / 2;
+      this.#anchorLayer.appendChild(this.#anchorBlock(Math.floor(cx), Math.floor(cz), color));
+    } else {
+      const bMinX = Math.floor(min_x), bMinZ = Math.floor(min_z);
+      const bMaxX = Math.ceil(max_x) - 1, bMaxZ = Math.ceil(max_z) - 1;
+      this.#anchorLayer.appendChild(this.#anchorBlock(bMinX, bMinZ, color));
+      if (bMaxX !== bMinX || bMaxZ !== bMinZ) this.#anchorLayer.appendChild(this.#anchorBlock(bMaxX, bMaxZ, color));
+    }
+  }
+
+  #anchorBlock(bx, bz, color) {
+    const p1 = this.#toSvg(bx, bz), p2 = this.#toSvg(bx+1, bz+1);
+    return svgEl("rect", {
+      x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y),
+      width: Math.abs(p2.x - p1.x), height: Math.abs(p2.y - p1.y),
+      fill: color, "fill-opacity": "0.5", stroke: color, "stroke-width": "2",
+      "vector-effect": "non-scaling-stroke", "pointer-events": "none",
+    });
+  }
+
+  // ── region rendering ──────────────────────────────────────────────────────
+
+  #buildXmlRegions() {
+    this.#regionGroupMap.clear();
+    this.#shapeMap.clear();
+    this.#nodeMap.clear();
+    const g = svgEl("g", { id: "layer-regions" });
+    this.#regionsLayerEl = g;
+    for (const region of this.#flattenNamed(this.#groups)) {
+      const regionG = this.#regionGroup(region);
+      this.#regionGroupMap.set(region.id, regionG);
+      this.#nodeMap.set(region.id, region);
+      g.appendChild(regionG);
+    }
+    for (const node of this.#addedNodes) {
+      if (!this.#regionGroupMap.has(node.id)) {
+        const regionG = this.#regionGroup(node);
+        this.#regionGroupMap.set(node.id, regionG);
+        this.#nodeMap.set(node.id, node);
+        g.appendChild(regionG);
+      }
+    }
+    return g;
+  }
+
+  #regionGroup(region) {
+    const { id, type, color, bounds } = region;
+    const p1 = bounds ? this.#toSvg(bounds.min_x, bounds.min_z) : null;
+    const p2 = bounds ? this.#toSvg(bounds.max_x, bounds.max_z) : null;
+    const rx = p1 ? Math.min(p1.x, p2.x) : 0, ry = p1 ? Math.min(p1.y, p2.y) : 0;
+    const rw = p1 ? Math.abs(p2.x - p1.x) : 0, rh = p1 ? Math.abs(p2.y - p1.y) : 0;
+    const cx = p1 ? (p1.x + p2.x) / 2 : 0, cy = p1 ? (p1.y + p2.y) / 2 : 0;
+
+    const g = svgEl("g", { id: `region-${id}` });
+    const title = svgEl("title");
+    title.textContent = `${id} (${type})`;
+    g.appendChild(title);
+
+    if (region.polygon_2d) {
+      const shape = this.#polygonShape(region, color);
+      if (shape) { g.appendChild(shape); this.#shapeMap.set(id, { shape, type }); }
+    } else if (type === "cylinder" || type === "circle" || type === "sphere") {
+      const shape = svgEl("ellipse", {
+        cx, cy, rx: rw / 2, ry: rh / 2,
+        fill: color, "fill-opacity": "0.20",
+        stroke: color, "stroke-opacity": "0.55", "stroke-width": "1.5", "stroke-dasharray": "4,2",
+        "vector-effect": "non-scaling-stroke",
+      });
+      g.appendChild(shape);
+      this.#shapeMap.set(id, { shape, type });
+    } else {
+      const shape = svgEl("rect", {
+        x: rx, y: ry, width: rw, height: rh,
+        fill: color, "fill-opacity": "0.20",
+        stroke: color, "stroke-opacity": "0.55", "stroke-width": "1.5", "stroke-dasharray": "4,2",
+        "vector-effect": "non-scaling-stroke",
+      });
+      g.appendChild(shape);
+      this.#shapeMap.set(id, { shape, type });
+    }
+    return g;
+  }
+
+  #polyAttrs(color) {
+    return {
+      fill: color, "fill-opacity": "0.20",
+      stroke: color, "stroke-opacity": "0.55", "stroke-width": "1.5", "stroke-dasharray": "4,2",
+      "vector-effect": "non-scaling-stroke", "fill-rule": "evenodd",
+    };
+  }
+
+  #polygonShape(region, color) {
+    const poly = region.polygon_2d;
+    if (!poly?.exterior?.length) return null;
+    return svgEl("path", { d: polyToPath(poly, this.#toSvg), ...this.#polyAttrs(color) });
+  }
+
+  #refreshRegionDisplay(id) {
+    const g = this.#regionGroupMap.get(id);
+    if (!g) return;
+    const isSelected = this.#currentSelectedIds.has(id);
+    const isVisible  = this.#visibilityMap.get(id) !== false;
+    g.style.display  = (isVisible || isSelected) ? "" : "none";
+    const entry = this.#shapeMap.get(id);
+    if (!entry) return;
+    if (isSelected) {
+      entry.shape.setAttribute("stroke-width",   "2.5");
+      entry.shape.setAttribute("stroke-opacity", "0.85");
+      entry.shape.setAttribute("fill-opacity",   "0.22");
+      entry.shape.removeAttribute("stroke-dasharray");
+    } else {
+      entry.shape.setAttribute("stroke-width",   "1.5");
+      entry.shape.setAttribute("stroke-opacity", "0.55");
+      entry.shape.setAttribute("fill-opacity",   "0.20");
+      entry.shape.setAttribute("stroke-dasharray", "4,2");
+    }
+  }
+
+  // ── resize ────────────────────────────────────────────────────────────────
+
+  #screenBounds(node) {
+    if (!node?.bounds || !this.#toSvg) return null;
+    const { min_x, min_z, max_x, max_z } = node.bounds;
+    const toScr = (bx, by) => ({ x: bx * this.#scale + this.#panX, y: by * this.#scale + this.#panY });
+    const p1b = this.#toSvg(min_x, min_z), p2b = this.#toSvg(max_x, max_z);
+    const s1  = toScr(p1b.x, p1b.y), s2 = toScr(p2b.x, p2b.y);
+    return {
+      left: Math.min(s1.x, s2.x), right: Math.max(s1.x, s2.x),
+      top:  Math.min(s1.y, s2.y), bottom: Math.max(s1.y, s2.y),
+      midX: (s1.x + s2.x) / 2,   midY: (s1.y + s2.y) / 2,
+      leftIsMinX: p1b.x <= p2b.x, topIsMinZ: p1b.y <= p2b.y,
+    };
+  }
+
+  #handleFields(key, sb) {
+    const lF = sb.leftIsMinX ? "min_x" : "max_x", rF = sb.leftIsMinX ? "max_x" : "min_x";
+    const tF = sb.topIsMinZ  ? "min_z" : "max_z", bF = sb.topIsMinZ  ? "max_z" : "min_z";
+    return { nw:{xField:lF,zField:tF}, n:{xField:null,zField:tF}, ne:{xField:rF,zField:tF},
+              w:{xField:lF,zField:null}, e:{xField:rF,zField:null},
+             sw:{xField:lF,zField:bF}, s:{xField:null,zField:bF}, se:{xField:rF,zField:bF} }[key];
+  }
+
+  #renderHandles(node) {
+    const sb = this.#screenBounds(node);
+    if (!sb) return;
+    const hs = HANDLE_SIZE / 2, color = node.color || "#94a3b8";
+    for (const h of HANDLE_DEFS) {
+      const [cx, cy] = h.pos(sb);
+      const el = svgEl("rect", {
+        x: cx-hs, y: cy-hs, width: HANDLE_SIZE, height: HANDLE_SIZE, rx: 1,
+        fill: "#1e293b", stroke: color, "stroke-width": "1.5", cursor: h.cursor,
+      });
+      el.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation(); e.preventDefault();
+        const fields = this.#handleFields(h.key, this.#screenBounds(node));
+        this.#resizeState = { node, ...fields, cursor: h.cursor };
+        this.#svg.style.cursor = h.cursor;
+      });
+      this.#overlayLayer.appendChild(el);
+    }
+  }
+
+  #doResize(clientX, clientY) {
+    if (!this.#resizeState || !this.#toWorld) return;
+    const { node, xField, zField } = this.#resizeState;
+    const svgPt = this.#clientToSvg(clientX, clientY);
+    const world = this.#toWorld(svgPt.x, svgPt.y);
+    const nb    = { ...node.bounds };
+    if (xField) nb[xField] = Math.round(world.x);
+    if (zField) nb[zField] = Math.round(world.z);
+    if (xField && nb.max_x - nb.min_x < 1)
+      nb[xField] = xField === "max_x" ? nb.min_x + 1 : nb.max_x - 1;
+    if (zField && nb.max_z - nb.min_z < 1)
+      nb[zField] = zField === "max_z" ? nb.min_z + 1 : nb.max_z - 1;
+    this.#callbacks.onBoundsChange?.(node, nb);
+  }
+
+  // ── draw tools ────────────────────────────────────────────────────────────
+
+  #buildDrawLayer() {
+    const g = svgEl("g", { id: "layer-draw" });
+    this.#drawLayerEl = g;
+    return g;
+  }
+
+  #boundsFromBlocks(b1x, b1z, b2x, b2z) {
+    return { min_x: Math.min(b1x, b2x), min_z: Math.min(b1z, b2z),
+             max_x: Math.max(b1x, b2x) + 1, max_z: Math.max(b1z, b2z) + 1 };
+  }
+
+  #moveAnchorBlock(el, bx, bz) {
+    const p1 = this.#toSvg(bx, bz), p2 = this.#toSvg(bx+1, bz+1);
+    el.setAttribute("x",      Math.min(p1.x, p2.x));
+    el.setAttribute("y",      Math.min(p1.y, p2.y));
+    el.setAttribute("width",  Math.abs(p2.x - p1.x));
+    el.setAttribute("height", Math.abs(p2.y - p1.y));
+  }
+
+  #startDraw(bx, bz) {
+    if (!this.#drawLayerEl || !this.#toSvg) return;
+    const color = "#94a3b8";
+    const previewRect = svgEl("rect", {
+      x: 0, y: 0, width: 0, height: 0,
+      fill: color, "fill-opacity": "0.12",
+      stroke: color, "stroke-width": "1.5", "stroke-dasharray": "4,2",
+      "vector-effect": "non-scaling-stroke", "pointer-events": "none",
+    });
+    const anchor1 = this.#anchorBlock(bx, bz, color);
+    const anchor2 = this.#anchorBlock(bx, bz, color);
+    this.#drawLayerEl.appendChild(previewRect);
+    this.#drawLayerEl.appendChild(anchor1);
+    this.#drawLayerEl.appendChild(anchor2);
+    this.#drawState = { toolType: this.#activeTool, startBx: bx, startBz: bz,
+                        currentBx: bx, currentBz: bz, previewRect, anchor1, anchor2 };
+    this.#updateDrawPreview(bx, bz);
+  }
+
+  #updateDrawPreview(bx, bz) {
+    if (!this.#drawState || !this.#toSvg) return;
+    this.#drawState.currentBx = bx;
+    this.#drawState.currentBz = bz;
+    const { startBx, startBz, previewRect, anchor1, anchor2 } = this.#drawState;
+    const { min_x, min_z, max_x, max_z } = this.#boundsFromBlocks(startBx, startBz, bx, bz);
+    const p1 = this.#toSvg(min_x, min_z), p2 = this.#toSvg(max_x, max_z);
+    previewRect.setAttribute("x",      Math.min(p1.x, p2.x));
+    previewRect.setAttribute("y",      Math.min(p1.y, p2.y));
+    previewRect.setAttribute("width",  Math.abs(p2.x - p1.x));
+    previewRect.setAttribute("height", Math.abs(p2.y - p1.y));
+    this.#moveAnchorBlock(anchor1, min_x,     min_z);
+    this.#moveAnchorBlock(anchor2, max_x - 1, max_z - 1);
+  }
+
+  #completeDraw() {
+    if (!this.#drawState) return;
+    const { toolType, startBx, startBz, currentBx, currentBz } = this.#drawState;
+    const bounds = this.#boundsFromBlocks(startBx, startBz, currentBx, currentBz);
+    this.#cancelDraw();
+    this.#callbacks.onRegionDraw?.({ type: toolType, ...bounds });
+  }
+
+  #cancelDraw() {
+    if (!this.#drawState) return;
+    if (this.#drawLayerEl) while (this.#drawLayerEl.firstChild) this.#drawLayerEl.removeChild(this.#drawLayerEl.firstChild);
+    this.#drawState = null;
+  }
+
+  #startRadialDraw(bx, bz) {
+    if (!this.#drawLayerEl || !this.#toSvg) return;
+    const centerX = bx + 0.5, centerZ = bz + 0.5;
+    const pt = this.#toSvg(centerX, centerZ);
+    const dot = svgEl("circle", { cx: pt.x, cy: pt.y, r: 5, fill: "#a78bfa", stroke: "#fff", "stroke-width": "1.5", "pointer-events": "none" });
+    const line = svgEl("line", { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y, stroke: "#a78bfa", "stroke-width": "1.5", "stroke-dasharray": "4 2", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
+    const previewCircle = svgEl("ellipse", { cx: pt.x, cy: pt.y, rx: 0, ry: 0, fill: "none", stroke: "#a78bfa", "stroke-width": "1.5", "stroke-dasharray": "6 3", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
+    const label = svgEl("text", { x: pt.x, y: pt.y, fill: "#a78bfa", "font-size": "11", "text-anchor": "start", "pointer-events": "none" });
+    this.#drawLayerEl.append(previewCircle, line, dot, label);
+    this.#drawState = { toolType: this.#activeTool, centerX, centerZ, dot, line, previewCircle, label, currentRadius: 1 };
+  }
+
+  #updateRadialPreview(bx, bz) {
+    if (!this.#drawState || !this.#toSvg) return;
+    const { centerX, centerZ, line, previewCircle, label } = this.#drawState;
+    const cursorX = bx + 0.5, cursorZ = bz + 0.5;
+    const dx = cursorX - centerX, dz = cursorZ - centerZ;
+    const radius = Math.max(1, Math.round(Math.sqrt(dx*dx + dz*dz)));
+    this.#drawState.currentRadius = radius;
+    const cPt = this.#toSvg(centerX, centerZ);
+    const rxPt = this.#toSvg(centerX + radius, centerZ);
+    const rzPt = this.#toSvg(centerX, centerZ + radius);
+    const endPt = this.#toSvg(cursorX, cursorZ);
+    line.setAttribute("x2", endPt.x); line.setAttribute("y2", endPt.y);
+    previewCircle.setAttribute("rx", Math.abs(rxPt.x - cPt.x));
+    previewCircle.setAttribute("ry", Math.abs(rzPt.y - cPt.y));
+    label.setAttribute("x", endPt.x + 6); label.setAttribute("y", endPt.y - 4);
+    label.textContent = `r=${radius}`;
+  }
+
+  #completeRadialDraw(bx, bz) {
+    if (!this.#drawState) return;
+    const { toolType, centerX, centerZ } = this.#drawState;
+    this.#updateRadialPreview(bx, bz);
+    const r = this.#drawState.currentRadius;
+    this.#cancelDraw();
+    if (!this.#callbacks.onRegionDraw) return;
+    if (toolType === "circle") {
+      this.#callbacks.onRegionDraw({ type: "circle", center_x: centerX, center_z: centerZ, radius: r });
+    } else {
+      this.#callbacks.onRegionDraw({ type: "cylinder", base_x: centerX - 0.5, base_z: centerZ - 0.5, radius: r });
+    }
+  }
+
+  // ── flatten helpers ────────────────────────────────────────────────────────
+
+  #flattenNamed(groupsOrNodes, out = []) {
+    for (const item of groupsOrNodes) {
+      if (item.regions) { this.#flattenNamed(item.regions, out); continue; }
+      if (this.#resolvedMode && item.id && item.polygon_2d && this.#visibilityMap.get(item.id) !== false) {
+        out.push(item); continue;
+      }
+      if (item.id && !COMPOSITE_TYPES.has(item.type) && (item.bounds || item.polygon_2d)) {
+        out.push(item);
+        if (!item.bounds && item.polygon_2d) continue;
+      }
+      this.#flattenNamed(item.children || [], out);
+      if (item.source && !item.source.id) this.#flattenNamed([item.source], out);
+    }
+    return out;
+  }
+}

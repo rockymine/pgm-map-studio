@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PGM Map Studio</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}"/>
+</head>
+<body class="dashboard-page">
+
+<div id="topbar">
+  <span class="dashboard-logo">
+    <span class="dashboard-logo-box">
+      <span class="dashboard-logo-pgm">pgm</span>
+      <span class="dashboard-logo-sub">STUDIO</span>
+    </span>
+    <span class="dashboard-title">Map Studio</span>
+  </span>
+
+  <div class="topbar-right">
+    <div id="topbar-error" role="alert">
+      <span class="topbar-error-text"></span>
+      <button class="topbar-error-dismiss" id="error-dismiss-btn" title="Dismiss">✕</button>
+    </div>
+    <button class="topbar-btn" id="settings-btn" title="Settings">⚙ Settings</button>
+  </div>
+
+  <!-- Settings dropdown -->
+  <div id="settings-panel" hidden>
+    <div class="settings-title">Configuration</div>
+    <div class="settings-row">
+      <label class="settings-label" for="maps-folder-input">Maps folder</label>
+      <input type="text" id="maps-folder-input" class="settings-input" placeholder="/path/to/maps"/>
+    </div>
+    <div class="settings-row">
+      <label class="settings-label" for="output-folder-input">Output folder</label>
+      <input type="text" id="output-folder-input" class="settings-input" placeholder="/path/to/output"/>
+    </div>
+    <div class="settings-actions">
+      <button class="action-btn action-btn--primary" id="save-settings-btn">Save</button>
+      <span id="settings-msg" class="settings-msg"></span>
+    </div>
+  </div>
+</div>
+
+<div id="dashboard-layout">
+
+  <!-- Map list -->
+  <div id="map-list-panel">
+    <div class="map-list-header">
+      <span class="map-list-title">Maps</span>
+      <input type="text" id="map-filter" class="map-filter-input" placeholder="Filter…"/>
+    </div>
+    <div id="url-import-row" class="url-import-row">
+      <input type="text" id="url-import-input" class="map-filter-input" placeholder="Paste map URL…"/>
+      <button class="action-btn" id="url-import-btn">Import</button>
+    </div>
+    <div id="url-import-status" class="url-import-status" hidden></div>
+    <div id="map-list">
+      <div class="map-list-empty">Configure paths above to load maps.</div>
+    </div>
+  </div>
+
+  <!-- Map detail -->
+  <div id="map-detail-panel">
+    <div class="map-detail-empty" id="map-detail-empty">
+      Select a map from the list.
+    </div>
+
+    <div id="map-detail-content" hidden>
+
+      <div class="map-detail-header">
+        <div class="map-detail-main">
+          <div class="map-detail-name" id="detail-name"></div>
+          <div class="map-detail-meta" id="detail-meta"></div>
+          <div id="detail-open-wrap">
+            <a id="open-editor-btn" class="open-editor-btn" hidden>Open in Editor →</a>
+            <button id="run-pipeline-btn" class="action-btn" style="margin-left:8px" hidden>Run Pipeline</button>
+          </div>
+        </div>
+        <div class="map-detail-thumb">
+          <img id="detail-thumb" class="map-thumb-img" alt="Map thumbnail" hidden/>
+          <div id="detail-thumb-placeholder" class="map-thumb-placeholder">No map.png</div>
+        </div>
+      </div>
+
+      <div class="detail-block" id="detail-validation-block" hidden>
+        <div class="detail-block-title">Validation</div>
+        <div id="detail-validation"></div>
+      </div>
+
+      <div class="detail-block">
+        <div class="detail-block-title">Pipeline</div>
+        <div id="detail-steps"></div>
+      </div>
+
+      <div class="console-wrap" id="pipeline-console" hidden>
+        <div class="console-header">
+          <span class="console-title">Console</span>
+          <button class="console-clear-btn" id="console-clear-btn">Clear</button>
+        </div>
+        <div class="console-output" id="console-output"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script type="module" src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

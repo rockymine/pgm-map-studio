@@ -12,6 +12,7 @@ dependencies = [
     "pandas",
     "pyarrow",
     "shapely",
+    "flask>=3.0",
 ]
 
 [project.scripts]
