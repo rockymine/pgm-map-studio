@@ -287,8 +287,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-/* List-panel variant — no outer padding or gap; section headers and list rows supply their own spacing */
-.workspace-scroll--list { padding: 0; gap: 0; }
 
 /* Canvas / main content column. position:relative makes it a positioning context
    for .canvas-hint and any other absolute overlays inside the canvas. */

@@ -357,15 +357,34 @@
     <!-- ── Sections & panels ── -->
     <section class="ds-section" id="sections">
       <div class="ds-heading">Sections &amp; panels</div>
-      <div class="ds-sub">All panel content lives in <code style="color:var(--code-color)">.panel-section</code> blocks. Headers use exactly one modifier: <code style="color:var(--code-color)">--ruled</code> (right panel / inspector) or <code style="color:var(--code-color)">--list</code> (left panel lists).</div>
+      <div class="ds-sub">
+        All panel content lives in <code style="color:var(--code-color)">.panel-section</code> blocks.
+        Every section header uses <code style="color:var(--code-color)">.section-header--ruled</code> — a border-bottom that sits inset from the sidebar edge via the outer <code style="color:var(--code-color)">workspace-scroll</code> padding.
+        Optional add buttons go <strong>inside</strong> the header (right slot) and are automatically compact via <code style="color:var(--code-color)">.section-header .action-btn</code>.
+      </div>
 
       <div class="ds-row" style="align-items:flex-start">
 
         <div class="ds-panel-demo">
           <div class="panel-section" style="padding:var(--space-4) 14px">
             <div class="section-header section-header--ruled">
-              <h2 class="section-title">Inspector section</h2>
-              <span class="status-badge status-badge--confirmed">OK</span>
+              <h2 class="section-title">Teams</h2>
+              <button class="action-btn">+ Add team</button>
+            </div>
+            <div class="panel-list">
+              <div class="list-row list-row--selected">
+                <span class="list-swatch" style="background:#5555ff"></span>
+                <span class="list-label">Blue</span>
+              </div>
+              <div class="list-row">
+                <span class="list-swatch" style="background:#ff5555"></span>
+                <span class="list-label">Red</span>
+              </div>
+            </div>
+          </div>
+          <div class="panel-section" style="padding:0 14px var(--space-4)">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Map Identity</h2>
             </div>
             <div class="field">
               <label class="field-label" for="ds-p1">Map name</label>
@@ -379,20 +398,6 @@
         </div>
 
         <div class="ds-panel-demo">
-          <div class="section-header section-header--list">
-            <h2 class="section-title">List header</h2>
-            <button class="action-btn">+ Add</button>
-          </div>
-          <div class="panel-divider"></div>
-          <div class="section-header section-header--list">
-            <h2 class="section-title">Second section</h2>
-          </div>
-          <div style="padding:0 14px 14px">
-            <p class="section-desc">A description using .section-desc before a control.</p>
-          </div>
-        </div>
-
-        <div class="ds-panel-demo">
           <div class="panel-empty">
             <p class="panel-empty-msg">Nothing selected yet.<br>Pick an item from the list.</p>
           </div>
@@ -400,9 +405,31 @@
 
       </div>
       <div style="margin-top:8px;font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace">
-        .panel-section + .section-header--ruled + .panel-actions &nbsp;·&nbsp;
-        .section-header--list + .panel-divider + .section-desc &nbsp;·&nbsp;
-        .panel-empty + .panel-empty-msg
+        .panel-section + .section-header--ruled[+ .action-btn] + .panel-list / .field / .panel-actions &nbsp;·&nbsp; .panel-empty + .panel-empty-msg
+      </div>
+
+      <div class="ds-subhead" style="margin-top:20px">Author row — avatar + name + contribution + remove</div>
+      <div class="ds-sub">Used inside a list section (Authors, Contributors) wherever a person entry needs an avatar, two text inputs, and a remove button. The avatar image uses <code style="color:var(--code-color)">image-rendering: pixelated</code> for Minecraft skins.</div>
+      <div style="width:320px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--space-4) 14px;display:flex;flex-direction:column;gap:var(--space-3)">
+        <div class="section-header section-header--ruled">
+          <h2 class="section-title">Authors</h2>
+          <button class="action-btn">+ Add</button>
+        </div>
+        <div class="author-row">
+          <img class="author-avatar" src="" alt=""/>
+          <input class="field-input author-name" type="text" value="rockymine" placeholder="Username"/>
+          <input class="field-input author-contribution" type="text" value="Terrain" placeholder="Contribution"/>
+          <button class="btn-remove"><i data-lucide="x"></i></button>
+        </div>
+        <div class="author-row">
+          <img class="author-avatar" src="" alt=""/>
+          <input class="field-input author-name" type="text" value="Ruediger_1" placeholder="Username"/>
+          <input class="field-input author-contribution" type="text" value="Builds" placeholder="Contribution"/>
+          <button class="btn-remove"><i data-lucide="x"></i></button>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace">
+        .author-row → .author-avatar + .field-input.author-name + .field-input.author-contribution + .btn-remove
       </div>
 
     </section>
@@ -1050,8 +1077,7 @@
           <tr><td>.workspace</td><td>Workspace container — <code>display: flex; flex: 1; overflow: hidden</code></td><td>—</td><td>Never</td></tr>
           <tr><td>.workspace-sidebar</td><td>Left panel — list / form content. Width = <code>--sidebar-width</code> (280px)</td><td><code>--sidebar-width</code></td><td>Never (change the token to adjust all sidebars)</td></tr>
           <tr><td>.workspace-inspector</td><td>Right panel — detail / property view. Width = <code>--inspector-width</code> (280px)</td><td><code>--inspector-width</code></td><td>Never (change the token to adjust all inspectors)</td></tr>
-          <tr><td>.workspace-scroll</td><td>Scrollable inner content — <code>flex: 1; overflow-y: auto; padding: 16px 14px; gap: --space-6; flex col</code>. Use for form-content panels (Overview).</td><td>—</td><td>Never</td></tr>
-          <tr><td>.workspace-scroll--list</td><td>Modifier — strips outer padding to zero. Use for list panels (Teams) where section headers and <code>.list-row</code> already supply 12px horizontal spacing.</td><td>—</td><td>Never</td></tr>
+          <tr><td>.workspace-scroll</td><td>Scrollable inner content — <code>flex: 1; overflow-y: auto; padding: 16px 14px; gap: --space-6; flex col</code>. Used by all sidebars — the 14px horizontal padding creates the inset for section-header borders.</td><td>—</td><td>Never</td></tr>
           <tr><td>.workspace-canvas</td><td>Canvas column — <code>flex: 1; flex col; overflow: hidden; bg: --bg-deep</code></td><td>—</td><td>Never</td></tr>
           <tr><td>.workspace--placeholder</td><td>Modifier on <code>.workspace</code> — centres a "coming soon" message. Removed once the activity is implemented.</td><td>—</td><td>Never</td></tr>
         </tbody>
@@ -1117,10 +1143,9 @@
         </div>
         <pre class="detail-xml-pre" style="font-size:10px;line-height:1.7">#pt-workspace.workspace
 ├─ #pt-left.workspace-sidebar      ← width from --sidebar-width
-│   └─ #pt-left-scroll.workspace-scroll.workspace-scroll--list
-│       ├─ #pt-teams-section
-│       ├─ .panel-divider
-│       └─ #pt-spawns-section
+│   └─ #pt-left-scroll.workspace-scroll
+│       ├─ .panel-section#pt-teams-section
+│       └─ .panel-section#pt-spawns-section
 ├─ .sidebar-handle
 ├─ #pt-canvas-wrap.workspace-canvas
 │   ├─ .canvas-subbar

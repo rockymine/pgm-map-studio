@@ -90,17 +90,17 @@
           <section class="panel-section">
             <div class="section-header section-header--ruled">
               <h2 class="section-title">Authors</h2>
+              <button id="ov-add-author" class="action-btn">+ Add</button>
             </div>
             <div id="ov-authors-list"></div>
-            <button id="ov-add-author" class="action-btn">+ Add author</button>
           </section>
 
           <section class="panel-section">
             <div class="section-header section-header--ruled">
               <h2 class="section-title">Contributors</h2>
+              <button id="ov-add-contributor" class="action-btn">+ Add</button>
             </div>
             <div id="ov-contributors-list"></div>
-            <button id="ov-add-contributor" class="action-btn">+ Add contributor</button>
           </section>
 
           <section class="panel-section">
@@ -121,21 +121,20 @@
     <!-- Teams workspace -->
     <div id="pt-workspace" class="workspace" hidden>
       <div id="pt-left" class="workspace-sidebar">
-        <div id="pt-left-scroll" class="workspace-scroll workspace-scroll--list">
-          <div id="pt-teams-section">
-            <div class="section-header section-header--list">
+        <div id="pt-left-scroll" class="workspace-scroll">
+          <section class="panel-section" id="pt-teams-section">
+            <div class="section-header section-header--ruled">
               <h2 class="section-title">Teams</h2>
               <button id="pt-add-team-btn" class="action-btn">+ Add team</button>
             </div>
             <div id="pt-teams-list" class="panel-list"></div>
-          </div>
-          <div class="panel-divider"></div>
-          <div id="pt-spawns-section">
-            <div class="section-header section-header--list">
+          </section>
+          <section class="panel-section" id="pt-spawns-section">
+            <div class="section-header section-header--ruled">
               <h2 class="section-title">Spawn Regions</h2>
             </div>
-            <div id="pt-spawn-list"></div>
-          </div>
+            <div id="pt-spawn-list" class="panel-list"></div>
+          </section>
         </div>
       </div>
 

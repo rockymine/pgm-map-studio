@@ -34,8 +34,8 @@
   flex-shrink: 0;
 }
 .section-header--ruled { border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-.section-header--list  { padding: 10px 12px 6px; }
-.section-header--list .action-btn { padding: 2px 10px; font-size: 12px; }
+/* Compact add-button sizing when placed in any section header */
+.section-header .action-btn { padding: 2px 10px; font-size: 12px; }
 
 .panel-divider { height: 1px; flex-shrink: 0; background: var(--border); }
 
@@ -109,14 +109,18 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 6px 12px;
+  padding: 6px 4px;
   min-height: 34px;
   cursor: pointer;
   user-select: none;
+  border-radius: var(--radius-sm);
 }
-.list-row:hover     { background: var(--bg-selected); }
-.list-row--selected { background: var(--bg-selected); }
-.list-row--compact  { min-height: 28px; padding: 5px 12px; gap: 8px; }
+.list-row:hover     { background: var(--bg-selected-hover); }
+.list-row--selected {
+  background: var(--bg-selected);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.list-row--compact  { min-height: 28px; padding: 5px 4px; gap: 8px; }
 
 .list-swatch {
   width: 14px;
