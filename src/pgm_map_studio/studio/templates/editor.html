@@ -12,7 +12,7 @@
 
 <div id="topbar">
   <a href="/" class="topbar-breadcrumb-home" title="Back to dashboard">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <i data-lucide="house"></i>
     <span>Maps</span>
   </a>
   <span class="topbar-sep">›</span>
@@ -23,7 +23,7 @@
   <div class="topbar-right">
     <div id="topbar-error" role="alert">
       <span class="topbar-error-text"></span>
-      <button class="topbar-error-dismiss" id="error-dismiss-btn">✕</button>
+      <button class="topbar-error-dismiss" id="error-dismiss-btn"><i data-lucide="x"></i></button>
     </div>
     <button id="export-xml-btn" class="action-btn" disabled>Export XML</button>
   </div>
@@ -103,10 +103,12 @@
             <button id="ov-add-contributor" class="action-btn">+ Add contributor</button>
           </section>
 
-          <div class="panel-actions">
-            <button id="ov-save-btn" class="action-btn action-btn--primary" disabled>Save changes</button>
-            <span id="ov-save-status" class="panel-save-status"></span>
-          </div>
+          <section class="panel-section">
+            <div class="panel-actions">
+              <button id="ov-save-btn" class="action-btn action-btn--primary" disabled>Save changes</button>
+              <span id="ov-save-status" class="panel-save-status"></span>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -119,19 +121,21 @@
     <!-- Teams workspace -->
     <div id="pt-workspace" class="workspace" hidden>
       <div id="pt-left" class="workspace-sidebar">
-        <div id="pt-teams-section">
-          <div class="section-header section-header--list">
-            <h2 class="section-title">Teams</h2>
-            <button id="pt-add-team-btn" class="action-btn">+ Add team</button>
+        <div id="pt-left-scroll" class="workspace-scroll workspace-scroll--list">
+          <div id="pt-teams-section">
+            <div class="section-header section-header--list">
+              <h2 class="section-title">Teams</h2>
+              <button id="pt-add-team-btn" class="action-btn">+ Add team</button>
+            </div>
+            <div id="pt-teams-list" class="panel-list"></div>
           </div>
-          <div id="pt-teams-list"></div>
-        </div>
-        <div class="panel-divider"></div>
-        <div id="pt-spawns-section">
-          <div class="section-header section-header--list">
-            <h2 class="section-title">Spawn Regions</h2>
+          <div class="panel-divider"></div>
+          <div id="pt-spawns-section">
+            <div class="section-header section-header--list">
+              <h2 class="section-title">Spawn Regions</h2>
+            </div>
+            <div id="pt-spawn-list"></div>
           </div>
-          <div id="pt-spawn-list"></div>
         </div>
       </div>
 
@@ -158,7 +162,7 @@
             <span id="pt-zoom-level" class="canvas-zoom">—</span>
           </div>
         </div>
-        <div id="pt-svg-area">
+        <div id="pt-svg-area" class="svg-area">
           <svg id="pt-map-svg" xmlns="http://www.w3.org/2000/svg">
             <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
                   fill="var(--text-muted)" font-size="14">Loading map…</text>
@@ -245,8 +249,8 @@
     </div>
 
     <!-- Placeholder for future activities -->
-    <div id="obj-workspace"     hidden style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Objective editor — coming soon</div>
-    <div id="regions-workspace" class="workspace" hidden style="align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Regions editor — coming soon</div>
+    <div id="obj-workspace"     class="workspace workspace--placeholder" hidden>Objective editor — coming soon</div>
+    <div id="regions-workspace" class="workspace workspace--placeholder" hidden>Regions editor — coming soon</div>
 
   </div>
 </div>

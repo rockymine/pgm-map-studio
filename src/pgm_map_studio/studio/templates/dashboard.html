@@ -22,9 +22,9 @@
   <div class="topbar-right">
     <div id="topbar-error" role="alert">
       <span class="topbar-error-text"></span>
-      <button class="topbar-error-dismiss" id="error-dismiss-btn" title="Dismiss">✕</button>
+      <button class="topbar-error-dismiss" id="error-dismiss-btn" title="Dismiss"><i data-lucide="x"></i></button>
     </div>
-    <button class="action-btn" id="settings-btn" title="Settings">⚙ Settings</button>
+    <button class="action-btn" id="settings-btn" title="Settings"><i data-lucide="settings"></i>Settings</button>
   </div>
 
   <!-- Settings dropdown -->
@@ -109,6 +109,8 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "16", height: "16" } });</script>
 <script type="module" src="{{ url_for('static', filename='dashboard.js') }}"></script>
 </body>
 </html>

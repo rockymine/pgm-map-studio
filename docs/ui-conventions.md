@@ -164,11 +164,14 @@ CSS must never reference these prefixed IDs for shared layout.
 
 ### Buttons — four variants only
 
+All `.action-btn` variants use `display: inline-flex; align-items: center; gap: --space-1` so icons and text are always vertically centred. When adding a Lucide icon, omit the space character between the `<i>` and label text — gap handles the spacing.
+
 | Class | Use when |
 |---|---|
 | `.action-btn` | Any action — panels, topbar, sidebars |
 | `.action-btn--primary` | Single primary action per section (Save, Open) |
 | `.action-btn--danger` | Irreversible destructive actions only |
+| `.action-btn--icon` | Icon-only button — equal padding on all sides, square aspect |
 | `.btn-remove` | Inline row removal icon (✕) |
 | `.draw-tool-btn` | Canvas toolbar tools (editor.css — editor-specific) |
 

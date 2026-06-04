@@ -11,7 +11,7 @@
 <body>
 <div id="topbar">
   <a href="/" class="topbar-breadcrumb-home" title="Back to dashboard">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <i data-lucide="house"></i>
     <span>Maps</span>
   </a>
   <span class="topbar-sep">›</span>
@@ -19,11 +19,16 @@
   <span class="topbar-sep">›</span>
   <span class="topbar-crumb topbar-crumb--dim">Configure</span>
   <div class="topbar-right">
-    <div id="topbar-error" role="alert"><span class="topbar-error-text"></span></div>
+    <div id="topbar-error" role="alert">
+      <span class="topbar-error-text"></span>
+      <button class="topbar-error-dismiss" id="error-dismiss-btn"><i data-lucide="x"></i></button>
+    </div>
   </div>
 </div>
-<div style="padding:24px;color:var(--text-muted);font-size:13px">
+<div class="page-placeholder">
   Configure page coming in M2 (scan layer, island exclusions, symmetry confirmation).
 </div>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "16", height: "16" } });</script>
 </body>
 </html>

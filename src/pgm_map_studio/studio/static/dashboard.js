@@ -139,7 +139,7 @@ function renderList() {
   mapListEl.innerHTML = "";
   for (const m of visible) {
     const item = document.createElement("div");
-    item.className = "map-list-item" + (m.slug === state.selected ? " map-list-item--selected" : "");
+    item.className = "list-row" + (m.slug === state.selected ? " list-row--selected" : "");
     item.dataset.slug = m.slug;
 
     const dotClass = m.editor_ready ? "map-status-dot--ready"

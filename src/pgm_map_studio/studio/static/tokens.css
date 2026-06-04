@@ -16,7 +16,8 @@
   --bg-panel-glass:     #1e293bcc;
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
-  --border: #334155;
+  --border:        #334155;
+  --border-swatch: rgba(255,255,255,0.15); /* overlay edge on color-filled swatches/dots */
 
   /* ── Text hierarchy (muted → bright) ────────────────────────────────── */
   --text-muted:     #475569;   /* labels, metadata, disabled */
@@ -33,12 +34,15 @@
   --accent-bg-hover: #1d4ed8;
 
   /* ── Semantic status ─────────────────────────────────────────────────── */
-  --color-success:     #22c55e;
-  --color-success-bg:  #14532d44;
-  --color-error:       #ef4444;
-  --color-error-bg:    #7f1d1d44;
-  --color-error-light: #f87171;
-  --color-warning:     #f59e0b;
+  /* -bg values follow the pattern: Tailwind 900 + hex alpha 44 (26.7% opacity) */
+  --color-success:     #22c55e;   /* green-500 */
+  --color-success-bg:  #14532d44; /* green-900 @ 26.7% */
+  --color-error:       #ef4444;   /* red-500   */
+  --color-error-bg:    #7f1d1d44; /* red-900   @ 26.7% */
+  --color-error-light: #f87171;   /* red-400   — lighter text on error-bg */
+  --color-error-hover: rgba(239,68,68,0.1); /* subtle red tint for danger hover states */
+  --color-warning:     #f59e0b;   /* amber-500 */
+  --color-warning-bg:  #451a0344; /* amber-900 @ 26.7% */
 
   /* ── Code / monospace highlight ──────────────────────────────────────── */
   --code-color: #7dd3fc;
@@ -62,8 +66,9 @@
   --space-6: 24px;
 
   /* ── Border radii ────────────────────────────────────────────────────── */
-  --radius-sm: 3px;
-  --radius-md: 6px;
+  --radius-sm:   3px;
+  --radius-md:   6px;
+  --radius-pill: 9999px; /* capsule / pill shapes */
 
   /* ── Motion ──────────────────────────────────────────────────────────── */
   --transition-fast: 0.12s ease;

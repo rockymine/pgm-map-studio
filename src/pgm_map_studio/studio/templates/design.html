@@ -111,6 +111,7 @@
       <div class="ds-subhead">Border &amp; accent</div>
       <div class="ds-swatches">
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--border)"></div><div class="ds-swatch-name">--border</div><div class="ds-swatch-val">all dividers, input borders, panel edges</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--border-swatch)"></div><div class="ds-swatch-name">--border-swatch</div><div class="ds-swatch-val">rgba(255,255,255,0.15) — overlay edge on color-filled swatches and team dots</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--accent)"></div><div class="ds-swatch-name">--accent</div><div class="ds-swatch-val">.action-btn--primary border, active tool border, sidebar handle hover</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--accent-light)"></div><div class="ds-swatch-name">--accent-light</div><div class="ds-swatch-val">.draw-tool-btn--active text, focus highlights</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--code-color)"></div><div class="ds-swatch-name">--code-color</div><div class="ds-swatch-val">.detail-xml-pre, inline &lt;code&gt; text</div></div>
@@ -120,10 +121,12 @@
       <div class="ds-swatches">
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success)"></div><div class="ds-swatch-name">--color-success</div><div class="ds-swatch-val">.badge--success, .step-dot--done, .map-status-dot--ready</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success-bg)"></div><div class="ds-swatch-name">--color-success-bg</div><div class="ds-swatch-val">.badge--success bg, .toast--success bg</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning)"></div><div class="ds-swatch-name">--color-warning</div><div class="ds-swatch-val">.badge--warning, .panel-warning, .map-status-dot--partial</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning)"></div><div class="ds-swatch-name">--color-warning</div><div class="ds-swatch-val">.badge--warning text/border, .panel-warning border+text, .map-status-dot--partial</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning-bg)"></div><div class="ds-swatch-name">--color-warning-bg</div><div class="ds-swatch-val">amber-900 @ 26.7% — .badge--warning bg, .panel-warning bg</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error)"></div><div class="ds-swatch-name">--color-error</div><div class="ds-swatch-val">.badge--error, .field-input--error border, .btn-remove:hover, #topbar-error</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-bg)"></div><div class="ds-swatch-name">--color-error-bg</div><div class="ds-swatch-val">.badge--error bg, .toast--error bg</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-light)"></div><div class="ds-swatch-name">--color-error-light</div><div class="ds-swatch-val">.toast--error text, #topbar-error text</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-hover)"></div><div class="ds-swatch-name">--color-error-hover</div><div class="ds-swatch-val">rgba(239,68,68,0.1) — subtle red tint for .action-btn--danger:hover</div></div>
       </div>
     </section>
 
@@ -140,9 +143,11 @@
         <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-6)"></div><div class="ds-space-lbl">--space-6 = 24px</div><span style="font-size:11px;color:var(--text-muted)">page-level outer padding</span></div>
       </div>
       <div style="margin-top:20px;font-size:12px;color:var(--text-dim);line-height:2">
-        Radii: <code style="color:var(--code-color)">--radius-sm (3px)</code> — rows, badges, small controls
+        Radii: <code style="color:var(--code-color)">--radius-sm (3px)</code> — rows, badges, small controls, inputs
         &ensp;·&ensp;
-        <code style="color:var(--code-color)">--radius-md (6px)</code> — cards, panels, menus<br>
+        <code style="color:var(--code-color)">--radius-md (6px)</code> — cards, panels, menus
+        &ensp;·&ensp;
+        <code style="color:var(--code-color)">--radius-pill (9999px)</code> — capsule / pill overlays (.canvas-hint)<br>
         Transition: <code style="color:var(--code-color)">--transition-fast (0.12s ease)</code> — hover colour changes, opacity fades
       </div>
     </section>
@@ -176,6 +181,7 @@
       <div class="ds-heading">Buttons</div>
       <div class="ds-sub">
         Four variants cover every action in the app. Never add a new one without updating this page.
+        All variants use <code style="color:var(--code-color)">display: inline-flex; align-items: center; gap: --space-1</code> so icons and labels are always vertically centred.
         Draw toolbar buttons (<code style="color:var(--code-color)">.draw-tool-btn</code>) are editor-specific — see <a href="#editor-canvas" style="color:var(--accent-light)">Canvas subbar</a>.
       </div>
 
@@ -198,16 +204,28 @@
         </div>
       </div>
 
+      <div class="ds-subhead">Icon + label &amp; icon-only</div>
+      <div class="ds-row">
+        <div class="ds-group">
+          <button class="action-btn"><i data-lucide="settings"></i>Settings</button>
+          <div class="ds-label">.action-btn with icon — gap centres them</div>
+        </div>
+        <div class="ds-group">
+          <button class="action-btn action-btn--icon"><i data-lucide="settings"></i></button>
+          <div class="ds-label">--icon — equal padding, square</div>
+        </div>
+      </div>
+
       <div class="ds-subhead">Inline remove button</div>
       <div class="ds-row">
         <div class="ds-group">
-          <button class="btn-remove">✕</button>
+          <button class="btn-remove"><i data-lucide="x"></i></button>
           <div class="ds-label">.btn-remove — always visible</div>
         </div>
         <div class="ds-group">
           <div class="list-row" style="width:220px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-sm)">
             <span class="list-label">Hover to reveal</span>
-            <button class="btn-remove btn-remove--hover-only">✕</button>
+            <button class="btn-remove btn-remove--hover-only"><i data-lucide="x"></i></button>
           </div>
           <div class="ds-label">.btn-remove--hover-only (inside .list-row)</div>
         </div>
@@ -331,6 +349,7 @@
           <div class="ds-label">.list-label--mono (monospace label)</div>
           <div class="ds-label">.vis-btn + .vis-btn--always</div>
           <div class="ds-label">.list-empty</div>
+          <div class="ds-label">.panel-list (wraps the rows)</div>
         </div>
       </div>
     </section>
@@ -490,7 +509,7 @@
           <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 14px;width:320px">
             <div id="topbar-error" class="visible" style="position:relative;display:flex;align-items:center;gap:6px;background:var(--color-error-bg);border:1px solid var(--color-error);border-radius:var(--radius-sm);padding:3px 10px">
               <span style="font-size:12px;color:var(--color-error-light)">Map not found</span>
-              <button class="topbar-error-dismiss">✕</button>
+              <button class="topbar-error-dismiss"><i data-lucide="x"></i></button>
             </div>
           </div>
           <div class="ds-label">#topbar-error.visible (editor.css)</div>
@@ -527,7 +546,7 @@
           <div class="ds-panel-demo">
             <div style="padding:12px 14px;display:flex;flex-direction:column;gap:var(--space-3)">
               <div class="panel-warning">
-                <span class="panel-warning-icon">⚠</span>
+                <span class="panel-warning-icon"><i data-lucide="triangle-alert"></i></span>
                 <span>No wool room region assigned to this wool.</span>
               </div>
               <div class="field">
@@ -635,7 +654,7 @@
           <!-- Selected parent with collapse button — cuboid type -->
           <div class="region-row region-row--selected">
             <span class="region-indent">
-              <button class="collapse-btn">▾</button>
+              <button class="collapse-btn"><i data-lucide="chevron-down"></i></button>
             </span>
             <span class="region-type-icon"><i data-lucide="box"></i></span>
             <span class="region-label">blue-spawn-region</span>
@@ -738,7 +757,7 @@
             <div class="detail-header">
               <span class="detail-dot" style="background:var(--cat-wool)"></span>
               <span class="detail-label">blue-wool-room</span>
-              <span class="detail-type-badge">cuboid</span>
+              <span class="badge badge--neutral">cuboid</span>
             </div>
 
             <!-- Coordinate widget — min point -->
@@ -766,7 +785,7 @@
         </div>
 
         <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
-          <div class="ds-label">.detail-header → .detail-dot + .detail-label + .detail-type-badge</div>
+          <div class="ds-label">.detail-header → .detail-dot + .detail-label + .badge.badge--neutral</div>
           <div class="ds-label">.detail-geo-group → .detail-group-row → .detail-prefixed-field</div>
           <div class="ds-label">.detail-prefix + .detail-bounds-input (coordinate pair)</div>
           <div class="ds-label">.detail-xml-pre (monospace code/xml block)</div>
@@ -819,7 +838,7 @@
               </span>
               <span class="dashboard-title" style="font-size:12px">Map Studio</span>
               <div style="margin-left:auto">
-                <button class="action-btn" style="font-size:10px;padding:2px 8px">⚙ Settings</button>
+                <button class="action-btn" style="font-size:10px;padding:2px 8px"><i data-lucide="settings"></i> Settings</button>
               </div>
             </div>
           </div>
@@ -913,7 +932,7 @@
     │   │   └─ .map-filter-input
     │   ├─ .url-import-row
     │   └─ #map-list
-    │       └─ .map-list-item[--selected]
+    │       └─ .list-row[--selected]
     │           ├─ .map-status-dot[--ready/--partial]
     │           ├─ .map-list-name
     │           └─ .map-list-version
@@ -1019,7 +1038,7 @@
           <code style="color:var(--code-color)">#ov-left.workspace-sidebar</code>
           <span>ID <em>and</em> class — the class does all the styling; the ID is a JS-only handle written as <code style="color:var(--code-color)">&lt;div id="ov-left" class="workspace-sidebar"&gt;</code>. The CSS file has no rule for <code style="color:var(--code-color)">#ov-left</code>.</span>
           <code style="color:var(--code-color)">#ov-left-scroll.workspace-scroll</code>
-          <span>Same — class handles layout; ID only adds one override: <code style="color:var(--code-color)">#ov-left-scroll { gap: --space-6 }</code>.</span>
+          <span>Same — class handles all layout including gap. The ID is a JS handle only; no CSS rule targets it.</span>
         </div>
         <div style="margin-top:10px;color:var(--text-dim)">Rule: if you see <code style="color:var(--code-color)">#id.class</code>, the ID never appears as a selector in any CSS file. If you see a bare <code style="color:var(--code-color)">#id</code>, the element is one-of-a-kind and CSS uses the ID directly.</div>
       </div>
@@ -1031,8 +1050,10 @@
           <tr><td>.workspace</td><td>Workspace container — <code>display: flex; flex: 1; overflow: hidden</code></td><td>—</td><td>Never</td></tr>
           <tr><td>.workspace-sidebar</td><td>Left panel — list / form content. Width = <code>--sidebar-width</code> (280px)</td><td><code>--sidebar-width</code></td><td>Never (change the token to adjust all sidebars)</td></tr>
           <tr><td>.workspace-inspector</td><td>Right panel — detail / property view. Width = <code>--inspector-width</code> (280px)</td><td><code>--inspector-width</code></td><td>Never (change the token to adjust all inspectors)</td></tr>
-          <tr><td>.workspace-scroll</td><td>Scrollable inner content — <code>flex: 1; overflow-y: auto; padding: 16px 14px; flex col</code></td><td>—</td><td>Only if <code>gap</code> override needed (e.g. <code>#ov-left-scroll { gap: --space-6 }</code>)</td></tr>
+          <tr><td>.workspace-scroll</td><td>Scrollable inner content — <code>flex: 1; overflow-y: auto; padding: 16px 14px; gap: --space-6; flex col</code>. Use for form-content panels (Overview).</td><td>—</td><td>Never</td></tr>
+          <tr><td>.workspace-scroll--list</td><td>Modifier — strips outer padding to zero. Use for list panels (Teams) where section headers and <code>.list-row</code> already supply 12px horizontal spacing.</td><td>—</td><td>Never</td></tr>
           <tr><td>.workspace-canvas</td><td>Canvas column — <code>flex: 1; flex col; overflow: hidden; bg: --bg-deep</code></td><td>—</td><td>Never</td></tr>
+          <tr><td>.workspace--placeholder</td><td>Modifier on <code>.workspace</code> — centres a "coming soon" message. Removed once the activity is implemented.</td><td>—</td><td>Never</td></tr>
         </tbody>
       </table>
 
@@ -1053,7 +1074,7 @@
         </div>
         <pre class="detail-xml-pre" style="font-size:10px;line-height:1.7">#overview-workspace.workspace
 ├─ #ov-left.workspace-sidebar      ← width from --sidebar-width
-│   └─ #ov-left-scroll.workspace-scroll  gap: --space-6 (only override)
+│   └─ #ov-left-scroll.workspace-scroll  ← gap from class default
 │       └─ .panel-section × N
 ├─ .sidebar-handle
 └─ #ov-canvas-wrap.workspace-canvas
@@ -1096,9 +1117,10 @@
         </div>
         <pre class="detail-xml-pre" style="font-size:10px;line-height:1.7">#pt-workspace.workspace
 ├─ #pt-left.workspace-sidebar      ← width from --sidebar-width
-│   ├─ #pt-teams-section           max-height: 55%, own scroll
-│   ├─ .panel-divider
-│   └─ #pt-spawns-section          flex: 1, own scroll
+│   └─ #pt-left-scroll.workspace-scroll.workspace-scroll--list
+│       ├─ #pt-teams-section
+│       ├─ .panel-divider
+│       └─ #pt-spawns-section
 ├─ .sidebar-handle
 ├─ #pt-canvas-wrap.workspace-canvas
 │   ├─ .canvas-subbar

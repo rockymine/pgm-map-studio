@@ -68,13 +68,13 @@ body {
 }
 #topbar-error.visible { display: flex; }
 .topbar-error-dismiss {
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: none;
   color: var(--color-error-light);
   cursor: pointer;
-  font-size: 14px;
   padding: 0 2px;
-  line-height: 1;
 }
 .topbar-error-dismiss:hover { color: var(--text-white); }
 
@@ -137,7 +137,7 @@ body {
 .draw-tool-btn {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   padding: 4px 5px;
   cursor: pointer;
   color: var(--text-dim);
@@ -180,7 +180,7 @@ body {
   width: 38px;
   height: 38px;
   border-radius: var(--radius-md);
-  background: #0d1117;
+  background: var(--bg-deep);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -191,7 +191,7 @@ body {
   font-family: ui-monospace, monospace;
   font-size: 11px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-white);
   letter-spacing: 0.05em;
   line-height: 1;
 }
@@ -199,7 +199,7 @@ body {
   font-family: ui-monospace, monospace;
   font-size: 6px;
   font-weight: 600;
-  color: rgba(255,255,255,0.6);
+  color: var(--text-secondary);
   letter-spacing: 0.22em;
   line-height: 1;
 }
@@ -283,9 +283,12 @@ body {
   min-height: 0;
   overflow-y: auto;
   padding: var(--space-4) 14px;
+  gap: var(--space-6);
   display: flex;
   flex-direction: column;
 }
+/* List-panel variant — no outer padding or gap; section headers and list rows supply their own spacing */
+.workspace-scroll--list { padding: 0; gap: 0; }
 
 /* Canvas / main content column. position:relative makes it a positioning context
    for .canvas-hint and any other absolute overlays inside the canvas. */
@@ -298,11 +301,26 @@ body {
   position: relative;
 }
 
+/* Placeholder state for activities not yet implemented */
+.workspace--placeholder {
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Placeholder block for pages not yet implemented (configure stub, etc.) */
+.page-placeholder {
+  padding: var(--space-6);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    OVERVIEW WORKSPACE
    ══════════════════════════════════════════════════════════════════════════ */
 
-#ov-left-scroll { gap: var(--space-6); }
+
 #ov-map-svg     { display: block; width: 100%; height: 100%; }
 #ov-save-status { font-size: 12px; color: var(--text-secondary); }
 
@@ -310,32 +328,8 @@ body {
    TEAMS WORKSPACE
    ══════════════════════════════════════════════════════════════════════════ */
 
-#pt-teams-section {
-  flex-shrink: 0;
-  max-height: 55%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-#pt-teams-list { flex: 1; overflow-y: auto; padding: 4px 0; }
-#pt-spawns-section {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-#pt-spawn-list { flex: 1; overflow-y: auto; }
 #pt-spawn-list .region-type-icon { margin-right: 0; }
 
-#pt-svg-area {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 12px;
-}
 #pt-map-svg { max-width: 100%; max-height: 100%; cursor: default; }
 
 #pt-spawn-region-detail { padding: 0; }
@@ -346,7 +340,6 @@ body {
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* Region list uses tighter padding since .region-row has its own horizontal padding */
-#region-list { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 0; }
 
 /* ── Region tree row details (used by map-canvas + region sidebar) ── */
 .region-row {
@@ -478,7 +471,7 @@ body {
   padding: 5px 10px;
   background: none;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 12px;
   font-family: inherit;
@@ -486,7 +479,7 @@ body {
   cursor: pointer;
 }
 .ctx-item:hover  { background: var(--bg-selected-hover); color: var(--text-bright); }
-.ctx-item--danger:hover { background: #3f1515; color: #f87171; }
+.ctx-item--danger:hover { background: var(--color-error-bg); color: var(--color-error-light); }
 .ctx-item kbd {
   font-size: 10px;
   color: var(--text-muted);
@@ -500,14 +493,6 @@ body {
 .ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
 
 /* ── detail widget ── */
-.detail-type-badge {
-  font-size: 11px;
-  background: var(--bg-base);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
 .detail-header {
   display: flex;
   align-items: center;
@@ -526,7 +511,7 @@ body {
 .detail-bounds-input {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-family: ui-monospace, monospace;
   font-size: 12px;
@@ -540,7 +525,7 @@ body {
 .detail-xml-pre {
   background: var(--bg-base);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--code-color);
   font-family: ui-monospace, monospace;
   font-size: 11px;
@@ -561,7 +546,7 @@ body {
   align-items: center;
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 .detail-prefixed-field:focus-within { border-color: var(--accent); }
 .detail-prefix {
@@ -610,7 +595,7 @@ body.dashboard-page { overflow: hidden; }
   width: 30px;
   height: 30px;
   border-radius: var(--radius-md);
-  background: #0d1117;
+  background: var(--bg-deep);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -621,14 +606,14 @@ body.dashboard-page { overflow: hidden; }
 .dashboard-logo-pgm {
   font-size: 9px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-white);
   letter-spacing: 0.1em;
   line-height: 1;
 }
 .dashboard-logo-sub {
   font-size: 5px;
   font-weight: 600;
-  color: rgba(255,255,255,0.6);
+  color: var(--text-secondary);
   letter-spacing: 0.22em;
   line-height: 1;
 }
@@ -741,18 +726,6 @@ body.dashboard-page { overflow: hidden; }
 .url-import-status--loading { color: var(--text-muted); }
 
 #map-list { flex: 1; overflow-y: auto; }
-
-.map-list-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 7px 12px;
-  cursor: pointer;
-  user-select: none;
-  border-bottom: 1px solid transparent;
-}
-.map-list-item:hover     { background: var(--bg-selected-hover); }
-.map-list-item--selected { background: var(--bg-selected); }
 
 .map-status-dot {
   width: 8px;
