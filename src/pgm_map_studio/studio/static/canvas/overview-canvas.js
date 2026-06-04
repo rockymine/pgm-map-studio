@@ -96,13 +96,13 @@ export class OverviewCanvas {
     while (this.#symmetryLayerEl.firstChild)
       this.#symmetryLayerEl.removeChild(this.#symmetryLayerEl.firstChild);
 
-    const { center, global_symmetry } = this.#symmetryData;
+    const { center, modes, global_symmetry } = this.#symmetryData;
     if (!center) return;
 
     const opacity = this.#symmetryStatus === "skipped" ? SYMMETRY_SKIPPED : 1.0;
     const { min_x, max_x, min_z, max_z } = this.#bbox;
 
-    const primary = [...global_symmetry]
+    const primary = [...(modes ?? global_symmetry ?? [])]
       .filter(e => e.detected)
       .sort((a, b) => b.confidence - a.confidence)[0];
 

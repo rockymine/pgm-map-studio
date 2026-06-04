@@ -9,8 +9,9 @@ import { RegionRegistry } from "../region/region-registry.js";
 import * as api           from "../api.js";
 import { chatColorHex }   from "../shared/game-colors.js";
 
-const SPAWN_COLOR  = "#3b82f6";
-const POINT_COLOR  = "#60a5fa";
+// Use CSS token values so they match the design system
+const SPAWN_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--cat-spawn").trim() || "#3b82f6";
+const POINT_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--accent-light").trim() || "#60a5fa";
 
 export class TeamsActivity {
   #el      = null;

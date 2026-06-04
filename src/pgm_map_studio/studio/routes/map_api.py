@@ -45,8 +45,8 @@ def patch_symmetry(name: str):
         abort(404)
     sym = json.loads(sym_path.read_text(encoding="utf-8"))
     payload = request.get_json(force=True) or {}
-    if "symmetry_status" in payload:
-        sym["symmetry_status"] = payload["symmetry_status"]
+    if "status" in payload:
+        sym["status"] = payload["status"]
     sym_path.write_text(json.dumps(sym, indent=2), encoding="utf-8")
     return jsonify({"ok": True})
 
