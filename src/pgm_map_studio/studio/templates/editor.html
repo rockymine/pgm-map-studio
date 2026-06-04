@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PGM Map Studio — Editor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}"/>
 </head>
@@ -24,7 +25,7 @@
       <span class="topbar-error-text"></span>
       <button class="topbar-error-dismiss" id="error-dismiss-btn">✕</button>
     </div>
-    <button id="export-xml-btn" class="topbar-btn" disabled>Export XML</button>
+    <button id="export-xml-btn" class="action-btn" disabled>Export XML</button>
   </div>
 </div>
 
@@ -59,9 +60,9 @@
   <div id="activity-viewport">
 
     <!-- Overview workspace -->
-    <div id="overview-workspace">
-      <div id="ov-left">
-        <div id="ov-left-scroll">
+    <div id="overview-workspace" class="workspace">
+      <div id="ov-left" class="workspace-sidebar">
+        <div id="ov-left-scroll" class="workspace-scroll">
           <section class="panel-section">
             <div class="section-header section-header--ruled">
               <h2 class="section-title">Map Identity</h2>
@@ -110,14 +111,14 @@
       </div>
 
       <div class="sidebar-handle" id="ov-left-handle"></div>
-      <div id="ov-canvas-wrap">
+      <div id="ov-canvas-wrap" class="workspace-canvas">
         <svg id="ov-map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
     </div>
 
     <!-- Teams workspace -->
-    <div id="pt-workspace" hidden>
-      <div id="pt-left">
+    <div id="pt-workspace" class="workspace" hidden>
+      <div id="pt-left" class="workspace-sidebar">
         <div id="pt-teams-section">
           <div class="section-header section-header--list">
             <h2 class="section-title">Teams</h2>
@@ -136,7 +137,7 @@
 
       <div class="sidebar-handle" id="pt-left-handle"></div>
 
-      <div id="pt-canvas-wrap">
+      <div id="pt-canvas-wrap" class="workspace-canvas">
         <div id="pt-canvas-subbar" class="canvas-subbar">
           <div class="canvas-toolbar" id="pt-draw-toolbar">
             <button id="pt-tool-move"     class="draw-tool-btn" title="Move (M)">
@@ -167,8 +168,8 @@
 
       <div class="sidebar-handle" id="pt-right-handle"></div>
 
-      <div id="pt-right">
-        <div id="pt-right-scroll">
+      <div id="pt-right" class="workspace-inspector">
+        <div id="pt-right-scroll" class="workspace-scroll">
           <div id="pt-team-inspector" hidden>
             <section class="panel-section">
               <div class="section-header section-header--ruled">
@@ -245,7 +246,7 @@
 
     <!-- Placeholder for future activities -->
     <div id="obj-workspace"     hidden style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Objective editor — coming soon</div>
-    <div id="regions-workspace" hidden style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Regions editor — coming soon</div>
+    <div id="regions-workspace" class="workspace" hidden style="align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Regions editor — coming soon</div>
 
   </div>
 </div>
