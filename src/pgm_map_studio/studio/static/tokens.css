@@ -1,0 +1,70 @@
+/* tokens.css — CSS custom properties for PGM Map Studio.
+ * Only :root variables here. No selectors, no component rules.
+ * Load this before editor.css and components.css in every template. */
+
+:root {
+  /* ── Backgrounds ─────────────────────────────────────────────────────── */
+  --bg-deep:            #080f1a;   /* canvas area, deep layers */
+  --bg-base:            #0f172a;   /* page background */
+  --bg-panel:           #1e293b;   /* sidebars, panels, topbar */
+  --bg-multi:           #1a3a2f;   /* multi-team selection tint */
+  --bg-selected:        #1e3a5f;   /* selected row / active fill */
+  --bg-selected-hover:  #1e3a5f44;
+  --bg-selected-child:  #1e3a5f77;
+  --bg-vis-hover:       #162032;   /* visibility button hover */
+  --bg-base-glass:      #0f172acc;
+  --bg-panel-glass:     #1e293bcc;
+
+  /* ── Borders ─────────────────────────────────────────────────────────── */
+  --border: #334155;
+
+  /* ── Text hierarchy (muted → bright) ────────────────────────────────── */
+  --text-muted:     #475569;   /* labels, metadata, disabled */
+  --text-dim:       #64748b;   /* helper text, decorative */
+  --text-secondary: #94a3b8;   /* secondary content, form labels */
+  --text-primary:   #cbd5e1;   /* default body text */
+  --text-bright:    #e2e8f0;   /* headings, emphasis */
+  --text-white:     #fff;      /* active / selected text */
+
+  /* ── Accent (primary action colour) ─────────────────────────────────── */
+  --accent:          #3b82f6;
+  --accent-light:    #60a5fa;
+  --accent-lighter:  #93c5fd;
+  --accent-bg-hover: #1d4ed8;
+
+  /* ── Semantic status ─────────────────────────────────────────────────── */
+  --color-success:     #22c55e;
+  --color-success-bg:  #14532d44;
+  --color-error:       #ef4444;
+  --color-error-bg:    #7f1d1d44;
+  --color-error-light: #f87171;
+  --color-warning:     #f59e0b;
+
+  /* ── Code / monospace highlight ──────────────────────────────────────── */
+  --code-color: #7dd3fc;
+
+  /* ── Region category colours (canvas, sidebar, badges) ───────────────── */
+  --cat-spawn: #3b82f6;
+  --cat-wool:  #f59e0b;
+  --cat-build: #22c55e;
+  --cat-other: #94a3b8;
+
+  /* ── Sidebar widths ─────────────────────────────────────────────────── */
+  --sidebar-width:   280px;   /* left panels — list / form content */
+  --inspector-width: 280px;   /* right panels — detail / property view */
+
+  /* ── Spacing scale ───────────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  /* ── Border radii ────────────────────────────────────────────────────── */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  --transition-fast: 0.12s ease;
+}

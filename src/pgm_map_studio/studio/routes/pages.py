@@ -19,3 +19,8 @@ def editor():
 def configure():
     map_name = request.args.get("map", "")
     return render_template("configure.html", map_name=map_name)
+
+
+@bp.route("/design")
+def design():
+    return render_template("design.html")

@@ -1,0 +1,164 @@
+/* design.css — Layout and helpers for the /design page only.
+ * Never define production component classes here.
+ * Production components belong in components.css or editor.css. */
+
+/* ── Page chrome ──────────────────────────────────────────────────────────── */
+
+#ds-layout { display: flex; flex: 1; overflow: hidden; }
+#ds-nav    { width: 180px; flex-shrink: 0; background: var(--bg-panel); border-right: 1px solid var(--border); overflow-y: auto; padding: var(--space-3) 0; }
+#ds-main   { flex: 1; overflow-y: auto; padding: var(--space-6) 40px; }
+
+#ds-nav a          { display: block; padding: 5px 16px; font-size: 12px; color: var(--text-secondary); text-decoration: none; border-left: 2px solid transparent; }
+#ds-nav a:hover    { color: var(--text-white); background: var(--bg-selected-hover); }
+#ds-nav a.active   { color: var(--text-white); border-left-color: var(--accent); }
+.ds-nav-group      { padding: 14px 16px 4px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+
+/* ── Section structure ────────────────────────────────────────────────────── */
+
+.ds-section     { margin-bottom: 56px; scroll-margin-top: 24px; }
+.ds-heading     { font-size: 18px; font-weight: 600; color: var(--text-white); margin-bottom: 4px; }
+.ds-sub         { font-size: 12px; color: var(--text-dim); margin-bottom: 24px; line-height: 1.6; }
+.ds-row         { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+.ds-group       { display: flex; flex-direction: column; gap: 10px; }
+.ds-label       { font-size: 10px; color: var(--text-muted); font-family: ui-monospace, monospace; margin-top: 4px; }
+.ds-divider     { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.ds-subhead     { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+
+.ds-group-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent-light);
+  margin-bottom: 32px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Color token swatches ─────────────────────────────────────────────────── */
+
+.ds-swatches     { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 20px; }
+.ds-swatch       { display: flex; flex-direction: column; gap: 3px; }
+.ds-swatch-block { height: 36px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,.06); }
+.ds-swatch-name  { font-size: 10px; font-family: ui-monospace, monospace; color: var(--text-muted); }
+.ds-swatch-val   { font-size: 10px; font-family: ui-monospace, monospace; color: var(--text-dim); }
+
+/* ── Space scale visualisation ────────────────────────────────────────────── */
+
+.ds-spaces    { display: flex; flex-direction: column; gap: 6px; }
+.ds-space-row { display: flex; align-items: center; gap: 12px; }
+.ds-space-bar { background: var(--accent); opacity: 0.6; height: 10px; border-radius: 2px; }
+.ds-space-lbl { font-size: 11px; font-family: ui-monospace, monospace; color: var(--text-secondary); min-width: 140px; }
+
+/* ── Demo containers ──────────────────────────────────────────────────────── */
+
+.ds-panel-demo        { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-md); width: 280px; overflow: hidden; }
+.ds-preview-demo      { background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+.ds-canvas-demo       { background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.ds-notification-demo { position: relative; min-height: 80px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.ds-canvas-hint-demo  { position: relative; height: 80px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; }
+
+/* ── Usage rules tables ───────────────────────────────────────────────────── */
+
+.ds-rules-table { width: 100%; max-width: 680px; border-collapse: collapse; font-size: 12px; margin-bottom: 28px; }
+.ds-rules-table th { text-align: left; padding: 6px 12px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.ds-rules-table td { padding: 7px 12px; color: var(--text-secondary); border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+.ds-rules-table td:first-child { font-family: ui-monospace, monospace; color: var(--text-primary); white-space: nowrap; }
+.ds-rules-table code { color: var(--code-color); }
+
+/* ── Layout mocks ─────────────────────────────────────────────────────────── */
+
+.ds-mock {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: ui-monospace, monospace;
+  flex-shrink: 0;
+}
+.ds-mock-label {
+  font-size: 9px;
+  font-family: ui-monospace, monospace;
+  color: var(--text-muted);
+  letter-spacing: .04em;
+  padding: 2px 0;
+}
+.ds-mock-topbar {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.ds-mock-rail {
+  width: 32px;
+  flex-shrink: 0;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+  gap: 3px;
+}
+.ds-mock-rail-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: var(--border);
+}
+.ds-mock-rail-btn.active { background: var(--bg-selected); border: 1px solid var(--accent); }
+.ds-mock-sidebar {
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.ds-mock-sidebar.right { border-right: none; border-left: 1px solid var(--border); }
+.ds-mock-handle {
+  width: 4px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.ds-mock-canvas {
+  flex: 1;
+  background: var(--bg-deep);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ds-mock-subbar {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.ds-mock-field {
+  height: 14px;
+  background: var(--bg-base);
+  border-radius: 2px;
+}
+.ds-mock-section-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+/* ── Decision list (don't-reinvent registry) ──────────────────────────────── */
+
+.ds-decisions      { list-style: none; max-width: 620px; display: flex; flex-direction: column; gap: 4px; }
+.ds-decisions li   { font-size: 12px; color: var(--text-secondary); line-height: 1.6; padding: 5px 10px; border-left: 2px solid var(--border); }
+.ds-decisions li code { color: var(--code-color); }
+.ds-decisions li strong { color: var(--text-primary); }
