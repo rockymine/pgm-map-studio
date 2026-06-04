@@ -357,6 +357,44 @@
 
 
 /* ══════════════════════════════════════════════════════════════════════════
+   AUTHOR CHIP  (avatar + resolved player name — used in map detail view)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.map-author-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px 2px 2px;
+}
+.map-author-avatar {
+  width: 16px; height: 16px; border-radius: var(--radius-sm);
+  image-rendering: pixelated; background: var(--border);
+  flex-shrink: 0; display: block;
+}
+.map-author-name { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FILTER CHIP  (toggleable filter option inside a filter panel)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.filter-group-options { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.filter-chip {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-family: inherit;
+  padding: 2px 8px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-base); color: var(--text-secondary);
+  cursor: pointer;
+}
+.filter-chip:hover     { border-color: var(--text-muted); color: var(--text-primary); }
+.filter-chip--active   { background: var(--bg-selected); border-color: var(--accent); color: var(--accent-lighter); }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
    STEP ROW  (pipeline status lists)
    ══════════════════════════════════════════════════════════════════════════ */
 

@@ -39,6 +39,7 @@
     <a href="#lists">List rows</a>
     <a href="#sections">Sections &amp; panels</a>
     <a href="#badges">Badges</a>
+    <a href="#filter-chips">Filter chips</a>
     <a href="#preview">Preview cards</a>
     <a href="#console">Console</a>
     <a href="#steps">Step rows</a>
@@ -432,6 +433,24 @@
         .author-row → .author-avatar + .field-input.author-name + .field-input.author-contribution + .btn-remove
       </div>
 
+      <div class="ds-subhead" style="margin-top:20px">Author chip — resolved player name with avatar</div>
+      <div class="ds-sub">Used in the dashboard map detail view to display resolved Minecraft player names. Avatar is fetched from mc-heads.net using the player UUID.</div>
+      <div class="ds-row">
+        <div class="ds-group">
+          <div style="display:flex;gap:var(--space-2)">
+            <div class="map-author-chip">
+              <img class="map-author-avatar" src="" alt=""/>
+              <span class="map-author-name">rockymine</span>
+            </div>
+            <div class="map-author-chip">
+              <img class="map-author-avatar" src="" alt=""/>
+              <span class="map-author-name">Ruediger_LP</span>
+            </div>
+          </div>
+          <div class="ds-label" style="margin-top:6px">.map-author-chip → .map-author-avatar + .map-author-name</div>
+        </div>
+      </div>
+
     </section>
 
     <!-- ── Badges ── -->
@@ -456,6 +475,25 @@
         pipeline step result → <code style="color:var(--code-color)">--success / --error / --dim</code> &nbsp;·&nbsp;
         gamemode label → <code style="color:var(--code-color)">--neutral</code>
       </div>
+    </section>
+
+    <!-- ── Filter chips ── -->
+    <section class="ds-section" id="filter-chips">
+      <div class="ds-heading">Filter chips</div>
+      <div class="ds-sub">Toggleable option buttons used inside a filter panel. Each chip represents one discrete filter value. Active state uses accent styling matching <code style="color:var(--code-color)">.list-row--selected</code>. Group labels use <code style="color:var(--code-color)">.section-title</code>.</div>
+      <div class="ds-group">
+        <div class="section-title" style="margin-bottom:var(--space-1)">Teams</div>
+        <div class="filter-group-options">
+          <button class="filter-chip">3 teams</button>
+          <button class="filter-chip filter-chip--active">4 teams</button>
+        </div>
+        <div class="section-title" style="margin-top:var(--space-2);margin-bottom:var(--space-1)">Symmetry</div>
+        <div class="filter-group-options">
+          <button class="filter-chip">rot 90</button>
+          <button class="filter-chip">rot 180</button>
+        </div>
+      </div>
+      <div class="ds-label" style="margin-top:8px">.filter-group-options → .filter-chip[.filter-chip--active] &nbsp;·&nbsp; group labels use .section-title</div>
     </section>
 
     <!-- ── Preview cards ── -->

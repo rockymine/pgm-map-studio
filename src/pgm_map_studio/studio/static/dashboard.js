@@ -10,13 +10,20 @@
 import * as api from "./api.js";
 import { showSystemError, clearSystemError, showToast } from "./shared/ui-helpers.js";
 
+const _AVATAR_EMPTY = "data:image/gif;base64,R0lGODlhEAAQAAAAACwAAAAAEAAQAAABEIQBADs=";
+function _avatarUrl(uuid) {
+  return `https://mc-heads.net/avatar/${encodeURIComponent(uuid)}/16`;
+}
+
 // ── State ──────────────────────────────────────────────────────────────────
 
 const state = {
-  sources:     [],        // [{slug, display_name, has_xml, editor_ready, info}]
-  selected:    null,      // slug string
-  status:      null,      // {steps, all_done, editor_ready, info}
+  sources:     [],   // [{slug, display_name, has_xml, editor_ready, info}]
+  selected:    null, // slug string
+  status:      null, // {steps, all_done, editor_ready, info}
   isRunning:   false,
+  filters:     { teams: null, wools: null, symmetry: null },
+  filterOpen:  false,
 };
 
 // ── DOM ────────────────────────────────────────────────────────────────────
@@ -25,15 +32,18 @@ const $ = id => document.getElementById(id);
 
 const mapListEl        = $("map-list");
 const mapFilterEl      = $("map-filter");
+const mapCountBadge    = $("map-count-badge");
+const filterBtn        = $("filter-btn");
+const filterPanel      = $("filter-panel");
 const urlImportInput   = $("url-import-input");
 const urlImportBtn     = $("url-import-btn");
 const urlImportStatus  = $("url-import-status");
 const mapDetailEmpty   = $("map-detail-empty");
 const mapDetailContent = $("map-detail-content");
+const detailBadges     = $("detail-badges");
 const detailName       = $("detail-name");
-const detailMeta       = $("detail-meta");
-const detailValidation = $("detail-validation");
-const detailValidBlock = $("detail-validation-block");
+const detailVersion    = $("detail-version");
+const detailAuthors    = $("detail-authors");
 const detailSteps      = $("detail-steps");
 const detailThumb      = $("detail-thumb");
 const detailThumbPH    = $("detail-thumb-placeholder");
@@ -42,8 +52,6 @@ const runPipelineBtn   = $("run-pipeline-btn");
 const pipelineConsole  = $("pipeline-console");
 const consoleOutput    = $("console-output");
 const consoleClearBtn  = $("console-clear-btn");
-const settingsBtn      = $("settings-btn");
-const settingsPanel    = $("settings-panel");
 const mapsFolderInput  = $("maps-folder-input");
 const outputFolderInput= $("output-folder-input");
 const saveSettingsBtn  = $("save-settings-btn");
@@ -61,24 +69,6 @@ async function init() {
 
 // ── Settings ──────────────────────────────────────────────────────────────
 
-settingsBtn.addEventListener("click", () => {
-  const hidden = settingsPanel.hidden;
-  settingsPanel.hidden = !hidden;
-  if (!hidden) return;
-  // close on outside click
-  setTimeout(() => {
-    document.addEventListener("click", closeSettings, { once: true, capture: true });
-  }, 0);
-});
-
-function closeSettings(e) {
-  if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
-    settingsPanel.hidden = true;
-  } else {
-    document.addEventListener("click", closeSettings, { once: true, capture: true });
-  }
-}
-
 saveSettingsBtn.addEventListener("click", async () => {
   const cfg = {
     maps_folder:   mapsFolderInput.value.trim(),
@@ -86,15 +76,14 @@ saveSettingsBtn.addEventListener("click", async () => {
   };
   try {
     await api.saveConfig(cfg);
-    flashSettingsMsg("Saved");
-    settingsPanel.hidden = true;
+    flashMsg("Saved");
     await loadSources();
   } catch (err) {
-    flashSettingsMsg(`Error: ${err.message}`, true);
+    flashMsg(`Error: ${err.message}`, true);
   }
 });
 
-function flashSettingsMsg(msg, isError = false) {
+function flashMsg(msg, isError = false) {
   settingsMsg.textContent = msg;
   settingsMsg.className   = "settings-msg" + (isError ? " settings-msg--error" : " settings-msg--ok");
   setTimeout(() => { settingsMsg.textContent = ""; settingsMsg.className = "settings-msg"; }, 3000);
@@ -105,34 +94,127 @@ async function loadConfig() {
     const cfg = await api.fetchConfig();
     mapsFolderInput.value   = cfg.maps_folder   || "";
     outputFolderInput.value = cfg.output_folder || "";
-  } catch (err) {
+  } catch {
     showSystemError("Could not load configuration");
+  }
+}
+
+// ── Filter panel ──────────────────────────────────────────────────────────
+
+filterBtn.addEventListener("click", () => {
+  state.filterOpen = !state.filterOpen;
+  filterBtn.classList.toggle("action-btn--primary", state.filterOpen);
+  filterPanel.hidden = !state.filterOpen;
+  if (state.filterOpen) buildFilterPanel();
+});
+
+function buildFilterPanel() {
+  filterPanel.innerHTML = "";
+
+  const grouped = {
+    teams:    new Set(),
+    wools:    new Set(),
+    symmetry: new Set(),
+  };
+
+  for (const m of state.sources) {
+    if (m.info?.teams)    grouped.teams.add(m.info.teams);
+    if (m.info?.wools)    grouped.wools.add(m.info.wools);
+    if (m.info?.symmetry) grouped.symmetry.add(m.info.symmetry);
+  }
+
+  const labels = { teams: "Teams", wools: "Wools", symmetry: "Symmetry" };
+  const format = {
+    teams:    v => `${v} team${v !== 1 ? "s" : ""}`,
+    wools:    v => `${v} wool${v !== 1 ? "s" : ""}`,
+    symmetry: v => v.replace("_", " "),
+  };
+
+  let anyGroup = false;
+  for (const [key, values] of Object.entries(grouped)) {
+    if (!values.size) continue;
+    anyGroup = true;
+
+    const label = document.createElement("div");
+    label.className = "section-title";
+    label.textContent = labels[key];
+    filterPanel.appendChild(label);
+
+    const opts = document.createElement("div");
+    opts.className = "filter-group-options";
+
+    for (const v of [...values].sort((a, b) => String(a).localeCompare(String(b)))) {
+      const chip = document.createElement("button");
+      chip.className = "filter-chip" + (state.filters[key] === v ? " filter-chip--active" : "");
+      chip.textContent = format[key](v);
+      chip.addEventListener("click", () => {
+        state.filters[key] = state.filters[key] === v ? null : v;
+        renderList();
+        buildFilterPanel(); // re-render to update active state
+      });
+      opts.appendChild(chip);
+    }
+    filterPanel.appendChild(opts);
+  }
+
+  if (!anyGroup) {
+    const empty = document.createElement("div");
+    empty.className = "filter-group-label";
+    empty.textContent = "No filter options available";
+    filterPanel.appendChild(empty);
+  }
+
+  // Clear button if any filter is active
+  const anyActive = Object.values(state.filters).some(v => v !== null);
+  if (anyActive) {
+    const clearBtn = document.createElement("button");
+    clearBtn.className = "action-btn action-btn--danger";
+    clearBtn.style.alignSelf = "flex-start";
+    clearBtn.textContent = "Clear filters";
+    clearBtn.addEventListener("click", () => {
+      state.filters = { teams: null, wools: null, symmetry: null };
+      renderList();
+      buildFilterPanel();
+    });
+    filterPanel.appendChild(clearBtn);
   }
 }
 
 // ── Source map list ────────────────────────────────────────────────────────
 
 async function loadSources() {
-  mapListEl.innerHTML = '<div class="map-list-empty">Loading…</div>';
+  mapListEl.innerHTML = '<div class="list-empty">Loading…</div>';
   try {
     state.sources = await api.fetchSources();
     renderList();
     clearSystemError();
   } catch (err) {
-    mapListEl.innerHTML = `<div class="map-list-empty map-list-error">${err.message}</div>`;
+    mapListEl.innerHTML = `<div class="list-empty" style="color:var(--color-error)">${err.message}</div>`;
   }
 }
 
+function _applyFilters(sources) {
+  return sources.filter(m => {
+    if (state.filters.teams    !== null && m.info?.teams    !== state.filters.teams)    return false;
+    if (state.filters.wools    !== null && m.info?.wools    !== state.filters.wools)    return false;
+    if (state.filters.symmetry !== null && m.info?.symmetry !== state.filters.symmetry) return false;
+    return true;
+  });
+}
+
 function renderList() {
-  const filter  = mapFilterEl.value.toLowerCase();
-  const visible = filter
+  const query   = mapFilterEl.value.toLowerCase();
+  let visible   = query
     ? state.sources.filter(m =>
-        m.slug.toLowerCase().includes(filter) ||
-        m.display_name.toLowerCase().includes(filter))
-    : state.sources;
+        m.slug.toLowerCase().includes(query) ||
+        m.display_name.toLowerCase().includes(query))
+    : [...state.sources];
+
+  visible = _applyFilters(visible);
+  mapCountBadge.textContent = visible.length || "";
 
   if (!visible.length) {
-    mapListEl.innerHTML = '<div class="map-list-empty">No maps found.</div>';
+    mapListEl.innerHTML = '<div class="list-empty">No maps found.</div>';
     return;
   }
 
@@ -142,10 +224,10 @@ function renderList() {
     item.className = "list-row" + (m.slug === state.selected ? " list-row--selected" : "");
     item.dataset.slug = m.slug;
 
-    const dotClass = m.editor_ready ? "map-status-dot--ready"
+    const dotClass = m.editor_ready    ? "map-status-dot--ready"
                    : (m.has_xml || m.has_region) ? "map-status-dot--partial"
                    : "";
-    const version = m.info?.version ? ` v${m.info.version}` : "";
+    const version = m.info?.version ? `v${m.info.version}` : "";
 
     item.innerHTML = `
       <span class="map-status-dot ${dotClass}"></span>
@@ -167,21 +249,25 @@ async function selectMap(slug) {
   mapDetailEmpty.hidden   = true;
   mapDetailContent.hidden = false;
 
-  const m = state.sources.find(s => s.slug === slug);
-  detailName.textContent = m?.display_name ?? slug;
-  detailMeta.innerHTML = "";
-  detailSteps.innerHTML = '<div class="step-row"><span class="step-label" style="color:var(--text-muted)">Loading…</span></div>';
-  openEditorBtn.hidden = true;
-  runPipelineBtn.hidden = true;
-  pipelineConsole.hidden = true;
+  detailBadges.innerHTML    = "";
+  detailName.textContent    = "";
+  detailVersion.textContent = "";
+  detailAuthors.innerHTML   = "";
+  detailSteps.innerHTML     = '<div class="step-row"><span class="step-label" style="color:var(--text-muted)">Loading…</span></div>';
+  openEditorBtn.hidden    = true;
+  runPipelineBtn.hidden   = true;
+  pipelineConsole.hidden  = true;
 
   // Thumbnail
-  detailThumb.hidden = true;
+  detailThumb.hidden   = true;
   detailThumbPH.hidden = false;
   const thumbUrl = `/api/sources/${encodeURIComponent(slug)}/thumbnail`;
   const img = new Image();
   img.onload = () => { detailThumb.src = thumbUrl; detailThumb.hidden = false; detailThumbPH.hidden = true; };
   img.src = thumbUrl;
+
+  const m = state.sources.find(s => s.slug === slug);
+  if (m?.display_name) detailName.textContent = m.display_name;
 
   try {
     const status = await api.fetchSourceStatus(slug);
@@ -195,15 +281,34 @@ async function selectMap(slug) {
 function renderDetail(slug, status) {
   const { steps, editor_ready, info } = status;
 
-  // Meta tags
-  detailMeta.innerHTML = "";
-  if (info?.version)  _addTag(detailMeta, `v${info.version}`, "highlight");
-  if (info?.gamemode) _addTag(detailMeta, info.gamemode);
-  if (info?.teams)    _addTag(detailMeta, `${info.teams} team${info.teams !== 1 ? "s" : ""}`);
-  if (info?.wools)    _addTag(detailMeta, `${info.wools} wool${info.wools !== 1 ? "s" : ""}`);
-  if (info?.authors?.length) _addTag(detailMeta, info.authors.slice(0, 2).join(", "));
+  // ── Badge row ──────────────────────────────────────────────────────────
+  detailBadges.innerHTML = "";
+  if (info?.gamemode) _addBadge(info.gamemode, "neutral");
+  if (info?.teams)    _addBadge(`${info.teams} team${info.teams !== 1 ? "s" : ""}`, "neutral");
+  if (info?.wools)    _addBadge(`${info.wools} wool${info.wools !== 1 ? "s" : ""}`, "neutral");
+  if (info?.symmetry) _addBadge(info.symmetry.replace("_", " "), "dim");
 
-  // Pipeline steps
+  // ── Name + version ─────────────────────────────────────────────────────
+  detailName.textContent    = info?.name || slug;
+  detailVersion.textContent = info?.version ? `v${info.version}` : "";
+
+  // ── Authors — render placeholders then resolve names async ─────────────
+  detailAuthors.innerHTML = "";
+  for (const author of (info?.authors ?? [])) {
+    const chip = _makeAuthorChip(author.uuid, null);
+    detailAuthors.appendChild(chip);
+    // Resolve name in background; update chip when done
+    api.fetchMinecraftPlayer(author.uuid)
+      .then(player => {
+        const nameEl = chip.querySelector(".map-author-name");
+        if (nameEl) nameEl.textContent = player.name;
+        const avatarEl = chip.querySelector(".map-author-avatar");
+        if (avatarEl) avatarEl.src = _avatarUrl(player.uuid);
+      })
+      .catch(() => { /* leave UUID placeholder */ });
+  }
+
+  // ── Pipeline steps ─────────────────────────────────────────────────────
   detailSteps.innerHTML = "";
   for (const step of steps) {
     const row = document.createElement("div");
@@ -217,22 +322,33 @@ function renderDetail(slug, status) {
     detailSteps.appendChild(row);
   }
 
-  // CTA buttons
-  openEditorBtn.hidden = !editor_ready;
-  openEditorBtn.href   = `/editor?map=${encodeURIComponent(slug)}`;
+  // ── Action buttons ─────────────────────────────────────────────────────
+  openEditorBtn.hidden      = !editor_ready;
+  openEditorBtn.href        = `/editor?map=${encodeURIComponent(slug)}`;
   openEditorBtn.textContent = "Open in Editor →";
-
-  runPipelineBtn.hidden = false;
+  runPipelineBtn.hidden     = false;
   runPipelineBtn.textContent = editor_ready ? "Re-run Pipeline" : "Run Pipeline";
-  runPipelineBtn.disabled = state.isRunning;
-  runPipelineBtn.onclick = () => runPipeline(slug);
+  runPipelineBtn.disabled   = state.isRunning;
+  runPipelineBtn.onclick    = () => runPipeline(slug);
 }
 
-function _addTag(parent, text, variant = "") {
+function _makeAuthorChip(uuid, name) {
+  const chip = document.createElement("div");
+  chip.className = "map-author-chip";
+  const avatarSrc = uuid ? _avatarUrl(uuid) : _AVATAR_EMPTY;
+  const displayName = name ?? uuid?.slice(0, 8) ?? "…";
+  chip.innerHTML = `
+    <img class="map-author-avatar" src="${avatarSrc}" alt="" loading="lazy"/>
+    <span class="map-author-name">${displayName}</span>
+  `;
+  return chip;
+}
+
+function _addBadge(text, variant) {
   const span = document.createElement("span");
-  span.className = `map-meta-tag${variant ? ` map-meta-tag--${variant}` : ""}`;
+  span.className = `badge badge--${variant}`;
   span.textContent = text;
-  parent.appendChild(span);
+  detailBadges.appendChild(span);
 }
 
 // ── URL Import ────────────────────────────────────────────────────────────
@@ -269,9 +385,8 @@ function runPipeline(slug) {
   if (state.isRunning) return;
   state.isRunning = true;
   runPipelineBtn.disabled = true;
-  pipelineConsole.hidden = false;
+  pipelineConsole.hidden  = false;
 
-  // Reset step dots
   const dots = detailSteps.querySelectorAll(".step-dot");
   dots.forEach(d => { d.className = "step-dot step-dot--running"; });
 
@@ -281,13 +396,11 @@ function runPipeline(slug) {
     const { id, status } = JSON.parse(e.data);
     _appendConsoleLine(`[${id}] ${status}`, status === "error" ? "error" : "");
     const allRows = detailSteps.querySelectorAll(".step-row");
-    const steps = ["layout", "symmetry", "xml"];
-    const idx = steps.indexOf(id);
+    const stepIds = ["layout", "symmetry", "xml"];
+    const idx = stepIds.indexOf(id);
     if (idx >= 0 && allRows[idx]) {
       const dot = allRows[idx].querySelector(".step-dot");
-      if (dot) {
-        dot.className = `step-dot step-dot--${status === "done" ? "done" : status === "error" ? "error" : "running"}`;
-      }
+      if (dot) dot.className = `step-dot step-dot--${status === "done" ? "done" : status === "error" ? "error" : "running"}`;
     }
   });
 

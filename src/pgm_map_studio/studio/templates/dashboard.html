@@ -24,76 +24,105 @@
       <span class="topbar-error-text"></span>
       <button class="topbar-error-dismiss" id="error-dismiss-btn" title="Dismiss"><i data-lucide="x"></i></button>
     </div>
-    <button class="action-btn" id="settings-btn" title="Settings"><i data-lucide="settings"></i>Settings</button>
-  </div>
-
-  <!-- Settings dropdown -->
-  <div id="settings-panel" hidden>
-    <div class="settings-title">Configuration</div>
-    <div class="settings-row">
-      <label class="settings-label" for="maps-folder-input">Maps folder</label>
-      <input type="text" id="maps-folder-input" class="settings-input" placeholder="/path/to/maps"/>
-    </div>
-    <div class="settings-row">
-      <label class="settings-label" for="output-folder-input">Output folder</label>
-      <input type="text" id="output-folder-input" class="settings-input" placeholder="/path/to/output"/>
-    </div>
-    <div class="settings-actions">
-      <button class="action-btn action-btn--primary" id="save-settings-btn">Save</button>
-      <span id="settings-msg" class="settings-msg"></span>
-    </div>
   </div>
 </div>
 
 <div id="dashboard-layout">
 
-  <!-- Map list -->
+  <!-- ── Left sidebar ───────────────────────────────────────────────────── -->
   <div id="map-list-panel">
-    <div class="map-list-header">
-      <span class="map-list-title">Maps</span>
-      <input type="text" id="map-filter" class="map-filter-input" placeholder="Filter…"/>
+
+    <!-- Zone 1: Import + Search -->
+    <div class="sidebar-actions">
+      <div class="sidebar-import-row">
+        <input type="text" id="url-import-input" class="field-input" placeholder="Paste map URL…"/>
+        <button class="action-btn" id="url-import-btn"><i data-lucide="download"></i>Import</button>
+      </div>
+      <div id="url-import-status" class="url-import-status" hidden></div>
+      <div class="sidebar-search-row">
+        <div class="sidebar-search-wrap">
+          <span class="sidebar-search-icon"><i data-lucide="search"></i></span>
+          <input type="text" id="map-filter" class="sidebar-search-input" placeholder="Search…"/>
+        </div>
+        <button class="action-btn action-btn--icon" id="filter-btn" title="Filter"><i data-lucide="sliders-horizontal"></i></button>
+      </div>
     </div>
-    <div id="url-import-row" class="url-import-row">
-      <input type="text" id="url-import-input" class="map-filter-input" placeholder="Paste map URL…"/>
-      <button class="action-btn" id="url-import-btn">Import</button>
+
+    <!-- Filter panel (shown when Filter is active) -->
+    <div id="filter-panel" class="sidebar-filter-panel" hidden></div>
+
+    <!-- Zone 2: Maps list -->
+    <div class="sidebar-maps">
+      <section class="panel-section">
+        <div class="section-header section-header--ruled">
+          <h2 class="section-title">Maps</h2>
+          <span id="map-count-badge" class="badge badge--dim"></span>
+        </div>
+        <div id="map-list" class="panel-list">
+          <div class="list-empty">Configure paths below to load maps.</div>
+        </div>
+      </section>
     </div>
-    <div id="url-import-status" class="url-import-status" hidden></div>
-    <div id="map-list">
-      <div class="map-list-empty">Configure paths above to load maps.</div>
+
+    <!-- Zone 3: Settings (snapped to bottom) -->
+    <div class="sidebar-settings">
+      <div class="section-header section-header--ruled">
+        <h2 class="section-title">Settings</h2>
+      </div>
+      <div class="field">
+        <label class="field-label" for="maps-folder-input">Maps folder</label>
+        <input type="text" id="maps-folder-input" class="field-input" placeholder="/path/to/maps"/>
+      </div>
+      <div class="field">
+        <label class="field-label" for="output-folder-input">Output folder</label>
+        <input type="text" id="output-folder-input" class="field-input" placeholder="/path/to/output"/>
+      </div>
+      <div class="panel-actions">
+        <button class="action-btn action-btn--primary" id="save-settings-btn">Save</button>
+        <span id="settings-msg" class="settings-msg"></span>
+      </div>
     </div>
+
   </div>
 
-  <!-- Map detail -->
+  <!-- ── Map detail panel ───────────────────────────────────────────────── -->
   <div id="map-detail-panel">
+
     <div class="map-detail-empty" id="map-detail-empty">
       Select a map from the list.
     </div>
 
     <div id="map-detail-content" hidden>
 
+      <!-- Badge row -->
+      <div id="detail-badges" class="map-detail-badges"></div>
+
+      <!-- Two-column layout -->
       <div class="map-detail-header">
+
+        <!-- Left: name, version, authors, pipeline -->
         <div class="map-detail-main">
           <div class="map-detail-name" id="detail-name"></div>
-          <div class="map-detail-meta" id="detail-meta"></div>
-          <div id="detail-open-wrap">
-            <a id="open-editor-btn" class="action-btn action-btn--primary" hidden>Open in Editor →</a>
-            <button id="run-pipeline-btn" class="action-btn" style="margin-left:8px" hidden>Run Pipeline</button>
+          <div class="map-detail-version" id="detail-version"></div>
+          <div id="detail-authors" class="map-detail-authors"></div>
+          <div class="detail-block">
+            <div class="detail-block-title">Pipeline</div>
+            <div id="detail-steps"></div>
           </div>
         </div>
-        <div class="map-detail-thumb">
-          <img id="detail-thumb" class="map-thumb-img" alt="Map thumbnail" hidden/>
-          <div id="detail-thumb-placeholder" class="map-thumb-placeholder">No map.png</div>
+
+        <!-- Right: thumbnail + action buttons -->
+        <div class="map-detail-aside">
+          <div class="map-detail-thumb">
+            <img id="detail-thumb" class="map-thumb-img" alt="Map thumbnail" hidden/>
+            <div id="detail-thumb-placeholder" class="map-thumb-placeholder">No map.png</div>
+          </div>
+          <div class="map-detail-actions">
+            <a id="open-editor-btn" class="action-btn action-btn--primary" hidden>Open in Editor →</a>
+            <button id="run-pipeline-btn" class="action-btn" hidden>Run Pipeline</button>
+          </div>
         </div>
-      </div>
 
-      <div class="detail-block" id="detail-validation-block" hidden>
-        <div class="detail-block-title">Validation</div>
-        <div id="detail-validation"></div>
-      </div>
-
-      <div class="detail-block">
-        <div class="detail-block-title">Pipeline</div>
-        <div id="detail-steps"></div>
       </div>
 
       <div class="console-wrap" id="pipeline-console" hidden>
