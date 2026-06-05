@@ -1,4 +1,5 @@
 export const TYPE_ICON = {
+  // PGM region primitives
   point:      lucide.Dot,
   block:      lucide.Square,
   rectangle:  lucide.RectangleHorizontal,
@@ -6,6 +7,7 @@ export const TYPE_ICON = {
   cylinder:   lucide.Cylinder,
   circle:     lucide.Circle,
   sphere:     lucide.Globe,
+  // PGM compound / boolean
   complement: lucide.SquaresSubtract,
   union:      lucide.SquaresUnite,
   negative:   lucide.SquareSquare,
@@ -14,6 +16,10 @@ export const TYPE_ICON = {
   mirror:     lucide.SquareSplitHorizontal,
   half:       lucide.ArrowsUpFromLine,
   translate:  lucide.Move3d,
+  // Sketch-only shape types (not PGM region types)
+  polygon:    lucide.Pentagon,
+  lasso:      lucide.Lasso,
+  island:     lucide.Layers,
 };
 
 export function deriveBoundsFromCoords(type, coords) {

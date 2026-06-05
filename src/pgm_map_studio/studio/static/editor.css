@@ -153,6 +153,27 @@ body {
   border-color: var(--accent);
   color: var(--accent-light);
 }
+/*
+ * Operation mode toggle — used in the sketch draw toolbar for Add / Subtract.
+ * Visually identical to .draw-tool-btn--active but coloured by operation so the
+ * active operation is always distinguishable from the active draw tool.
+ * Add an icon + <span class="draw-tool-label"> inside the button for the text label.
+ */
+.draw-tool-btn--op-add {
+  background: #0d948822;
+  border-color: var(--canvas-add-fill);
+  color: var(--canvas-add-fill);
+}
+.draw-tool-btn--op-sub {
+  background: #dc262622;
+  border-color: var(--canvas-sub-fill);
+  color: var(--canvas-sub-fill);
+}
+.draw-tool-label {
+  font-size: 11px;
+  margin-left: 3px;
+  user-select: none;
+}
 
 /* ── ACTIVITY RAIL ── */
 #activity-rail {

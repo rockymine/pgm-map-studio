@@ -44,10 +44,13 @@
     <a href="#console">Console</a>
     <a href="#steps">Step rows</a>
     <a href="#notifications">Notifications</a>
+    <a href="#detail-table">Detail table</a>
+    <a href="#simplify">Simplify widget</a>
 
     <div class="ds-nav-group">Editor Patterns</div>
     <a href="#editor-rail">Activity rail</a>
     <a href="#editor-canvas">Canvas subbar</a>
+    <a href="#editor-canvas-render">Canvas rendering</a>
     <a href="#editor-region-tree">Region tree</a>
     <a href="#editor-history">History panel</a>
     <a href="#editor-ctx-menu">Context menu</a>
@@ -116,6 +119,17 @@
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--accent)"></div><div class="ds-swatch-name">--accent</div><div class="ds-swatch-val">.action-btn--primary border, active tool border, sidebar handle hover</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--accent-light)"></div><div class="ds-swatch-name">--accent-light</div><div class="ds-swatch-val">.draw-tool-btn--active text, focus highlights</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--code-color)"></div><div class="ds-swatch-name">--code-color</div><div class="ds-swatch-val">.detail-xml-pre, inline &lt;code&gt; text</div></div>
+      </div>
+
+      <div class="ds-subhead">Canvas SVG</div>
+      <div class="ds-swatches">
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-island)"></div><div class="ds-swatch-name">--canvas-island</div><div class="ds-swatch-val">Island polygon fill — editor + sketch. Single shared gray.</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-island-stroke)"></div><div class="ds-swatch-name">--canvas-island-stroke</div><div class="ds-swatch-val">Island polygon stroke — darken(fill, 0.55)</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-add-fill)"></div><div class="ds-swatch-name">--canvas-add-fill</div><div class="ds-swatch-val">Sketch add-shape fill</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-sub-fill)"></div><div class="ds-swatch-name">--canvas-sub-fill</div><div class="ds-swatch-val">Sketch subtract-shape fill</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-result-fill)"></div><div class="ds-swatch-name">--canvas-result-fill</div><div class="ds-swatch-val">Sketch computed island polygon fill</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-mirror-fill);border:1px solid var(--canvas-mirror-stroke)"></div><div class="ds-swatch-name">--canvas-mirror-fill/stroke</div><div class="ds-swatch-val">Mirror preview overlay (lower opacity)</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-axis)"></div><div class="ds-swatch-name">--canvas-axis</div><div class="ds-swatch-val">Symmetry axis line and center crosshair</div></div>
       </div>
 
       <div class="ds-subhead">Semantic status</div>
@@ -589,8 +603,11 @@
             <div class="toast visible toast--error" style="position:relative;bottom:auto;right:auto;margin:12px;pointer-events:auto">
               Save failed: conflict
             </div>
+            <div class="toast visible toast--info" style="position:relative;bottom:auto;right:auto;margin:12px;pointer-events:auto">
+              New disconnected mass — created a separate island
+            </div>
           </div>
-          <div class="ds-label">.toast.visible.toast--success / --error</div>
+          <div class="ds-label">.toast.visible.toast--success / --error / --info</div>
         </div>
 
       </div>
@@ -704,6 +721,292 @@
         .canvas-subbar → #draw-toolbar → .draw-tool-btn[--active] + .draw-tool-btn:disabled<br>
         .subbar-sep &nbsp;·&nbsp; .canvas-toolbar → .layer-item &nbsp;·&nbsp; .canvas-cursor &nbsp;·&nbsp; .canvas-subbar-right → .canvas-zoom
       </div>
+
+      <div class="ds-subhead" style="margin-top:24px">Sketch toolbar — dual-axis (tool + operation mode)</div>
+      <div class="ds-sub">The sketch toolbar carries two independent active states: the active <strong>draw tool</strong> (which shape) and the active <strong>operation mode</strong> (add or subtract). A <code style="color:var(--code-color)">.subbar-sep</code> separates the two groups. Operation buttons use coloured active states (<code style="color:var(--code-color)">.draw-tool-btn--op-add / --op-sub</code>) so they are always visually distinct from the active tool. The <code style="color:var(--code-color)">.draw-tool-label</code> span adds the text label inside the button.</div>
+
+      <div class="canvas-subbar" style="max-width:600px;border-radius:var(--radius-md)">
+        <div class="canvas-toolbar">
+          <button class="draw-tool-btn" title="Pan (M)"><i data-lucide="hand"></i></button>
+          <button class="draw-tool-btn" title="Select (S)"><i data-lucide="mouse-pointer-2"></i></button>
+          <button class="draw-tool-btn draw-tool-btn--active" title="Rectangle (R)"><i data-lucide="rectangle-horizontal"></i></button>
+          <button class="draw-tool-btn" title="Circle (O)"><i data-lucide="circle"></i></button>
+          <button class="draw-tool-btn" title="Polygon (P)"><i data-lucide="pentagon"></i></button>
+          <button class="draw-tool-btn" title="Lasso (L)"><i data-lucide="lasso"></i></button>
+        </div>
+        <div class="subbar-sep"></div>
+        <div class="canvas-toolbar">
+          <button class="draw-tool-btn draw-tool-btn--op-add" title="Add mode"><i data-lucide="plus-square"></i><span class="draw-tool-label">Add</span></button>
+          <button class="draw-tool-btn" title="Subtract mode"><i data-lucide="minus-square"></i><span class="draw-tool-label">Sub</span></button>
+        </div>
+        <span class="canvas-cursor">X:&thinsp;42 &ensp; Z:&thinsp;−80</span>
+        <div class="canvas-subbar-right"><span class="canvas-zoom">150%</span></div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;line-height:2">
+        Tool group: .draw-tool-btn + [--active] (one active at a time)<br>
+        Op group: .draw-tool-btn + [--op-add | --op-sub] (one active at a time, colour coded)<br>
+        .draw-tool-label — text span inside op buttons
+      </div>
+    </section>
+
+    <!-- ── Canvas rendering ── -->
+    <section class="ds-section" id="editor-canvas-render">
+      <div class="ds-heading">Canvas rendering</div>
+      <div class="ds-sub">Two distinct visual vocabularies share the same SVG canvas. <strong>Sketch primitives</strong> use solid fills coloured by operation (add = teal, subtract = red) and are overlaid on top of the boolean result polygon. <strong>Editor regions</strong> use dashed, colour-coded outlines when deselected; a selected region switches to a solid outline and gains anchor blocks and resize handles.</div>
+
+      <!-- ── Sketch primitives ── -->
+      <div class="ds-subhead">Sketch primitives — all shape types, deselected (Primitives toggle on)</div>
+      <div class="ds-sub">All four sketch shape types share the same fill/stroke rules. Subtract shapes use the red pair regardless of type.</div>
+      <div class="ds-row" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Add rectangle</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="130" height="110" style="display:block">
+              <rect x="15" y="15" width="100" height="80"
+                style="fill:var(--canvas-add-fill);fill-opacity:0.30;stroke:var(--canvas-add-stroke);stroke-width:1.2"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Add circle</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="130" height="110" style="display:block">
+              <ellipse cx="65" cy="55" rx="50" ry="40"
+                style="fill:var(--canvas-add-fill);fill-opacity:0.30;stroke:var(--canvas-add-stroke);stroke-width:1.2"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Add polygon</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="130" height="110" style="display:block">
+              <polygon points="65,12 118,40 100,95 30,95 12,40"
+                style="fill:var(--canvas-add-fill);fill-opacity:0.30;stroke:var(--canvas-add-stroke);stroke-width:1.2"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Subtract rect (lasso same)</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="130" height="110" style="display:block">
+              <rect x="15" y="15" width="100" height="80"
+                style="fill:var(--canvas-sub-fill);fill-opacity:0.30;stroke:var(--canvas-sub-stroke);stroke-width:1.2"/>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:6px;line-height:1.8">
+        All types: fill-opacity: 0.30 · solid stroke · stroke-width: 1.2<br>
+        Add: fill var(--canvas-add-fill) / stroke var(--canvas-add-stroke)<br>
+        Subtract: fill var(--canvas-sub-fill) / stroke var(--canvas-sub-stroke)
+      </div>
+
+      <!-- ── Selected sketch shape ── -->
+      <div class="ds-subhead" style="margin-top:20px">Sketch primitive — selected (rectangle shown; all types behave the same)</div>
+      <div class="ds-row" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+
+        <div class="ds-group">
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="180" height="140" style="display:block">
+              <!-- Selected: thicker stroke + glow -->
+              <rect x="20" y="20" width="140" height="100"
+                style="fill:var(--canvas-add-fill);fill-opacity:0.30;stroke:var(--canvas-add-stroke);stroke-width:2;filter:drop-shadow(0 0 3px rgba(99,102,241,0.5))"/>
+              <!-- 8 resize handles (screen-space, fixed size) -->
+              <rect x="16.5" y="16.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+              <rect x="86.5" y="16.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+              <rect x="153.5" y="16.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+              <rect x="16.5" y="66.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+              <rect x="153.5" y="66.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+              <rect x="16.5" y="113.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+              <rect x="86.5" y="113.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+              <rect x="153.5" y="113.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+            </svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
+            stroke-width: 2 · drop-shadow glow<br>
+            8 resize handles: 7×7 · fill #0f172a · stroke #94a3b8<br>
+            (polygon: vertex drag handles instead of resize handles)
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Result polygon ── -->
+      <div class="ds-subhead" style="margin-top:20px">Sketch result polygon (computed island, boolean union−subtract)</div>
+      <div class="ds-row" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Result (add rect − overlapping sub rect = L-shape)</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="220" height="150" style="display:block">
+              <!-- Sub rect context (faint outline, outside the result) -->
+              <rect x="80" y="60" width="110" height="80"
+                style="fill:none;stroke:var(--canvas-sub-stroke);stroke-width:0.8;opacity:0.35;stroke-dasharray:3,2"/>
+              <!-- Result polygon: add(20,20→140,120) minus sub(80,60→190,140) -->
+              <!-- Intersection: (80,60)→(140,120) -->
+              <!-- Result path: (20,20)→(140,20)→(140,60)→(80,60)→(80,120)→(20,120)→Z -->
+              <path d="M20,20 L140,20 L140,60 L80,60 L80,120 L20,120 Z"
+                style="fill:var(--canvas-result-fill);fill-opacity:0.18;stroke:var(--canvas-result-stroke);stroke-width:1.5;fill-rule:evenodd"/>
+              <text x="24" y="38" style="fill:var(--canvas-result-stroke);font-size:10px;font-family:ui-monospace,monospace">result</text>
+              <text x="88" y="100" style="fill:var(--canvas-sub-stroke);font-size:10px;font-family:ui-monospace,monospace;opacity:0.5">sub</text>
+            </svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
+            fill var(--canvas-result-fill) · fill-opacity: 0.18<br>
+            stroke var(--canvas-result-stroke) · stroke-width: 1.5<br>
+            fill-rule: evenodd (handles holes from inner subtract shapes)
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Mirror preview overlay (live preview of mirrored sector)</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="220" height="150" style="display:block">
+              <!-- Primary island (result) -->
+              <path d="M20,20 L140,20 L140,60 L80,60 L80,120 L20,120 Z"
+                style="fill:var(--canvas-result-fill);fill-opacity:0.18;stroke:var(--canvas-result-stroke);stroke-width:1.5;fill-rule:evenodd"/>
+              <!-- Mirror overlay: same shape flipped horizontally, visually distinct -->
+              <path d="M200,20 L80,20 L80,60 L140,60 L140,120 L200,120 Z"
+                style="fill:var(--canvas-mirror-fill);stroke:var(--canvas-mirror-stroke);stroke-width:1.5;fill-rule:evenodd"/>
+              <!-- Axis line -->
+              <line x1="110" y1="10" x2="110" y2="140"
+                style="stroke:var(--canvas-axis);stroke-width:1;stroke-dasharray:4,3;opacity:0.6"/>
+              <text x="24" y="38" style="fill:var(--canvas-result-stroke);font-size:10px;font-family:ui-monospace,monospace">primary</text>
+              <text x="146" y="38" style="fill:var(--canvas-mirror-stroke);font-size:10px;font-family:ui-monospace,monospace">mirror</text>
+            </svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
+            fill var(--canvas-mirror-fill) · stroke var(--canvas-mirror-stroke)<br>
+            axis line: var(--canvas-axis) · dashed · not stored as shapes
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Editor regions deselected ── -->
+      <div class="ds-subhead" style="margin-top:20px">Editor regions — deselected</div>
+      <div class="ds-row" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Rectangle / cuboid (spawn)</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="150" height="120" style="display:block">
+              <rect x="15" y="15" width="120" height="90"
+                style="fill:var(--cat-spawn);fill-opacity:0.20;stroke:var(--cat-spawn);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Cylinder / circle (wool room)</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="150" height="120" style="display:block">
+              <ellipse cx="75" cy="60" rx="60" ry="45"
+                style="fill:var(--cat-wool);fill-opacity:0.20;stroke:var(--cat-wool);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Polygon (polygon_2d)</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="150" height="120" style="display:block">
+              <polygon points="75,12 135,45 115,105 35,105 15,45"
+                style="fill:var(--cat-build);fill-opacity:0.20;stroke:var(--cat-build);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2;fill-rule:evenodd"/>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:6px;line-height:1.8">
+        All types: fill-opacity: 0.20 · stroke-opacity: 0.55 · stroke-dasharray: 4,2 · stroke-width: 1.5<br>
+        Colour from region category: --cat-spawn / --cat-wool / --cat-build / --cat-other
+      </div>
+
+      <!-- ── Editor region selected ── -->
+      <div class="ds-subhead" style="margin-top:20px">Editor region — selected (rectangle shown; all types gain the same overlays)</div>
+      <div class="ds-row" style="align-items:flex-start;gap:20px;flex-wrap:wrap">
+
+        <div class="ds-group">
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="290" height="185" style="display:block">
+              <!-- Label above -->
+              <text x="30" y="22"
+                style="fill:var(--cat-spawn);font-size:10px;font-family:ui-monospace,monospace">blue-spawn-region</text>
+              <!-- Selected region: solid, no dasharray, fill-opacity 0.22 -->
+              <rect x="30" y="28" width="210" height="130"
+                style="fill:var(--cat-spawn);fill-opacity:0.22;stroke:var(--cat-spawn);stroke-opacity:0.85;stroke-width:2.5"/>
+              <!-- Anchor block: top-left (min) corner block -->
+              <rect x="30" y="28" width="8" height="8"
+                style="fill:var(--cat-spawn);fill-opacity:0.5;stroke:var(--cat-spawn);stroke-width:2"/>
+              <!-- Anchor block: bottom-right (max) corner block -->
+              <rect x="232" y="150" width="8" height="8"
+                style="fill:var(--cat-spawn);fill-opacity:0.5;stroke:var(--cat-spawn);stroke-width:2"/>
+              <!-- 8 resize handles -->
+              <rect x="26.5" y="24.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="131.5" y="24.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="236.5" y="24.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="26.5" y="89.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="236.5" y="89.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="26.5" y="154.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="131.5" y="154.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="236.5" y="154.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <!-- Dimension pill -->
+              <rect x="102" y="167" width="66" height="16" rx="3"
+                style="fill:var(--cat-spawn);fill-opacity:0.85"/>
+              <text x="135" y="179" text-anchor="middle"
+                style="fill:#0f172a;font-size:10px;font-family:ui-monospace,monospace;font-weight:600">210 × 130</text>
+            </svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
+            selected: fill-opacity 0.22 · stroke-opacity 0.85 · no dasharray · stroke-width 2.5<br>
+            anchors: 1-block square at min and max corner · fill-opacity 0.5 · stroke-width 2<br>
+            handles: 7×7 · fill #0f172a · stroke #94a3b8 · screen-space fixed size<br>
+            label: monospace · region color · above shape · truncated to 36 chars<br>
+            dimension pill: colored bg 85% · dark text · centered below shape
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Cylinder — selected (single center anchor)</div>
+          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+            <svg width="180" height="165" style="display:block">
+              <!-- Label -->
+              <text x="15" y="16" style="fill:var(--cat-wool);font-size:10px;font-family:ui-monospace,monospace">red-wool-room</text>
+              <!-- Selected ellipse -->
+              <ellipse cx="90" cy="85" rx="70" ry="55"
+                style="fill:var(--cat-wool);fill-opacity:0.22;stroke:var(--cat-wool);stroke-opacity:0.85;stroke-width:2.5"/>
+              <!-- Center anchor block -->
+              <rect x="86" y="81" width="8" height="8"
+                style="fill:var(--cat-wool);fill-opacity:0.5;stroke:var(--cat-wool);stroke-width:2"/>
+              <!-- 8 handles around bounding box (20,30) to (160,140) -->
+              <rect x="16.5" y="26.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="86.5" y="26.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="153.5" y="26.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="16.5" y="81.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="153.5" y="81.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="16.5" y="136.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="86.5" y="136.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="153.5" y="136.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <!-- Dimension pill -->
+              <rect x="57" y="149" width="66" height="16" rx="3"
+                style="fill:var(--cat-wool);fill-opacity:0.85"/>
+              <text x="90" y="161" text-anchor="middle"
+                style="fill:#0f172a;font-size:10px;font-family:ui-monospace,monospace;font-weight:600">140 × 110</text>
+            </svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
+            cylinder/circle/sphere: single center anchor<br>
+            handles on bounding box (not on ellipse outline)
+          </div>
+        </div>
+
+      </div>
     </section>
 
     <!-- ── Region tree ── -->
@@ -716,17 +1019,17 @@
 
           <div class="cat-header">Spawn</div>
 
-          <!-- Selected parent with collapse button — cuboid type -->
+          <!-- Union parent selected — all children get region-row--selected-child -->
           <div class="region-row region-row--selected">
             <span class="region-indent">
               <button class="collapse-btn"><i data-lucide="chevron-down"></i></button>
             </span>
-            <span class="region-type-icon"><i data-lucide="box"></i></span>
+            <span class="region-type-icon"><i data-lucide="squares-unite"></i></span>
             <span class="region-label">blue-spawn-region</span>
           </div>
 
-          <!-- Child row with indent + visibility button on hover — point type -->
-          <div class="region-row">
+          <!-- Child 1: point with vis-btn on hover — selected-child because parent is selected -->
+          <div class="region-row region-row--selected-child">
             <span class="region-indent"><span class="indent-pipe"></span></span>
             <span class="region-type-icon"><i data-lucide="dot"></i></span>
             <span class="region-label">blue-spawn-a</span>
@@ -735,18 +1038,44 @@
             </button>
           </div>
 
-          <!-- Selected-child with synthetic label — union type -->
+          <!-- Child 2: block — selected-child because parent is selected -->
           <div class="region-row region-row--selected-child">
             <span class="region-indent"><span class="indent-pipe"></span></span>
-            <span class="region-type-icon" style="color:var(--text-muted)"><i data-lucide="squares-unite"></i></span>
-            <span class="region-label region-label--synthetic">generated-union</span>
+            <span class="region-type-icon"><i data-lucide="square"></i></span>
+            <span class="region-label">blue-spawn-b</span>
+          </div>
+
+          <div class="cat-divider"></div>
+          <div class="cat-header">Build</div>
+
+          <!-- Complement parent — collapsed, not selected -->
+          <div class="region-row">
+            <span class="region-indent">
+              <button class="collapse-btn"><i data-lucide="chevron-right"></i></button>
+            </span>
+            <span class="region-type-icon"><i data-lucide="squares-subtract"></i></span>
+            <span class="region-label">not-build-region</span>
+          </div>
+
+          <!-- First child of complement: "base" tag — the unbounded outer space -->
+          <div class="region-row">
+            <span class="region-indent"><span class="indent-pipe"></span></span>
+            <span class="region-type-icon" style="color:var(--text-muted)"><i data-lucide="square-arrow-out-up-right"></i></span>
+            <span class="region-label region-label--synthetic">everywhere</span>
             <span class="complement-base-tag">base</span>
+          </div>
+
+          <!-- Second child of complement: the region being subtracted — no "base" tag -->
+          <div class="region-row">
+            <span class="region-indent"><span class="indent-pipe"></span></span>
+            <span class="region-type-icon" style="color:var(--text-muted)"><i data-lucide="squares-unite"></i></span>
+            <span class="region-label region-label--synthetic">build-region</span>
           </div>
 
           <div class="cat-divider"></div>
           <div class="cat-header">Wool</div>
 
-          <!-- rectangle type -->
+          <!-- Standalone primitive — no collapse button -->
           <div class="region-row">
             <span class="region-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
             <span class="region-label">blue-wool-room</span>
@@ -757,16 +1086,72 @@
 
         <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
           <div class="ds-label">.cat-header</div>
-          <div class="ds-label">.region-row--selected + .collapse-btn + .region-type-icon</div>
-          <div class="ds-label">.region-row + .indent-pipe + .region-label</div>
+          <div class="ds-label">selected parent: .region-row--selected</div>
+          <div class="ds-label">all children of a selected parent: .region-row--selected-child</div>
+          <div class="ds-label">children: .indent-pipe + .region-type-icon + .region-label</div>
           <div class="ds-label">.vis-btn (appears on row hover)</div>
-          <div class="ds-label">.region-row--selected-child</div>
-          <div class="ds-label">.region-label--synthetic (italic, dim)</div>
-          <div class="ds-label">.complement-base-tag</div>
+          <div class="ds-label">.complement-base-tag — first child of complement only</div>
+          <div class="ds-label">.region-label--synthetic (italic, dim) — generated/unnamed regions</div>
           <div class="ds-label">.cat-divider</div>
         </div>
       </div>
     </section>
+
+      <div class="ds-subhead" style="margin-top:24px">Island tree — sketch Layout activity</div>
+      <div class="ds-sub">Reuses the same <code style="color:var(--code-color)">.region-row</code> and <code style="color:var(--code-color)">.region-type-icon</code> pattern. Islands sit at top level with the <code style="color:var(--code-color)">layers</code> icon. Shape children use their type icon from <code style="color:var(--code-color)">TYPE_ICON</code>. The label shows the shape name and dimension or vertex count. All per-shape actions (delete, focus, change mode, override, participation) are in the context menu — no inline badges or toggles.</div>
+
+      <div class="ds-row" style="align-items:flex-start">
+        <div style="width:290px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+
+          <!-- Island 1 — expanded, selected -->
+          <div class="region-row region-row--selected">
+            <span class="region-indent">
+              <button class="collapse-btn"><i data-lucide="chevron-down"></i></button>
+            </span>
+            <span class="region-type-icon"><i data-lucide="layers"></i></span>
+            <span class="region-label">Island 1</span>
+            <span class="list-tag">3 shapes</span>
+          </div>
+          <!-- Shape children — same indent + type icon + label + dimension tag -->
+          <div class="region-row">
+            <span class="region-indent"><span class="indent-pipe"></span></span>
+            <span class="region-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
+            <span class="region-label">rect</span>
+            <span class="list-tag">129×110</span>
+          </div>
+          <div class="region-row">
+            <span class="region-indent"><span class="indent-pipe"></span></span>
+            <span class="region-type-icon"><i data-lucide="circle"></i></span>
+            <span class="region-label">circle</span>
+            <span class="list-tag">r=40</span>
+          </div>
+          <div class="region-row">
+            <span class="region-indent"><span class="indent-pipe"></span></span>
+            <span class="region-type-icon" style="color:var(--canvas-sub-fill)"><i data-lucide="pentagon"></i></span>
+            <span class="region-label">polygon</span>
+            <span class="list-tag">12 v</span>
+          </div>
+
+          <!-- Island 2 — collapsed -->
+          <div class="region-row">
+            <span class="region-indent">
+              <button class="collapse-btn"><i data-lucide="chevron-right"></i></button>
+            </span>
+            <span class="region-type-icon" style="color:var(--text-muted)"><i data-lucide="layers"></i></span>
+            <span class="region-label region-label--synthetic">Island 2</span>
+            <span class="list-tag">1 shape</span>
+          </div>
+
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
+          <div class="ds-label">.region-row--selected + .collapse-btn + .region-type-icon[layers]</div>
+          <div class="ds-label">shape child: .indent-pipe + .region-type-icon[type] + .region-label</div>
+          <div class="ds-label">.list-tag — dimension or vertex count</div>
+          <div class="ds-label">subtract shape: region-type-icon colour = --canvas-sub-fill</div>
+          <div class="ds-label">closed island: .region-label--synthetic (dimmed)</div>
+          <div class="ds-label">all actions → context menu (right-click)</div>
+        </div>
+      </div>
 
     <!-- ── History panel ── -->
     <section class="ds-section" id="editor-history">
@@ -792,18 +1177,35 @@
       <div class="ds-sub">Right-click menu for region tree items. Keyboard shortcuts are shown with <code style="color:var(--code-color)">kbd</code>. Danger items use a red hover state. Defined in <code style="color:var(--code-color)">editor.css</code>.</div>
 
       <div class="ds-row" style="align-items:flex-start">
-        <div class="ctx-menu" style="position:relative;z-index:auto;box-shadow:none">
-          <button class="ctx-item">Select<kbd>Click</kbd></button>
-          <button class="ctx-item">Rename<kbd>F2</kbd></button>
-          <button class="ctx-item">Duplicate<kbd>⌘D</kbd></button>
-          <div class="ctx-sep"></div>
-          <button class="ctx-item ctx-item--danger">Delete<kbd>Del</kbd></button>
+        <div class="ds-group">
+          <div class="ds-subhead" style="margin-bottom:6px">Region / editor context menu</div>
+          <div class="ctx-menu" style="position:relative;z-index:auto;box-shadow:none">
+            <button class="ctx-item">Select<kbd>Click</kbd></button>
+            <button class="ctx-item">Rename<kbd>F2</kbd></button>
+            <button class="ctx-item">Duplicate<kbd>⌘D</kbd></button>
+            <div class="ctx-sep"></div>
+            <button class="ctx-item ctx-item--danger">Delete<kbd>Del</kbd></button>
+          </div>
+        </div>
+        <div class="ds-group">
+          <div class="ds-subhead" style="margin-bottom:6px">Sketch island / shape context menu</div>
+          <div class="ctx-menu" style="position:relative;z-index:auto;box-shadow:none">
+            <button class="ctx-item">Focus on canvas</button>
+            <button class="ctx-item">Change mode → subtract</button>
+            <div class="ctx-sep"></div>
+            <button class="ctx-item">Enable override</button>
+            <button class="ctx-item">Disable mirror participation</button>
+            <div class="ctx-sep"></div>
+            <button class="ctx-item ctx-item--danger">Delete<kbd>Del</kbd></button>
+          </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
           <div class="ds-label">.ctx-menu</div>
-          <div class="ds-label">.ctx-item + kbd (shortcut)</div>
+          <div class="ds-label">.ctx-item + optional kbd</div>
           <div class="ds-label">.ctx-sep</div>
-          <div class="ds-label">.ctx-item--danger (red hover)</div>
+          <div class="ds-label">.ctx-item--danger</div>
+          <div class="ds-label" style="margin-top:8px">Sketch shapes have no inline badges or toggles.</div>
+          <div class="ds-label">Override and participation toggle → ctx menu only.</div>
         </div>
       </div>
     </section>
@@ -856,6 +1258,82 @@
           <div class="ds-label">.detail-xml-pre (monospace code/xml block)</div>
         </div>
       </div>
+    </section>
+
+      <div class="ds-subhead" style="margin-top:24px">Sketch inspector — detail table + simplify widget</div>
+      <div class="ds-sub">The sketch right-panel inspector uses <code style="color:var(--code-color)">.detail-table</code> for rectangle (MIN/MAX/SIZE) and polygon (vertex list). Lasso shapes additionally show a <code style="color:var(--code-color)">.simplify-section</code> with area readout, tolerance input, and Generalize button. Defined in <code style="color:var(--code-color)">components.css</code>.</div>
+
+      <div class="ds-row" style="align-items:flex-start">
+
+        <!-- Rectangle inspector -->
+        <div style="width:240px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+          <div style="padding:10px 14px;display:flex;flex-direction:column;gap:var(--space-3)">
+            <div class="detail-header">
+              <span class="region-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
+              <span class="detail-label">s1</span>
+              <span class="badge badge--neutral">Rectangle</span>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Geometry</div>
+              <table class="detail-table">
+                <thead><tr><th></th><th>MIN</th><th>MAX</th><th>SIZE</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="detail-axis">X</td>
+                    <td class="detail-val"><input class="detail-bounds-input" type="number" value="-171"/></td>
+                    <td class="detail-val"><input class="detail-bounds-input" type="number" value="-42"/></td>
+                    <td class="detail-size">129</td>
+                  </tr>
+                  <tr>
+                    <td class="detail-axis">Z</td>
+                    <td class="detail-val"><input class="detail-bounds-input" type="number" value="-219"/></td>
+                    <td class="detail-val"><input class="detail-bounds-input" type="number" value="-109"/></td>
+                    <td class="detail-size">110</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lasso inspector with simplify section -->
+        <div style="width:240px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+          <div style="padding:10px 14px;display:flex;flex-direction:column;gap:var(--space-3)">
+            <div class="detail-header">
+              <span class="region-type-icon"><i data-lucide="lasso"></i></span>
+              <span class="detail-label">s4</span>
+              <span class="badge badge--neutral">Lasso</span>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Simplify</div>
+              <div class="simplify-section">
+                <div class="simplify-row">
+                  <span class="simplify-label">Area</span>
+                  <span class="simplify-value">4 820 blocks²</span>
+                </div>
+                <div class="simplify-row">
+                  <span class="simplify-label">Tolerance</span>
+                  <div class="simplify-input-row">
+                    <input class="detail-bounds-input" type="number" value="50" style="width:56px"/>
+                    <span class="simplify-unit">blocks²</span>
+                  </div>
+                </div>
+                <button class="action-btn" style="width:100%;justify-content:center">Generalize</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
+          <div class="ds-label">.detail-table → th + .detail-axis + .detail-val + .detail-size</div>
+          <div class="ds-label">.detail-val .detail-bounds-input (width:60px)</div>
+          <div class="ds-label" style="margin-top:8px">.simplify-section → .simplify-row</div>
+          <div class="ds-label">.simplify-label + .simplify-value (read-only)</div>
+          <div class="ds-label">.simplify-input-row + .simplify-unit</div>
+          <div class="ds-label">Generalize: .action-btn full-width</div>
+        </div>
+      </div>
+
     </section>
 
     <hr class="ds-divider"/>
@@ -1257,15 +1735,28 @@
       <div class="ds-heading">Activity rail icons</div>
       <div class="ds-sub">Each <code style="color:var(--code-color)">.activity-btn</code> in <code style="color:var(--code-color)">editor.html</code> uses a <code style="color:var(--code-color)">data-lucide</code> attribute rendered by <code style="color:var(--code-color)">lucide.createIcons()</code> at 22×22 px / stroke-width 1.5 via main.js.</div>
 
+      <div class="ds-subhead">Editor workflow (existing-map)</div>
       <table class="ds-rules-table">
         <thead><tr><th>Activity</th><th>Icon</th><th>Lucide name</th><th>Status</th></tr></thead>
         <tbody>
+          <tr><td>Configure</td><td><i data-lucide="layers"></i></td><td>layers</td><td>Planned</td></tr>
           <tr><td>Overview</td><td><i data-lucide="book-open-text"></i></td><td>book-open-text</td><td>Active in M1</td></tr>
           <tr><td>Teams</td><td><i data-lucide="users"></i></td><td>users</td><td>Active in M1</td></tr>
-          <tr><td>Objective</td><td><i data-lucide="goal"></i></td><td>goal</td><td>Planned</td></tr>
+          <tr><td>Build Regions</td><td><i data-lucide="fence"></i></td><td>fence</td><td>Planned</td></tr>
+          <tr><td>Objectives</td><td><i data-lucide="goal"></i></td><td>goal</td><td>Planned</td></tr>
+          <tr><td>Filters</td><td><i data-lucide="gavel"></i></td><td>gavel</td><td>Planned</td></tr>
           <tr><td>Regions</td><td><i data-lucide="layout-dashboard"></i></td><td>layout-dashboard</td><td>Planned</td></tr>
-          <tr><td>Filters</td><td><i data-lucide="gavel"></i></td><td>gavel</td><td>Disabled / future</td></tr>
-          <tr><td>Export</td><td><i data-lucide="archive"></i></td><td>archive</td><td>Disabled / future</td></tr>
+          <tr><td>Export</td><td><i data-lucide="archive"></i></td><td>archive</td><td>Planned</td></tr>
+        </tbody>
+      </table>
+
+      <div class="ds-subhead" style="margin-top:16px">Sketch workflow (concept-first)</div>
+      <table class="ds-rules-table">
+        <thead><tr><th>Activity</th><th>Icon</th><th>Lucide name</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Overview</td><td><i data-lucide="book-open-text"></i></td><td>book-open-text</td><td>Same icon as editor</td></tr>
+          <tr><td>Setup</td><td><i data-lucide="axis-3d"></i></td><td>axis-3d</td><td>Bounding box, center, mirror mode</td></tr>
+          <tr><td>Layout</td><td><i data-lucide="pentagon"></i></td><td>pentagon</td><td>Island drawing</td></tr>
         </tbody>
       </table>
     </section>
@@ -1275,7 +1766,7 @@
       <div class="ds-heading">Draw toolbar &amp; action icons</div>
       <div class="ds-sub">Icons used in canvas toolbars and interface actions. All via Lucide <code style="color:var(--code-color)">data-lucide</code> rendered at 16×16 px / stroke-width 1.5. Draw tools are defined in <code style="color:var(--code-color)">region-types.js → DRAW_TOOLS</code> with keyboard shortcuts.</div>
 
-      <div class="ds-subhead">Canvas draw toolbar — Regions activity (DRAW_TOOLS keys)</div>
+      <div class="ds-subhead">Editor draw toolbar — Regions activity (DRAW_TOOLS keys)</div>
       <table class="ds-rules-table">
         <thead><tr><th>Tool</th><th>Icon</th><th>Lucide name</th><th>Key</th><th>Draw mode</th></tr></thead>
         <tbody>
@@ -1290,13 +1781,30 @@
         </tbody>
       </table>
 
-      <div class="ds-subhead">Other interface icons</div>
+      <div class="ds-subhead" style="margin-top:16px">Sketch draw toolbar — Layout activity</div>
+      <table class="ds-rules-table">
+        <thead><tr><th>Tool / control</th><th>Icon</th><th>Lucide name</th><th>Key</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Pan / move</td><td><i data-lucide="hand"></i></td><td>hand</td><td>M</td><td>shared</td></tr>
+          <tr><td>Select</td><td><i data-lucide="mouse-pointer-2"></i></td><td>mouse-pointer-2</td><td>S</td><td>shared</td></tr>
+          <tr><td>Rectangle</td><td><i data-lucide="rectangle-horizontal"></i></td><td>rectangle-horizontal</td><td>R</td><td>drag</td></tr>
+          <tr><td>Circle</td><td><i data-lucide="circle"></i></td><td>circle</td><td>O</td><td>radial</td></tr>
+          <tr><td>Polygon</td><td><i data-lucide="pentagon"></i></td><td>pentagon</td><td>P</td><td>click vertices, dbl-click to close</td></tr>
+          <tr><td>Lasso</td><td><i data-lucide="lasso"></i></td><td>lasso</td><td>L</td><td>hold-drag freeform</td></tr>
+          <tr><td colspan="5" style="color:var(--text-muted);font-size:11px;padding-top:6px">Operation mode (second axis — separated by .subbar-sep)</td></tr>
+          <tr><td>Add mode</td><td><i data-lucide="plus-square"></i></td><td>plus-square</td><td>—</td><td>.draw-tool-btn--op-add when active</td></tr>
+          <tr><td>Subtract mode</td><td><i data-lucide="minus-square"></i></td><td>minus-square</td><td>—</td><td>.draw-tool-btn--op-sub when active</td></tr>
+        </tbody>
+      </table>
+
+      <div class="ds-subhead" style="margin-top:16px">Other interface icons</div>
       <table class="ds-rules-table">
         <thead><tr><th>Context</th><th>Icon</th><th>Lucide name</th></tr></thead>
         <tbody>
           <tr><td>Topbar breadcrumb home</td><td><i data-lucide="house"></i></td><td>house</td></tr>
           <tr><td>Visibility toggle — visible</td><td><i data-lucide="eye"></i></td><td>eye</td></tr>
           <tr><td>Visibility toggle — hidden</td><td><i data-lucide="eye-off"></i></td><td>eye-off</td></tr>
+          <tr><td>Island in sketch tree</td><td><i data-lucide="layers"></i></td><td>layers</td></tr>
         </tbody>
       </table>
     </section>
@@ -1467,6 +1975,9 @@
         <li><strong>Semantic labels:</strong> use <code>.badge</code> with a semantic variant (<code>--success</code>, <code>--warning</code>, <code>--error</code>, <code>--neutral</code>, <code>--dim</code>). Works both inline and standalone. Do not create separate tag or badge systems.</li>
         <li><strong>Notification system:</strong> exactly four types (topbar error, toast, canvas hint, panel warning). Adding a fifth requires updating this page.</li>
         <li><strong>Vis toggle:</strong> always <code>.vis-btn</code>. Appears on row hover by default; use <code>.vis-btn--always</code> to make it always visible.</li>
+        <li><strong>Canvas colours:</strong> always use <code>--canvas-*</code> tokens (tokens.css). Never hardcode SVG fill, stroke, or overlay colours. Island polygons always use <code>--canvas-island</code> — the same gray in both the editor and sketch, with no per-island colour variation.</li>
+        <li><strong>Sketch island tree:</strong> reuse <code>.region-row</code>, <code>.region-type-icon</code>, <code>.region-label</code>, <code>.list-tag</code>. The island level uses the <code>layers</code> icon. Shape children use their type icon from <code>TYPE_ICON</code>. No inline operation badges or override buttons — all per-shape actions go in the context menu.</li>
+        <li><strong>Operation mode toggle:</strong> use <code>.draw-tool-btn--op-add</code> / <code>--op-sub</code> for the sketch add/subtract mode buttons. Separate the tool group and operation group with a <code>.subbar-sep</code>. Both groups use <code>.draw-tool-btn</code> as the base class.</li>
         <li><strong>New reusable patterns:</strong> add to <code>components.css</code> and demonstrate on <code>/design</code> before using elsewhere.</li>
         <li><strong>New editor-specific patterns:</strong> add to <code>editor.css</code> and demonstrate in the Editor Patterns section on <code>/design</code>.</li>
         <li><strong>IDs are for JavaScript, not CSS:</strong> workspace IDs (<code>ov-left</code>, <code>pt-right</code>, …) exist so JS can find elements. Do not use them as styling selectors — use <code>.workspace-sidebar</code>, <code>.workspace-scroll</code>, <code>.workspace-canvas</code> instead. Only override the one property that is genuinely unique per element (usually <code>width</code>).</li>

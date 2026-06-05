@@ -332,6 +332,11 @@
   border-color: var(--color-error);
   color: var(--color-error-light);
 }
+.toast--info {
+  background: var(--bg-panel);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -471,6 +476,76 @@
   font-size: 12px; color: var(--text-secondary);
   line-height: 1.6; margin-bottom: var(--space-2);
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DETAIL TABLE  (sketch inspector — rectangle MIN/MAX/SIZE, polygon vertices)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.detail-table th {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: right;
+  padding: 0 4px 4px;
+  user-select: none;
+}
+.detail-table th:first-child { text-align: left; }
+.detail-axis {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 2px 4px 2px 0;
+  user-select: none;
+}
+.detail-val { padding: 2px 2px; }
+.detail-val .detail-bounds-input { width: 60px; }
+.detail-size {
+  text-align: right;
+  padding: 2px 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* Scrollable vertex list used for polygon shapes */
+.detail-vertex-scroll {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SIMPLIFY WIDGET  (lasso shape inspector — area + tolerance + generalize)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.simplify-section { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.simplify-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.simplify-label { font-size: 12px; color: var(--text-secondary); }
+.simplify-value {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.simplify-input-row { display: flex; align-items: center; gap: var(--space-1); }
+.simplify-unit { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
 
 
 /* ══════════════════════════════════════════════════════════════════════════
