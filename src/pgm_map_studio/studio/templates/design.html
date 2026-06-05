@@ -99,15 +99,15 @@
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-base)"></div><div class="ds-swatch-name">--bg-base</div><div class="ds-swatch-val">body, console output, code blocks</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel)"></div><div class="ds-swatch-name">--bg-panel</div><div class="ds-swatch-val">sidebars, panels, topbar, .action-btn base</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-selected)"></div><div class="ds-swatch-name">--bg-selected</div><div class="ds-swatch-val">.list-row--selected, .action-btn--primary base, active draw tool</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-selected-hover)"></div><div class="ds-swatch-name">--bg-selected-hover</div><div class="ds-swatch-val">.list-row:hover, .region-row:hover</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-selected-hover)"></div><div class="ds-swatch-name">--bg-selected-hover</div><div class="ds-swatch-val">.list-row:hover, .geo-row:hover</div></div>
       </div>
 
       <div class="ds-subhead">Text hierarchy</div>
       <div class="ds-swatches">
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-muted)"></div><div class="ds-swatch-name">--text-muted</div><div class="ds-swatch-val">.section-title, .list-tag, section group labels</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-dim)"></div><div class="ds-swatch-name">--text-dim</div><div class="ds-swatch-val">.region-label--synthetic, .badge--dim, .console-line</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-dim)"></div><div class="ds-swatch-name">--text-dim</div><div class="ds-swatch-val">.geo-label--synthetic, .badge--dim, .console-line</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-secondary)"></div><div class="ds-swatch-name">--text-secondary</div><div class="ds-swatch-val">.field-label, .action-btn text, .section-desc</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-primary)"></div><div class="ds-swatch-name">--text-primary</div><div class="ds-swatch-val">.list-label, .region-label, .field-input text</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-primary)"></div><div class="ds-swatch-name">--text-primary</div><div class="ds-swatch-val">.list-label, .geo-label, .field-input text</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-bright)"></div><div class="ds-swatch-name">--text-bright</div><div class="ds-swatch-val">body default, topbar titles, cat-header</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-white)"></div><div class="ds-swatch-name">--text-white</div><div class="ds-swatch-val">.action-btn:hover, active activity-btn</div></div>
       </div>
@@ -1047,73 +1047,73 @@
     <!-- ── Region tree ── -->
     <section class="ds-section" id="editor-region-tree">
       <div class="ds-heading">Region tree item</div>
-      <div class="ds-sub">Used in the Regions activity sidebar. Each row is a <code style="color:var(--code-color)">.region-row</code>. Indent depth is expressed with <code style="color:var(--code-color)">.indent-pipe</code> spans. Category dividers use <code style="color:var(--code-color)">.cat-header</code> and <code style="color:var(--code-color)">.cat-divider</code>. Defined in <code style="color:var(--code-color)">editor.css</code>.</div>
+      <div class="ds-sub">Used in the Regions activity sidebar. Each row is a <code style="color:var(--code-color)">.geo-row</code>. Indent depth is expressed with <code style="color:var(--code-color)">.indent-pipe</code> spans. Category dividers use <code style="color:var(--code-color)">.cat-header</code> and <code style="color:var(--code-color)">.cat-divider</code>. Defined in <code style="color:var(--code-color)">editor.css</code>.</div>
 
       <div class="ds-row" style="align-items:flex-start">
         <div style="width:290px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
 
           <div class="cat-header">Spawn</div>
 
-          <!-- Union parent selected — all children get region-row--selected-child -->
-          <div class="region-row region-row--selected">
-            <span class="region-indent">
+          <!-- Union parent selected — all children get geo-row--selected-child -->
+          <div class="geo-row geo-row--selected">
+            <span class="geo-indent">
               <button class="collapse-btn"><i data-lucide="chevron-down"></i></button>
             </span>
-            <span class="region-type-icon"><i data-lucide="squares-unite"></i></span>
-            <span class="region-label">blue-spawn-region</span>
+            <span class="geo-type-icon"><i data-lucide="squares-unite"></i></span>
+            <span class="geo-label">blue-spawn-region</span>
           </div>
 
           <!-- Child 1: point with vis-btn on hover — selected-child because parent is selected -->
-          <div class="region-row region-row--selected-child">
-            <span class="region-indent"><span class="indent-pipe"></span></span>
-            <span class="region-type-icon"><i data-lucide="dot"></i></span>
-            <span class="region-label">blue-spawn-a</span>
+          <div class="geo-row geo-row--selected-child">
+            <span class="geo-indent"><span class="indent-pipe"></span></span>
+            <span class="geo-type-icon"><i data-lucide="dot"></i></span>
+            <span class="geo-label">blue-spawn-a</span>
             <button class="vis-btn" title="Toggle visibility">
               <i data-lucide="eye"></i>
             </button>
           </div>
 
           <!-- Child 2: block — selected-child because parent is selected -->
-          <div class="region-row region-row--selected-child">
-            <span class="region-indent"><span class="indent-pipe"></span></span>
-            <span class="region-type-icon"><i data-lucide="square"></i></span>
-            <span class="region-label">blue-spawn-b</span>
+          <div class="geo-row geo-row--selected-child">
+            <span class="geo-indent"><span class="indent-pipe"></span></span>
+            <span class="geo-type-icon"><i data-lucide="square"></i></span>
+            <span class="geo-label">blue-spawn-b</span>
           </div>
 
           <div class="cat-divider"></div>
           <div class="cat-header">Build</div>
 
           <!-- Complement parent — collapsed, not selected -->
-          <div class="region-row">
-            <span class="region-indent">
+          <div class="geo-row">
+            <span class="geo-indent">
               <button class="collapse-btn"><i data-lucide="chevron-right"></i></button>
             </span>
-            <span class="region-type-icon"><i data-lucide="squares-subtract"></i></span>
-            <span class="region-label">not-build-region</span>
+            <span class="geo-type-icon"><i data-lucide="squares-subtract"></i></span>
+            <span class="geo-label">not-build-region</span>
           </div>
 
           <!-- First child of complement: "base" tag — the unbounded outer space -->
-          <div class="region-row">
-            <span class="region-indent"><span class="indent-pipe"></span></span>
-            <span class="region-type-icon" style="color:var(--text-muted)"><i data-lucide="square-arrow-out-up-right"></i></span>
-            <span class="region-label region-label--synthetic">everywhere</span>
+          <div class="geo-row">
+            <span class="geo-indent"><span class="indent-pipe"></span></span>
+            <span class="geo-type-icon" style="color:var(--text-muted)"><i data-lucide="square-arrow-out-up-right"></i></span>
+            <span class="geo-label geo-label--synthetic">everywhere</span>
             <span class="complement-base-tag">base</span>
           </div>
 
           <!-- Second child of complement: the region being subtracted — no "base" tag -->
-          <div class="region-row">
-            <span class="region-indent"><span class="indent-pipe"></span></span>
-            <span class="region-type-icon" style="color:var(--text-muted)"><i data-lucide="squares-unite"></i></span>
-            <span class="region-label region-label--synthetic">build-region</span>
+          <div class="geo-row">
+            <span class="geo-indent"><span class="indent-pipe"></span></span>
+            <span class="geo-type-icon" style="color:var(--text-muted)"><i data-lucide="squares-unite"></i></span>
+            <span class="geo-label geo-label--synthetic">build-region</span>
           </div>
 
           <div class="cat-divider"></div>
           <div class="cat-header">Wool</div>
 
           <!-- Standalone primitive — no collapse button -->
-          <div class="region-row">
-            <span class="region-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
-            <span class="region-label">blue-wool-room</span>
+          <div class="geo-row">
+            <span class="geo-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
+            <span class="geo-label">blue-wool-room</span>
             <span class="list-tag">Blue</span>
           </div>
 
@@ -1121,69 +1121,69 @@
 
         <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
           <div class="ds-label">.cat-header</div>
-          <div class="ds-label">selected parent: .region-row--selected</div>
-          <div class="ds-label">all children of a selected parent: .region-row--selected-child</div>
-          <div class="ds-label">children: .indent-pipe + .region-type-icon + .region-label</div>
+          <div class="ds-label">selected parent: .geo-row--selected</div>
+          <div class="ds-label">all children of a selected parent: .geo-row--selected-child</div>
+          <div class="ds-label">children: .indent-pipe + .geo-type-icon + .geo-label</div>
           <div class="ds-label">.vis-btn (appears on row hover)</div>
           <div class="ds-label">.complement-base-tag — first child of complement only</div>
-          <div class="ds-label">.region-label--synthetic (italic, dim) — generated/unnamed regions</div>
+          <div class="ds-label">.geo-label--synthetic (italic, dim) — generated/unnamed regions</div>
           <div class="ds-label">.cat-divider</div>
         </div>
       </div>
     </section>
 
       <div class="ds-subhead" style="margin-top:24px">Island tree — sketch Layout activity</div>
-      <div class="ds-sub">Reuses the same <code style="color:var(--code-color)">.region-row</code> and <code style="color:var(--code-color)">.region-type-icon</code> pattern. Islands sit at top level with the <code style="color:var(--code-color)">layers</code> icon. Shape children use their type icon from <code style="color:var(--code-color)">TYPE_ICON</code>. The label shows the shape name and dimension or vertex count. All per-shape actions (delete, focus, change mode, override, participation) are in the context menu — no inline badges or toggles.</div>
+      <div class="ds-sub">Reuses the same <code style="color:var(--code-color)">.geo-row</code> and <code style="color:var(--code-color)">.geo-type-icon</code> pattern. Islands sit at top level with the <code style="color:var(--code-color)">layers</code> icon. Shape children use their type icon from <code style="color:var(--code-color)">TYPE_ICON</code>. The label shows the shape name and dimension or vertex count. All per-shape actions (delete, focus, change mode, override, participation) are in the context menu — no inline badges or toggles.</div>
 
       <div class="ds-row" style="align-items:flex-start">
         <div style="width:290px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
 
           <!-- Island 1 — expanded, selected -->
-          <div class="region-row region-row--selected">
-            <span class="region-indent">
+          <div class="geo-row geo-row--selected">
+            <span class="geo-indent">
               <button class="collapse-btn"><i data-lucide="chevron-down"></i></button>
             </span>
-            <span class="region-type-icon"><i data-lucide="layers"></i></span>
-            <span class="region-label">Island 1</span>
+            <span class="geo-type-icon"><i data-lucide="layers"></i></span>
+            <span class="geo-label">Island 1</span>
             <span class="list-tag">3 shapes</span>
           </div>
           <!-- Shape children — same indent + type icon + label + dimension tag -->
-          <div class="region-row">
-            <span class="region-indent"><span class="indent-pipe"></span></span>
-            <span class="region-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
-            <span class="region-label">rect</span>
+          <div class="geo-row">
+            <span class="geo-indent"><span class="indent-pipe"></span></span>
+            <span class="geo-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
+            <span class="geo-label">rect</span>
             <span class="list-tag">129×110</span>
           </div>
-          <div class="region-row">
-            <span class="region-indent"><span class="indent-pipe"></span></span>
-            <span class="region-type-icon"><i data-lucide="circle"></i></span>
-            <span class="region-label">circle</span>
+          <div class="geo-row">
+            <span class="geo-indent"><span class="indent-pipe"></span></span>
+            <span class="geo-type-icon"><i data-lucide="circle"></i></span>
+            <span class="geo-label">circle</span>
             <span class="list-tag">r=40</span>
           </div>
-          <div class="region-row">
-            <span class="region-indent"><span class="indent-pipe"></span></span>
-            <span class="region-type-icon" style="color:var(--canvas-sub-fill)"><i data-lucide="pentagon"></i></span>
-            <span class="region-label">polygon</span>
+          <div class="geo-row">
+            <span class="geo-indent"><span class="indent-pipe"></span></span>
+            <span class="geo-type-icon" style="color:var(--canvas-sub-fill)"><i data-lucide="pentagon"></i></span>
+            <span class="geo-label">polygon</span>
             <span class="list-tag">12 v</span>
           </div>
 
           <!-- Island 2 — collapsed -->
-          <div class="region-row">
-            <span class="region-indent">
+          <div class="geo-row">
+            <span class="geo-indent">
               <button class="collapse-btn"><i data-lucide="chevron-right"></i></button>
             </span>
-            <span class="region-type-icon" style="color:var(--text-muted)"><i data-lucide="layers"></i></span>
-            <span class="region-label region-label--synthetic">Island 2</span>
+            <span class="geo-type-icon" style="color:var(--text-muted)"><i data-lucide="layers"></i></span>
+            <span class="geo-label geo-label--synthetic">Island 2</span>
             <span class="list-tag">1 shape</span>
           </div>
 
         </div>
         <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
-          <div class="ds-label">.region-row--selected + .collapse-btn + .region-type-icon[layers]</div>
-          <div class="ds-label">shape child: .indent-pipe + .region-type-icon[type] + .region-label</div>
+          <div class="ds-label">.geo-row--selected + .collapse-btn + .geo-type-icon[layers]</div>
+          <div class="ds-label">shape child: .indent-pipe + .geo-type-icon[type] + .geo-label</div>
           <div class="ds-label">.list-tag — dimension or vertex count</div>
-          <div class="ds-label">subtract shape: region-type-icon colour = --canvas-sub-fill</div>
-          <div class="ds-label">closed island: .region-label--synthetic (dimmed)</div>
+          <div class="ds-label">subtract shape: geo-type-icon colour = --canvas-sub-fill</div>
+          <div class="ds-label">closed island: .geo-label--synthetic (dimmed)</div>
           <div class="ds-label">all actions → context menu (right-click)</div>
         </div>
       </div>
@@ -1304,7 +1304,7 @@
         <div style="width:240px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
           <div style="padding:10px 14px;display:flex;flex-direction:column;gap:var(--space-3)">
             <div class="detail-header">
-              <span class="region-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
+              <span class="geo-type-icon"><i data-lucide="rectangle-horizontal"></i></span>
               <span class="detail-label">s1</span>
               <span class="badge badge--neutral">Rectangle</span>
             </div>
@@ -1335,7 +1335,7 @@
         <div style="width:240px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
           <div style="padding:10px 14px;display:flex;flex-direction:column;gap:var(--space-3)">
             <div class="detail-header">
-              <span class="region-type-icon"><i data-lucide="lasso"></i></span>
+              <span class="geo-type-icon"><i data-lucide="lasso"></i></span>
               <span class="detail-label">s4</span>
               <span class="badge badge--neutral">Lasso</span>
             </div>
@@ -1725,7 +1725,7 @@
       <div class="ds-heading">Region type icons</div>
       <div class="ds-sub">
         Defined in <code style="color:var(--code-color)">region/region-types.js → TYPE_ICON</code>.
-        Rendered at runtime by <code style="color:var(--code-color)">typeIcon(type, size)</code> using <code style="color:var(--code-color)">lucide.createSvgIcon()</code> at 13 px / stroke-width 1.5, wrapped in <code style="color:var(--code-color)">.region-type-icon</code>.
+        Rendered at runtime by <code style="color:var(--code-color)">typeIcon(type, size)</code> using <code style="color:var(--code-color)">lucide.createSvgIcon()</code> at 13 px / stroke-width 1.5, wrapped in <code style="color:var(--code-color)">.geo-type-icon</code>.
         Category colour is applied to the wrapper via inline <code style="color:var(--code-color)">color:</code> (icons use <code style="color:var(--code-color)">currentColor</code>).
       </div>
 
@@ -1733,13 +1733,13 @@
       <table class="ds-rules-table">
         <thead><tr><th>Type</th><th>Icon</th><th>Lucide name</th><th>Geometry</th></tr></thead>
         <tbody>
-          <tr><td>point</td><td><span class="region-type-icon"><i data-lucide="dot"></i></span></td><td>dot</td><td>Single coordinate (x, y, z)</td></tr>
-          <tr><td>block</td><td><span class="region-type-icon"><i data-lucide="square"></i></span></td><td>square</td><td>Single 1×1×1 block</td></tr>
-          <tr><td>rectangle</td><td><span class="region-type-icon"><i data-lucide="rectangle-horizontal"></i></span></td><td>rectangle-horizontal</td><td>2D axis-aligned rectangle (xz plane)</td></tr>
-          <tr><td>cuboid</td><td><span class="region-type-icon"><i data-lucide="box"></i></span></td><td>box</td><td>3D axis-aligned box (min / max coords)</td></tr>
-          <tr><td>cylinder</td><td><span class="region-type-icon"><i data-lucide="cylinder"></i></span></td><td>cylinder</td><td>Vertical cylinder (base + radius + height)</td></tr>
-          <tr><td>circle</td><td><span class="region-type-icon"><i data-lucide="circle"></i></span></td><td>circle</td><td>2D circle (center + radius, xz plane)</td></tr>
-          <tr><td>sphere</td><td><span class="region-type-icon"><i data-lucide="globe"></i></span></td><td>globe</td><td>3D sphere (origin + radius)</td></tr>
+          <tr><td>point</td><td><span class="geo-type-icon"><i data-lucide="dot"></i></span></td><td>dot</td><td>Single coordinate (x, y, z)</td></tr>
+          <tr><td>block</td><td><span class="geo-type-icon"><i data-lucide="square"></i></span></td><td>square</td><td>Single 1×1×1 block</td></tr>
+          <tr><td>rectangle</td><td><span class="geo-type-icon"><i data-lucide="rectangle-horizontal"></i></span></td><td>rectangle-horizontal</td><td>2D axis-aligned rectangle (xz plane)</td></tr>
+          <tr><td>cuboid</td><td><span class="geo-type-icon"><i data-lucide="box"></i></span></td><td>box</td><td>3D axis-aligned box (min / max coords)</td></tr>
+          <tr><td>cylinder</td><td><span class="geo-type-icon"><i data-lucide="cylinder"></i></span></td><td>cylinder</td><td>Vertical cylinder (base + radius + height)</td></tr>
+          <tr><td>circle</td><td><span class="geo-type-icon"><i data-lucide="circle"></i></span></td><td>circle</td><td>2D circle (center + radius, xz plane)</td></tr>
+          <tr><td>sphere</td><td><span class="geo-type-icon"><i data-lucide="globe"></i></span></td><td>globe</td><td>3D sphere (origin + radius)</td></tr>
         </tbody>
       </table>
 
@@ -1747,20 +1747,20 @@
       <table class="ds-rules-table">
         <thead><tr><th>Type</th><th>Icon</th><th>Lucide name</th><th>Meaning</th></tr></thead>
         <tbody>
-          <tr><td>union</td><td><span class="region-type-icon"><i data-lucide="squares-unite"></i></span></td><td>squares-unite</td><td>All space covered by any child region</td></tr>
-          <tr><td>intersect</td><td><span class="region-type-icon"><i data-lucide="squares-intersect"></i></span></td><td>squares-intersect</td><td>Only space covered by every child region</td></tr>
-          <tr><td>complement</td><td><span class="region-type-icon"><i data-lucide="squares-subtract"></i></span></td><td>squares-subtract</td><td>All space except child regions</td></tr>
-          <tr><td>negative</td><td><span class="region-type-icon"><i data-lucide="square-square"></i></span></td><td>square-square</td><td>Exclusion / subtraction zone</td></tr>
-          <tr><td>reference</td><td><span class="region-type-icon"><i data-lucide="square-arrow-out-up-right"></i></span></td><td>square-arrow-out-up-right</td><td>Alias to another named region</td></tr>
-          <tr><td>mirror</td><td><span class="region-type-icon"><i data-lucide="square-split-horizontal"></i></span></td><td>square-split-horizontal</td><td>Reflected copy of child region</td></tr>
-          <tr><td>half</td><td><span class="region-type-icon"><i data-lucide="arrows-up-from-line"></i></span></td><td>arrows-up-from-line</td><td>Half-space divided by a plane</td></tr>
-          <tr><td>translate</td><td><span class="region-type-icon"><i data-lucide="move-3d"></i></span></td><td>move-3d</td><td>Offset copy of child region</td></tr>
+          <tr><td>union</td><td><span class="geo-type-icon"><i data-lucide="squares-unite"></i></span></td><td>squares-unite</td><td>All space covered by any child region</td></tr>
+          <tr><td>intersect</td><td><span class="geo-type-icon"><i data-lucide="squares-intersect"></i></span></td><td>squares-intersect</td><td>Only space covered by every child region</td></tr>
+          <tr><td>complement</td><td><span class="geo-type-icon"><i data-lucide="squares-subtract"></i></span></td><td>squares-subtract</td><td>All space except child regions</td></tr>
+          <tr><td>negative</td><td><span class="geo-type-icon"><i data-lucide="square-square"></i></span></td><td>square-square</td><td>Exclusion / subtraction zone</td></tr>
+          <tr><td>reference</td><td><span class="geo-type-icon"><i data-lucide="square-arrow-out-up-right"></i></span></td><td>square-arrow-out-up-right</td><td>Alias to another named region</td></tr>
+          <tr><td>mirror</td><td><span class="geo-type-icon"><i data-lucide="square-split-horizontal"></i></span></td><td>square-split-horizontal</td><td>Reflected copy of child region</td></tr>
+          <tr><td>half</td><td><span class="geo-type-icon"><i data-lucide="arrows-up-from-line"></i></span></td><td>arrows-up-from-line</td><td>Half-space divided by a plane</td></tr>
+          <tr><td>translate</td><td><span class="geo-type-icon"><i data-lucide="move-3d"></i></span></td><td>move-3d</td><td>Offset copy of child region</td></tr>
         </tbody>
       </table>
 
       <div style="font-size:12px;color:var(--text-dim);max-width:560px;line-height:1.6">
         <strong style="color:var(--text-secondary)">Compound types</strong> are listed in <code style="color:var(--code-color)">COMPOUND_TYPES</code> (region-types.js).
-        Synthetic / generated regions use <code style="color:var(--code-color)">.region-label--synthetic</code> (italic, dimmed) and <code style="color:var(--code-color)">.region-type-icon--synthetic</code>.
+        Synthetic / generated regions use <code style="color:var(--code-color)">.geo-label--synthetic</code> (italic, dimmed) and <code style="color:var(--code-color)">.geo-type-icon--synthetic</code>.
         Unknown types fall back to <code style="color:var(--code-color)">lucide.HelpCircle</code>.
       </div>
     </section>
@@ -1931,7 +1931,7 @@
           <tr>
             <td>editor.css</td>
             <td>The class only makes sense inside this app — it references a workspace layout, game concept (region, team, wool), or is a named structural element of the page shell.</td>
-            <td>.region-row, .cat-header, .activity-btn, .draw-tool-btn, .detail-xml-pre, #topbar, #activity-rail, #dashboard-layout</td>
+            <td>.geo-row, .cat-header, .activity-btn, .draw-tool-btn, .detail-xml-pre, #topbar, #activity-rail, #dashboard-layout</td>
           </tr>
           <tr>
             <td>design.css</td>
@@ -2011,7 +2011,7 @@
         <li><strong>Notification system:</strong> exactly four types (topbar error, toast, canvas hint, panel warning). Adding a fifth requires updating this page.</li>
         <li><strong>Vis toggle:</strong> always <code>.vis-btn</code>. Appears on row hover by default; use <code>.vis-btn--always</code> to make it always visible.</li>
         <li><strong>Canvas colours:</strong> always use <code>--canvas-*</code> tokens (tokens.css). Never hardcode SVG fill, stroke, or overlay colours. Island polygons always use <code>--canvas-island</code> — the same gray in both the editor and sketch, with no per-island colour variation.</li>
-        <li><strong>Sketch island tree:</strong> reuse <code>.region-row</code>, <code>.region-type-icon</code>, <code>.region-label</code>, <code>.list-tag</code>. The island level uses the <code>layers</code> icon. Shape children use their type icon from <code>TYPE_ICON</code>. No inline operation badges or override buttons — all per-shape actions go in the context menu.</li>
+        <li><strong>Sketch island tree:</strong> reuse <code>.geo-row</code>, <code>.geo-type-icon</code>, <code>.geo-label</code>, <code>.list-tag</code>. The island level uses the <code>layers</code> icon. Shape children use their type icon from <code>TYPE_ICON</code>. No inline operation badges or override buttons — all per-shape actions go in the context menu.</li>
         <li><strong>Operation mode toggle:</strong> use <code>.draw-tool-btn--op-add</code> / <code>--op-sub</code> for the sketch add/subtract mode buttons. Separate the tool group and operation group with a <code>.subbar-sep</code>. Both groups use <code>.draw-tool-btn</code> as the base class.</li>
         <li><strong>New reusable patterns:</strong> add to <code>components.css</code> and demonstrate on <code>/design</code> before using elsewhere.</li>
         <li><strong>New editor-specific patterns:</strong> add to <code>editor.css</code> and demonstrate in the Editor Patterns section on <code>/design</code>.</li>
