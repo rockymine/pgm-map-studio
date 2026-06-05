@@ -1,5 +1,6 @@
 /**
  * MapCanvas — SVG rendering engine for the editor activities.
+ * Extends CanvasBase for shared pan/zoom/transform machinery.
  *
  * Public surface:
  *   render(ctx, groups)           full repaint + zoom reset
@@ -22,11 +23,10 @@
  */
 
 import { buildTransform, buildInverseTransform, svgEl, polyToPath } from "./transform.js";
+import { CanvasBase, ZOOM_MIN, ZOOM_MAX } from "./canvas-base.js";
 import { chatColorHex, dyeColorHex } from "../shared/game-colors.js";
-
-const ZOOM_FACTOR = 1.15;
-const ZOOM_MIN    = 0.5;
-const ZOOM_MAX    = 200;
+import { drawnBoundsFromBlocks, blockToExtentBounds } from "../shared/converters.js";
+import { renderRegionShape } from "../shared/region-render.js";
 
 const HANDLE_SIZE = 7;
 const HANDLE_DEFS = [
@@ -50,7 +50,6 @@ function darkenHex(hex, factor = 0.55) {
   return `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
 }
 
-/** Convert a GeoJSON polygon {type,coordinates} to {exterior,holes} for polyToPath(). */
 function geojsonToSimplified(polygon) {
   if (!polygon?.coordinates?.length) return null;
   return {
@@ -59,32 +58,17 @@ function geojsonToSimplified(polygon) {
   };
 }
 
-export class MapCanvas {
-  #svg;
-  #wrap;
+export class MapCanvas extends CanvasBase {
   #ctx    = null;
   #groups = [];
   #toSvg  = null;
   #toWorld= null;
   #callbacks;
 
-  // zoom/pan
-  #scale = 1;
-  #panX  = 0;
-  #panY  = 0;
-
-  // drag/click state
-  #isDragging   = false;
-  #midDragging  = false;
-  #dragAnchor   = null;
-  #didDrag      = false;
-  #clickWasDrag = false;
-
   // DOM caches
   #regionGroupMap = new Map();
   #shapeMap       = new Map();
   #nodeMap        = new Map();
-  #viewportG      = null;
   #overlayLayer   = null;
   #highlightRect  = null;
   #anchorLayer    = null;
@@ -99,7 +83,6 @@ export class MapCanvas {
   #addedNodes     = [];
 
   // draw tool
-  #activeTool = null;
   #drawState  = null;
 
   // resize
@@ -118,10 +101,78 @@ export class MapCanvas {
   #selectedNode = null;
 
   constructor(svgEl_, wrapEl, callbacks = {}) {
-    this.#svg       = svgEl_;
-    this.#wrap      = wrapEl;
+    super(svgEl_, wrapEl);
     this.#callbacks = callbacks;
-    this.#setupEvents();
+  }
+
+  // ── CanvasBase hook overrides ──────────────────────────────────────────────
+
+  _onViewportChanged() {
+    this.#updateOverlay();
+  }
+
+  _onZoom(scale) {
+    this.#callbacks.onZoom?.(scale);
+  }
+
+  _onToolMousedown(e, svgPt) {
+    if (!this.#toWorld) return;
+    const world = this.#toWorld(svgPt.x, svgPt.y);
+    const bx = Math.floor(world.x), bz = Math.floor(world.z);
+    if (this._activeTool === "move" || !this._activeTool) return;
+    if (this._activeTool === "rectangle" || this._activeTool === "cuboid") {
+      this.#startDraw(bx, bz);
+    } else if (this._activeTool === "cylinder" || this._activeTool === "circle") {
+      if (!this.#drawState) this.#startRadialDraw(bx, bz);
+      else                  this.#completeRadialDraw(bx, bz);
+    } else if (this._activeTool === "point" || this._activeTool === "block") {
+      this.#callbacks.onRegionDraw?.({ ...blockToExtentBounds(bx, bz), type: this._activeTool });
+    }
+  }
+
+  _onPointerMove(e, svgPt) {
+    if (!this.#toWorld) return;
+    const world = this.#toWorld(svgPt.x, svgPt.y);
+    const bx = Math.floor(world.x), bz = Math.floor(world.z);
+    this.#callbacks.onCoords?.(bx, bz);
+    if (this.#drawState) {
+      if (this._activeTool === "rectangle" || this._activeTool === "cuboid") {
+        this.#updateDrawPreview(bx, bz);
+      } else if (this._activeTool === "cylinder" || this._activeTool === "circle") {
+        this.#updateRadialPreview(bx, bz);
+      }
+    }
+  }
+
+  _onToolMouseup(e, svgPt) {
+    if ((this._activeTool === "rectangle" || this._activeTool === "cuboid") && this.#drawState) {
+      this.#completeDraw();
+    }
+  }
+
+  _onCanvasClick(e, svgPt) {
+    if (!this.#toWorld) return;
+    const world = this.#toWorld(svgPt.x, svgPt.y);
+    this.#callbacks.onCanvasClick?.(this.#hitTest(world.x, world.z));
+  }
+
+  _onMouseleave() {
+    this.#callbacks.onCoords?.(null, null);
+  }
+
+  _onResizeMove(e) {
+    if (!this.#resizeState) return false;
+    this.#doResize(e.clientX, e.clientY);
+    return true;
+  }
+
+  _onResizeUp(e) {
+    if (!this.#resizeState || e.button !== 0) return false;
+    this.#callbacks.onBoundsSave?.(this.#resizeState.node, { ...this.#resizeState.node.bounds });
+    this.#resizeState = null;
+    this.#refreshCursor();
+    this.#updateOverlay();
+    return true;
   }
 
   // ── public API ─────────────────────────────────────────────────────────────
@@ -136,11 +187,11 @@ export class MapCanvas {
     this.#nodeMap.clear();
     this.#visibilityMap.clear();
     this.#currentSelectedIds.clear();
-    this.#scale = 1;
-    this.#panX  = 0;
-    this.#panY  = 0;
+    this._scale = 1;
+    this._panX  = 0;
+    this._panY  = 0;
     this.#repaint();
-    this.#callbacks.onZoom?.(this.#scale);
+    this._onZoom(this._scale);
   }
 
   showAnchors(node) {
@@ -193,8 +244,8 @@ export class MapCanvas {
     } else {
       return;
     }
-    const w  = this.#wrap.clientWidth  - 24;
-    const h  = this.#wrap.clientHeight - 24;
+    const w  = this._wrap.clientWidth  - 24;
+    const h  = this._wrap.clientHeight - 24;
     const p1 = this.#toSvg(min_x, min_z);
     const p2 = this.#toSvg(max_x, max_z);
     const sx1 = Math.min(p1.x, p2.x), sx2 = Math.max(p1.x, p2.x);
@@ -202,12 +253,12 @@ export class MapCanvas {
     const bw = sx2 - sx1, bh = sy2 - sy1;
     const newScale = (bw > 0 || bh > 0)
       ? Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.min(bw > 0 ? w / bw : Infinity, bh > 0 ? h / bh : Infinity) * 0.75))
-      : this.#scale;
-    this.#scale = newScale;
-    this.#panX  = w / 2 - ((sx1 + sx2) / 2) * newScale;
-    this.#panY  = h / 2 - ((sy1 + sy2) / 2) * newScale;
-    this.#applyViewportTransform();
-    this.#callbacks.onZoom?.(this.#scale);
+      : this._scale;
+    this._scale = newScale;
+    this._panX  = w / 2 - ((sx1 + sx2) / 2) * newScale;
+    this._panY  = h / 2 - ((sy1 + sy2) / 2) * newScale;
+    this._applyViewportTransform();
+    this._onZoom(this._scale);
   }
 
   setBlocksVisible(v) {
@@ -266,14 +317,8 @@ export class MapCanvas {
 
   setActiveTool(tool) {
     this.#cancelDraw();
-    this.#activeTool = tool;
+    this._activeTool = tool;
     this.#refreshCursor();
-  }
-
-  #refreshCursor() {
-    if (this.#activeTool === "move")    this.#svg.style.cursor = "grab";
-    else if (this.#activeTool !== null) this.#svg.style.cursor = "crosshair";
-    else                               this.#svg.style.cursor = "default";
   }
 
   addRegion(node) {
@@ -288,7 +333,7 @@ export class MapCanvas {
   }
 
   removeRegion(id) {
-    const g = this.#regionGroupMap.get(id) ?? this.#svg.querySelector(`[id="region-${id}"]`);
+    const g = this.#regionGroupMap.get(id) ?? this._svg.querySelector(`[id="region-${id}"]`);
     if (g?.parentNode) g.parentNode.removeChild(g);
     this.#regionGroupMap.delete(id);
     this.#shapeMap.delete(id);
@@ -324,10 +369,10 @@ export class MapCanvas {
 
   resize() {
     if (!this.#ctx) return;
-    const nW = this.#wrap.clientWidth  - 24;
-    const nH = this.#wrap.clientHeight - 24;
+    const nW = this._wrap.clientWidth  - 24;
+    const nH = this._wrap.clientHeight - 24;
     if (nW <= 0 || nH <= 0) return;
-    if (nW === +this.#svg.getAttribute("width") && nH === +this.#svg.getAttribute("height")) return;
+    if (nW === +this._svg.getAttribute("width") && nH === +this._svg.getAttribute("height")) return;
     this.#repaint();
   }
 
@@ -347,19 +392,19 @@ export class MapCanvas {
 
   #repaint() {
     this.#cancelDraw();
-    const w = this.#wrap.clientWidth  - 24;
-    const h = this.#wrap.clientHeight - 24;
-    this.#svg.setAttribute("width",   w);
-    this.#svg.setAttribute("height",  h);
-    this.#svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const w = this._wrap.clientWidth  - 24;
+    const h = this._wrap.clientHeight - 24;
+    this._svg.setAttribute("width",   w);
+    this._svg.setAttribute("height",  h);
+    this._svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
     this.#toSvg   = buildTransform(this.#ctx.bounding_box, w, h);
     this.#toWorld = buildInverseTransform(this.#ctx.bounding_box, w, h);
 
-    while (this.#svg.firstChild) this.#svg.removeChild(this.#svg.firstChild);
+    while (this._svg.firstChild) this._svg.removeChild(this._svg.firstChild);
 
     const viewport = svgEl("g");
-    this.#viewportG = viewport;
-    this.#applyViewportTransform();
+    this._viewportG = viewport;
+    this._applyViewportTransform();
 
     viewport.appendChild(this.#buildBuildRegion());
     viewport.appendChild(this.#buildBlockLayer());
@@ -375,155 +420,15 @@ export class MapCanvas {
     const overlayG = svgEl("g", { id: "layer-overlay" });
     this.#overlayLayer = overlayG;
 
-    this.#svg.appendChild(viewport);
-    this.#svg.appendChild(overlayG);
+    this._svg.appendChild(viewport);
+    this._svg.appendChild(overlayG);
     this.#updateOverlay();
   }
 
-  #applyViewportTransform() {
-    if (!this.#viewportG) return;
-    this.#viewportG.setAttribute("transform", `matrix(${this.#scale},0,0,${this.#scale},${this.#panX},${this.#panY})`);
-    this.#updateOverlay();
-  }
-
-  #clientToSvg(clientX, clientY) {
-    const rect = this.#svg.getBoundingClientRect();
-    return {
-      x: (clientX - rect.left  - this.#panX) / this.#scale,
-      y: (clientY - rect.top - this.#panY) / this.#scale,
-    };
-  }
-
-  // ── event wiring ──────────────────────────────────────────────────────────
-
-  #setupEvents() {
-    this.#svg.addEventListener("wheel", (e) => {
-      if (!this.#viewportG) return;
-      e.preventDefault();
-      const factor   = e.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
-      const newScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, this.#scale * factor));
-      const rect     = this.#svg.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      this.#panX = mx - (mx - this.#panX) * (newScale / this.#scale);
-      this.#panY = my - (my - this.#panY) * (newScale / this.#scale);
-      this.#scale = newScale;
-      this.#applyViewportTransform();
-      this.#callbacks.onZoom?.(this.#scale);
-    }, { passive: false });
-
-    this.#svg.addEventListener("mousedown", (e) => {
-      if (!this.#viewportG) return;
-      if (e.button === 1) {
-        e.preventDefault();
-        this.#midDragging = true;
-        this.#dragAnchor = { x: e.clientX, y: e.clientY, panX: this.#panX, panY: this.#panY };
-        return;
-      }
-      if (e.button !== 0) return;
-
-      const svgPt = this.#clientToSvg(e.clientX, e.clientY);
-      const world = this.#toWorld ? this.#toWorld(svgPt.x, svgPt.y) : null;
-      const bx = world ? Math.floor(world.x) : 0;
-      const bz = world ? Math.floor(world.z) : 0;
-
-      if (this.#activeTool === "move") {
-        this.#isDragging = true;
-        this.#didDrag    = false;
-        this.#dragAnchor = { x: e.clientX, y: e.clientY, panX: this.#panX, panY: this.#panY };
-      } else if (this.#activeTool === "rectangle" || this.#activeTool === "cuboid") {
-        this.#startDraw(bx, bz);
-      } else if (this.#activeTool === "cylinder" || this.#activeTool === "circle") {
-        if (!this.#drawState) this.#startRadialDraw(bx, bz);
-        else                  this.#completeRadialDraw(bx, bz);
-      } else if (this.#activeTool === "point" || this.#activeTool === "block") {
-        const type = this.#activeTool;
-        const bounds = { min_x: bx, min_z: bz, max_x: bx + 1, max_z: bz + 1 };
-        this.#callbacks.onRegionDraw?.({ type, ...bounds });
-      } else {
-        // select / null tool
-        this.#isDragging = true;
-        this.#didDrag    = false;
-        this.#dragAnchor = { x: e.clientX, y: e.clientY, panX: this.#panX, panY: this.#panY };
-      }
-    });
-
-    document.addEventListener("mousemove", (e) => {
-      if (this.#resizeState) { this.#doResize(e.clientX, e.clientY); return; }
-      if (!this.#viewportG) return;
-
-      if (this.#midDragging && this.#dragAnchor) {
-        this.#panX = this.#dragAnchor.panX + (e.clientX - this.#dragAnchor.x);
-        this.#panY = this.#dragAnchor.panY + (e.clientY - this.#dragAnchor.y);
-        this.#applyViewportTransform();
-        return;
-      }
-
-      if (this.#isDragging && this.#dragAnchor) {
-        const dx = e.clientX - this.#dragAnchor.x;
-        const dy = e.clientY - this.#dragAnchor.y;
-        if (!this.#didDrag && Math.sqrt(dx*dx + dy*dy) > 4) this.#didDrag = true;
-        if (this.#didDrag && (this.#activeTool === "move" || !this.#activeTool)) {
-          this.#panX = this.#dragAnchor.panX + dx;
-          this.#panY = this.#dragAnchor.panY + dy;
-          this.#applyViewportTransform();
-        }
-      }
-
-      if (this.#toWorld) {
-        const svgPt = this.#clientToSvg(e.clientX, e.clientY);
-        const world = this.#toWorld(svgPt.x, svgPt.y);
-        const bx = Math.floor(world.x);
-        const bz = Math.floor(world.z);
-        this.#callbacks.onCoords?.(bx, bz);
-        if (this.#drawState && (this.#activeTool === "rectangle" || this.#activeTool === "cuboid")) {
-          this.#updateDrawPreview(bx, bz);
-        }
-        if (this.#drawState && (this.#activeTool === "cylinder" || this.#activeTool === "circle")) {
-          this.#updateRadialPreview(bx, bz);
-        }
-      }
-    });
-
-    document.addEventListener("mouseup", (e) => {
-      if (this.#resizeState) {
-        if (e.button === 0) {
-          this.#callbacks.onBoundsSave?.(this.#resizeState.node, { ...this.#resizeState.node.bounds });
-          this.#resizeState = null;
-          this.#refreshCursor();
-          this.#updateOverlay();
-        }
-        return;
-      }
-      if (e.button === 1) { this.#midDragging = false; this.#dragAnchor = null; return; }
-      if (e.button !== 0) return;
-
-      if (this.#isDragging) {
-        this.#clickWasDrag = this.#didDrag;
-        this.#isDragging   = false;
-        this.#didDrag      = false;
-        this.#dragAnchor   = null;
-      }
-
-      if (this.#activeTool === "rectangle" || this.#activeTool === "cuboid") {
-        if (this.#drawState) this.#completeDraw();
-      }
-    });
-
-    this.#svg.addEventListener("click", (e) => {
-      if (this.#clickWasDrag) { this.#clickWasDrag = false; return; }
-      if (this.#activeTool !== null && this.#activeTool !== "move") return;
-      if (!this.#toWorld) return;
-
-      const svgPt = this.#clientToSvg(e.clientX, e.clientY);
-      const world = this.#toWorld(svgPt.x, svgPt.y);
-      const hit   = this.#hitTest(world.x, world.z);
-      this.#callbacks.onCanvasClick?.(hit);
-    });
-
-    this.#svg.addEventListener("mouseleave", () => {
-      this.#callbacks.onCoords?.(null, null);
-    });
+  #refreshCursor() {
+    if (this._activeTool === "move")    this._svg.style.cursor = "grab";
+    else if (this._activeTool !== null) this._svg.style.cursor = "crosshair";
+    else                               this._svg.style.cursor = "default";
   }
 
   // ── hit test ──────────────────────────────────────────────────────────────
@@ -549,7 +454,6 @@ export class MapCanvas {
     const g = svgEl("g", { id: "layer-build" });
     this.#buildLayerEl = g;
     if (!this.#showBuild) g.style.display = "none";
-    // Build region overlay not implemented in M1
     return g;
   }
 
@@ -691,7 +595,7 @@ export class MapCanvas {
 
     const p1b = this.#toSvg(min_x, min_z);
     const p2b = this.#toSvg(max_x, max_z);
-    const toScr = (bx, by) => ({ x: bx * this.#scale + this.#panX, y: by * this.#scale + this.#panY });
+    const toScr = (bx, by) => ({ x: bx * this._scale + this._panX, y: by * this._scale + this._panY });
     const s1 = toScr(p1b.x, p1b.y), s2 = toScr(p2b.x, p2b.y);
     const left = Math.min(s1.x, s2.x), right = Math.max(s1.x, s2.x);
     const top  = Math.min(s1.y, s2.y), bottom = Math.max(s1.y, s2.y);
@@ -786,55 +690,24 @@ export class MapCanvas {
   }
 
   #regionGroup(region) {
-    const { id, type, color, bounds } = region;
-    const p1 = bounds ? this.#toSvg(bounds.min_x, bounds.min_z) : null;
-    const p2 = bounds ? this.#toSvg(bounds.max_x, bounds.max_z) : null;
-    const rx = p1 ? Math.min(p1.x, p2.x) : 0, ry = p1 ? Math.min(p1.y, p2.y) : 0;
-    const rw = p1 ? Math.abs(p2.x - p1.x) : 0, rh = p1 ? Math.abs(p2.y - p1.y) : 0;
-    const cx = p1 ? (p1.x + p2.x) / 2 : 0, cy = p1 ? (p1.y + p2.y) / 2 : 0;
-
+    const { id, type, color } = region;
     const g = svgEl("g", { id: `region-${id}` });
     const title = svgEl("title");
     title.textContent = `${id} (${type})`;
     g.appendChild(title);
 
-    if (region.polygon_2d) {
-      const shape = this.#polygonShape(region, color);
-      if (shape) { g.appendChild(shape); this.#shapeMap.set(id, { shape, type }); }
-    } else if (type === "cylinder" || type === "circle" || type === "sphere") {
-      const shape = svgEl("ellipse", {
-        cx, cy, rx: rw / 2, ry: rh / 2,
-        fill: color, "fill-opacity": "0.20",
-        stroke: color, "stroke-opacity": "0.55", "stroke-width": "1.5", "stroke-dasharray": "4,2",
-        "vector-effect": "non-scaling-stroke",
-      });
-      g.appendChild(shape);
-      this.#shapeMap.set(id, { shape, type });
-    } else {
-      const shape = svgEl("rect", {
-        x: rx, y: ry, width: rw, height: rh,
-        fill: color, "fill-opacity": "0.20",
-        stroke: color, "stroke-opacity": "0.55", "stroke-width": "1.5", "stroke-dasharray": "4,2",
-        "vector-effect": "non-scaling-stroke",
-      });
-      g.appendChild(shape);
-      this.#shapeMap.set(id, { shape, type });
-    }
+    const boundsOrPoly = region.polygon_2d ?? region.bounds;
+    const shape = renderRegionShape(type, boundsOrPoly, this.#toSvg, this.#regionAttrs(color));
+    if (shape) { g.appendChild(shape); this.#shapeMap.set(id, { shape, type }); }
     return g;
   }
 
-  #polyAttrs(color) {
+  #regionAttrs(color) {
     return {
       fill: color, "fill-opacity": "0.20",
       stroke: color, "stroke-opacity": "0.55", "stroke-width": "1.5", "stroke-dasharray": "4,2",
-      "vector-effect": "non-scaling-stroke", "fill-rule": "evenodd",
+      "vector-effect": "non-scaling-stroke",
     };
-  }
-
-  #polygonShape(region, color) {
-    const poly = region.polygon_2d;
-    if (!poly?.exterior?.length) return null;
-    return svgEl("path", { d: polyToPath(poly, this.#toSvg), ...this.#polyAttrs(color) });
   }
 
   #refreshRegionDisplay(id) {
@@ -863,7 +736,7 @@ export class MapCanvas {
   #screenBounds(node) {
     if (!node?.bounds || !this.#toSvg) return null;
     const { min_x, min_z, max_x, max_z } = node.bounds;
-    const toScr = (bx, by) => ({ x: bx * this.#scale + this.#panX, y: by * this.#scale + this.#panY });
+    const toScr = (bx, by) => ({ x: bx * this._scale + this._panX, y: by * this._scale + this._panY });
     const p1b = this.#toSvg(min_x, min_z), p2b = this.#toSvg(max_x, max_z);
     const s1  = toScr(p1b.x, p1b.y), s2 = toScr(p2b.x, p2b.y);
     return {
@@ -897,7 +770,7 @@ export class MapCanvas {
         e.stopPropagation(); e.preventDefault();
         const fields = this.#handleFields(h.key, this.#screenBounds(node));
         this.#resizeState = { node, ...fields, cursor: h.cursor };
-        this.#svg.style.cursor = h.cursor;
+        this._svg.style.cursor = h.cursor;
       });
       this.#overlayLayer.appendChild(el);
     }
@@ -906,7 +779,7 @@ export class MapCanvas {
   #doResize(clientX, clientY) {
     if (!this.#resizeState || !this.#toWorld) return;
     const { node, xField, zField } = this.#resizeState;
-    const svgPt = this.#clientToSvg(clientX, clientY);
+    const svgPt = this._clientToSvg(clientX, clientY);
     const world = this.#toWorld(svgPt.x, svgPt.y);
     const nb    = { ...node.bounds };
     if (xField) nb[xField] = Math.round(world.x);
@@ -924,11 +797,6 @@ export class MapCanvas {
     const g = svgEl("g", { id: "layer-draw" });
     this.#drawLayerEl = g;
     return g;
-  }
-
-  #boundsFromBlocks(b1x, b1z, b2x, b2z) {
-    return { min_x: Math.min(b1x, b2x), min_z: Math.min(b1z, b2z),
-             max_x: Math.max(b1x, b2x) + 1, max_z: Math.max(b1z, b2z) + 1 };
   }
 
   #moveAnchorBlock(el, bx, bz) {
@@ -953,7 +821,7 @@ export class MapCanvas {
     this.#drawLayerEl.appendChild(previewRect);
     this.#drawLayerEl.appendChild(anchor1);
     this.#drawLayerEl.appendChild(anchor2);
-    this.#drawState = { toolType: this.#activeTool, startBx: bx, startBz: bz,
+    this.#drawState = { toolType: this._activeTool, startBx: bx, startBz: bz,
                         currentBx: bx, currentBz: bz, previewRect, anchor1, anchor2 };
     this.#updateDrawPreview(bx, bz);
   }
@@ -963,7 +831,7 @@ export class MapCanvas {
     this.#drawState.currentBx = bx;
     this.#drawState.currentBz = bz;
     const { startBx, startBz, previewRect, anchor1, anchor2 } = this.#drawState;
-    const { min_x, min_z, max_x, max_z } = this.#boundsFromBlocks(startBx, startBz, bx, bz);
+    const { min_x, min_z, max_x, max_z } = drawnBoundsFromBlocks(startBx, startBz, bx, bz);
     const p1 = this.#toSvg(min_x, min_z), p2 = this.#toSvg(max_x, max_z);
     previewRect.setAttribute("x",      Math.min(p1.x, p2.x));
     previewRect.setAttribute("y",      Math.min(p1.y, p2.y));
@@ -976,7 +844,7 @@ export class MapCanvas {
   #completeDraw() {
     if (!this.#drawState) return;
     const { toolType, startBx, startBz, currentBx, currentBz } = this.#drawState;
-    const bounds = this.#boundsFromBlocks(startBx, startBz, currentBx, currentBz);
+    const bounds = drawnBoundsFromBlocks(startBx, startBz, currentBx, currentBz);
     this.#cancelDraw();
     this.#callbacks.onRegionDraw?.({ type: toolType, ...bounds });
   }
@@ -996,7 +864,7 @@ export class MapCanvas {
     const previewCircle = svgEl("ellipse", { cx: pt.x, cy: pt.y, rx: 0, ry: 0, fill: "none", stroke: "#a78bfa", "stroke-width": "1.5", "stroke-dasharray": "6 3", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
     const label = svgEl("text", { x: pt.x, y: pt.y, fill: "#a78bfa", "font-size": "11", "text-anchor": "start", "pointer-events": "none" });
     this.#drawLayerEl.append(previewCircle, line, dot, label);
-    this.#drawState = { toolType: this.#activeTool, centerX, centerZ, dot, line, previewCircle, label, currentRadius: 1 };
+    this.#drawState = { toolType: this._activeTool, centerX, centerZ, dot, line, previewCircle, label, currentRadius: 1 };
   }
 
   #updateRadialPreview(bx, bz) {

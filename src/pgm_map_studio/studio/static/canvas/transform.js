@@ -72,3 +72,32 @@ export function boundsToRingPath(bounds, toSvg) {
     toSvg,
   );
 }
+
+/**
+ * Sutherland-Hodgman half-plane clip.
+ * Clips polygon `poly` ([[x,z],...]) against the half-plane defined by
+ * point (ox, oz) and inward normal (nx, nz).
+ * A vertex is inside when (v.x - ox)*nx + (v.z - oz)*nz >= 0.
+ */
+export function clipHalfPlane(poly, ox, oz, nx, nz) {
+  if (!poly.length) return [];
+  const dot = ([x, z]) => (x - ox) * nx + (z - oz) * nz;
+  const output = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[(i + poly.length - 1) % poly.length];
+    const b = poly[i];
+    const da = dot(a);
+    const db = dot(b);
+    if (db >= 0) {
+      if (da < 0) {
+        const t = da / (da - db);
+        output.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]);
+      }
+      output.push(b);
+    } else if (da >= 0) {
+      const t = da / (da - db);
+      output.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]);
+    }
+  }
+  return output;
+}

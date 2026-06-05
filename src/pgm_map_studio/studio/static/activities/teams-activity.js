@@ -6,6 +6,7 @@
 import { MapCanvas }      from "../canvas/map-canvas.js";
 import { TeamsPanel }     from "../panels/teams-panel.js";
 import { RegionRegistry } from "../region/region-registry.js";
+import { ToolManager }    from "../shared/tool-manager.js";
 import * as api           from "../api.js";
 import { chatColorHex }   from "../shared/game-colors.js";
 
@@ -14,13 +15,14 @@ const SPAWN_COLOR = getComputedStyle(document.documentElement).getPropertyValue(
 const POINT_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--accent-light").trim() || "#60a5fa";
 
 export class TeamsActivity {
-  #el      = null;
-  #canvas  = null;
-  #panel   = null;
-  #registry= null;
-  #mapName = null;
-  #coordsEl= null;
-  #zoomEl  = null;
+  #el       = null;
+  #canvas   = null;
+  #panel    = null;
+  #registry = null;
+  #toolMgr  = null;
+  #mapName  = null;
+  #coordsEl = null;
+  #zoomEl   = null;
 
   constructor({ onStatusChange } = {}) {
     this.#el       = document.getElementById("pt-workspace");
@@ -81,34 +83,29 @@ export class TeamsActivity {
       },
     });
 
-    // Wire draw tool buttons
-    const moveBtn     = document.getElementById("pt-tool-move");
-    const selectBtn   = document.getElementById("pt-tool-select");
-    const cylinderBtn = document.getElementById("pt-tool-cylinder");
-    const pointBtn    = document.getElementById("pt-tool-point");
+    // Wire draw tool buttons via ToolManager
+    this.#toolMgr = new ToolManager(this.#canvas, {
+      move:     document.getElementById("pt-tool-move"),
+      select:   document.getElementById("pt-tool-select"),
+      cylinder: document.getElementById("pt-tool-cylinder"),
+      point:    document.getElementById("pt-tool-point"),
+    });
 
-    const setTool = (tool, activeBtn) => {
-      this.#canvas.setActiveTool(tool);
-      for (const btn of [moveBtn, selectBtn, cylinderBtn, pointBtn]) {
-        btn?.classList.toggle("draw-tool-btn--active", btn === activeBtn);
-      }
-    };
+    document.getElementById("pt-tool-move")?.addEventListener("click",     () => this.#toolMgr.setTool("move"));
+    document.getElementById("pt-tool-select")?.addEventListener("click",   () => this.#toolMgr.setTool("select"));
+    document.getElementById("pt-tool-cylinder")?.addEventListener("click", () => this.#toolMgr.setTool("cylinder"));
+    document.getElementById("pt-tool-point")?.addEventListener("click",    () => this.#toolMgr.setTool("point"));
 
-    moveBtn?.addEventListener("click",     () => setTool("move",     moveBtn));
-    selectBtn?.addEventListener("click",   () => setTool(null,       selectBtn));
-    cylinderBtn?.addEventListener("click", () => setTool("cylinder", cylinderBtn));
-    pointBtn?.addEventListener("click",    () => setTool("point",    pointBtn));
-
-    setTool("move", moveBtn);
+    this.#toolMgr.setTool("move");
 
     document.addEventListener("keydown", (e) => {
       if (this.#el.hidden) return;
       if (e.target.matches("input,select,textarea")) return;
-      if (e.key === "m" || e.key === "M") setTool("move",    moveBtn);
-      if (e.key === "s" || e.key === "S") setTool(null,      selectBtn);
-      if (e.key === "y" || e.key === "Y") setTool("cylinder",cylinderBtn);
-      if (e.key === "p" || e.key === "P") setTool("point",   pointBtn);
-      if (e.key === "Escape") setTool("move", moveBtn);
+      if (e.key === "m" || e.key === "M") this.#toolMgr.setTool("move");
+      if (e.key === "s" || e.key === "S") this.#toolMgr.setTool("select");
+      if (e.key === "y" || e.key === "Y") this.#toolMgr.setTool("cylinder");
+      if (e.key === "p" || e.key === "P") this.#toolMgr.setTool("point");
+      if (e.key === "Escape")             this.#toolMgr.setTool("move");
     });
   }
 
