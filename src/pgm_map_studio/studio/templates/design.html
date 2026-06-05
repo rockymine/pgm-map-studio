@@ -174,16 +174,38 @@
     <!-- ── Typography ── -->
     <section class="ds-section" id="typography">
       <div class="ds-heading">Typography</div>
-      <div class="ds-sub">Single typeface: <code style="color:var(--code-color)">ui-monospace, monospace</code>. All sizes in px, set on <code style="color:var(--code-color)">body</code> at 14px. Never introduce a second typeface.</div>
-      <div class="ds-group" style="max-width:520px">
-        <div><span style="font-size:20px;font-weight:600;color:var(--text-white)">20 / 600</span><span style="font-size:11px;color:var(--text-muted);margin-left:12px">page title, map name — inline style</span></div>
-        <div><span style="font-size:15px;font-weight:600;color:var(--text-bright)">15 / 600</span><span style="font-size:11px;color:var(--text-muted);margin-left:12px">dashboard title — inline style</span></div>
-        <div><span style="font-size:14px;color:var(--text-bright)">14 / 400</span><span style="font-size:11px;color:var(--text-muted);margin-left:12px">body default</span></div>
-        <div><span style="font-size:13px;color:var(--text-primary)">13 / 400</span><span style="font-size:11px;color:var(--text-muted);margin-left:12px">primary content, form values</span></div>
-        <div><span style="font-size:12px;color:var(--text-secondary)">12 / 400</span><span style="font-size:11px;color:var(--text-muted);margin-left:12px">secondary text, .field-label</span></div>
-        <div><span style="font-size:11px;color:var(--text-dim)">11 / 400</span><span style="font-size:11px;color:var(--text-muted);margin-left:12px">helper, metadata — .ds-label</span></div>
-        <div><span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">10 CAPS / 700</span><span style="font-size:11px;color:var(--text-muted);margin-left:12px">.section-title, .console-title</span></div>
-        <div><span style="font-size:11px;color:var(--code-color)">11 / 400 code</span><span style="font-size:11px;color:var(--text-muted);margin-left:12px">.detail-xml-pre, .list-label--mono</span></div>
+      <div class="ds-sub">Single typeface: <code style="color:var(--code-color)">ui-monospace, monospace</code>. All sizes in px. Body base is 14px — no class needed. Use the utilities below for anything smaller. Heading sizes (20px map title, 15px dashboard title) are defined directly on their components, not in the general scale.</div>
+      <div class="ds-group" style="max-width:560px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:baseline;gap:16px">
+          <span class="text-lg" style="color:var(--text-bright);min-width:160px">The quick brown fox</span>
+          <code style="color:var(--code-color);font-size:11px">.text-lg</code>
+          <span style="font-size:11px;color:var(--text-muted)">14px — body default, topbar, region labels</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:16px">
+          <span class="text-md" style="color:var(--text-primary);min-width:160px">The quick brown fox</span>
+          <code style="color:var(--code-color);font-size:11px">.text-md</code>
+          <span style="font-size:11px;color:var(--text-muted)">13px — inputs, list labels, form values</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:16px">
+          <span class="text-base" style="color:var(--text-secondary);min-width:160px">The quick brown fox</span>
+          <code style="color:var(--code-color);font-size:11px">.text-base</code>
+          <span style="font-size:11px;color:var(--text-muted)">12px — most common: badges, buttons, panel labels</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:16px">
+          <span class="text-sm" style="color:var(--text-dim);min-width:160px">The quick brown fox</span>
+          <code style="color:var(--code-color);font-size:11px">.text-sm</code>
+          <span style="font-size:11px;color:var(--text-muted)">11px — field labels, helper text, tags</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:16px">
+          <span class="text-xs" style="color:var(--text-muted);min-width:160px">The quick brown fox</span>
+          <code style="color:var(--code-color);font-size:11px">.text-xs</code>
+          <span style="font-size:11px;color:var(--text-muted)">10px — smallest prose (not caps)</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:16px;margin-top:4px;padding-top:10px;border-top:1px solid var(--border)">
+          <span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);min-width:160px">Section header</span>
+          <code style="color:var(--code-color);font-size:11px">.section-title</code>
+          <span style="font-size:11px;color:var(--text-muted)">10px / 700 / uppercase / tracking — not a size utility</span>
+        </div>
       </div>
     </section>
 
