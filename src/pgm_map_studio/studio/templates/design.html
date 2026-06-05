@@ -136,6 +136,15 @@
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-handle-stroke)"></div><div class="ds-swatch-name">--canvas-handle-stroke</div><div class="ds-swatch-val">Resize handle border (slate-400)</div></div>
       </div>
 
+      <div class="ds-subhead">Type scale</div>
+      <div class="ds-swatches">
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-lg);color:var(--text-bright)">Aa</span></div><div class="ds-swatch-name">--font-lg</div><div class="ds-swatch-val">14px — body, topbar</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-md);color:var(--text-primary)">Aa</span></div><div class="ds-swatch-name">--font-md</div><div class="ds-swatch-val">13px — inputs, list labels</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-base);color:var(--text-secondary)">Aa</span></div><div class="ds-swatch-name">--font-base</div><div class="ds-swatch-val">12px — badges, buttons, panels</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-sm);color:var(--text-dim)">Aa</span></div><div class="ds-swatch-name">--font-sm</div><div class="ds-swatch-val">11px — field labels, helper text</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-xs);color:var(--text-muted)">Aa</span></div><div class="ds-swatch-name">--font-xs</div><div class="ds-swatch-val">10px — smallest prose</div></div>
+      </div>
+
       <div class="ds-subhead">Semantic status</div>
       <div class="ds-swatches">
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success)"></div><div class="ds-swatch-name">--color-success</div><div class="ds-swatch-val">.badge--success, .step-dot--done, .map-status-dot--ready</div></div>
@@ -178,28 +187,28 @@
       <div class="ds-group" style="max-width:560px;display:flex;flex-direction:column;gap:10px">
         <div style="display:flex;align-items:baseline;gap:16px">
           <span class="text-lg" style="color:var(--text-bright);min-width:160px">The quick brown fox</span>
-          <code style="color:var(--code-color);font-size:11px">.text-lg</code>
-          <span style="font-size:11px;color:var(--text-muted)">14px — body default, topbar, region labels</span>
+          <code style="color:var(--code-color);font-size:var(--font-sm)">.text-lg / var(--font-lg)</code>
+          <span style="font-size:var(--font-sm);color:var(--text-muted)">14px — body default, topbar, region labels</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:16px">
           <span class="text-md" style="color:var(--text-primary);min-width:160px">The quick brown fox</span>
-          <code style="color:var(--code-color);font-size:11px">.text-md</code>
-          <span style="font-size:11px;color:var(--text-muted)">13px — inputs, list labels, form values</span>
+          <code style="color:var(--code-color);font-size:var(--font-sm)">.text-md / var(--font-md)</code>
+          <span style="font-size:var(--font-sm);color:var(--text-muted)">13px — inputs, list labels, form values</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:16px">
           <span class="text-base" style="color:var(--text-secondary);min-width:160px">The quick brown fox</span>
-          <code style="color:var(--code-color);font-size:11px">.text-base</code>
-          <span style="font-size:11px;color:var(--text-muted)">12px — most common: badges, buttons, panel labels</span>
+          <code style="color:var(--code-color);font-size:var(--font-sm)">.text-base / var(--font-base)</code>
+          <span style="font-size:var(--font-sm);color:var(--text-muted)">12px — most common: badges, buttons, panel labels</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:16px">
           <span class="text-sm" style="color:var(--text-dim);min-width:160px">The quick brown fox</span>
-          <code style="color:var(--code-color);font-size:11px">.text-sm</code>
-          <span style="font-size:11px;color:var(--text-muted)">11px — field labels, helper text, tags</span>
+          <code style="color:var(--code-color);font-size:var(--font-sm)">.text-sm / var(--font-sm)</code>
+          <span style="font-size:var(--font-sm);color:var(--text-muted)">11px — field labels, helper text, tags</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:16px">
           <span class="text-xs" style="color:var(--text-muted);min-width:160px">The quick brown fox</span>
-          <code style="color:var(--code-color);font-size:11px">.text-xs</code>
-          <span style="font-size:11px;color:var(--text-muted)">10px — smallest prose (not caps)</span>
+          <code style="color:var(--code-color);font-size:var(--font-sm)">.text-xs / var(--font-xs)</code>
+          <span style="font-size:var(--font-sm);color:var(--text-muted)">10px — smallest prose (not caps)</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:16px;margin-top:4px;padding-top:10px;border-top:1px solid var(--border)">
           <span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);min-width:160px">Section header</span>

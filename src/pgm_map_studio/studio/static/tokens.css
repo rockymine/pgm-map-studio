@@ -85,6 +85,13 @@
   --canvas-handle-fill:   #0f172a;   /* slate-950 */
   --canvas-handle-stroke: #94a3b8;   /* slate-400 */
 
+  /* ── Type scale ─────────────────────────────────────────────────────── */
+  --font-lg:   14px;   /* body default */
+  --font-md:   13px;   /* inputs, list labels, form values */
+  --font-base: 12px;   /* most common — badges, buttons, panels */
+  --font-sm:   11px;   /* helper text, field labels, tags */
+  --font-xs:   10px;   /* smallest prose, section headers */
+
   /* ── Sidebar widths ─────────────────────────────────────────────────── */
   --sidebar-width:   280px;   /* left panels — list / form content */
   --inspector-width: 280px;   /* right panels — detail / property view */
