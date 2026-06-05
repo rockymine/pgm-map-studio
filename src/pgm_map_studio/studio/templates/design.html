@@ -130,6 +130,10 @@
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-result-fill)"></div><div class="ds-swatch-name">--canvas-result-fill</div><div class="ds-swatch-val">Sketch computed island polygon fill</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-mirror-fill);border:1px solid var(--canvas-mirror-stroke)"></div><div class="ds-swatch-name">--canvas-mirror-fill/stroke</div><div class="ds-swatch-val">Mirror preview overlay (lower opacity)</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-axis)"></div><div class="ds-swatch-name">--canvas-axis</div><div class="ds-swatch-val">Symmetry axis line and center crosshair</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-bg)"></div><div class="ds-swatch-name">--canvas-bg</div><div class="ds-swatch-val">SVG canvas area fill (= --bg-deep)</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-region)"></div><div class="ds-swatch-name">--canvas-region</div><div class="ds-swatch-val">Region shape fill + stroke — all types. Runtime supplies category colour; this is the fallback.</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-handle-fill)"></div><div class="ds-swatch-name">--canvas-handle-fill</div><div class="ds-swatch-val">Resize handle interior (slate-950)</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-handle-stroke)"></div><div class="ds-swatch-name">--canvas-handle-stroke</div><div class="ds-swatch-val">Resize handle border (slate-400)</div></div>
       </div>
 
       <div class="ds-subhead">Semantic status</div>
@@ -773,7 +777,7 @@
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Add circle</div>
           <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
             <svg width="130" height="110" style="display:block">
-              <ellipse cx="65" cy="55" rx="50" ry="40"
+              <circle cx="65" cy="55" r="45"
                 style="fill:var(--canvas-add-fill);fill-opacity:0.30;stroke:var(--canvas-add-stroke);stroke-width:1.2"/>
             </svg>
           </div>
@@ -817,19 +821,19 @@
               <rect x="20" y="20" width="140" height="100"
                 style="fill:var(--canvas-add-fill);fill-opacity:0.30;stroke:var(--canvas-add-stroke);stroke-width:2;filter:drop-shadow(0 0 3px rgba(99,102,241,0.5))"/>
               <!-- 8 resize handles (screen-space, fixed size) -->
-              <rect x="16.5" y="16.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
-              <rect x="86.5" y="16.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
-              <rect x="153.5" y="16.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
-              <rect x="16.5" y="66.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
-              <rect x="153.5" y="66.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
-              <rect x="16.5" y="113.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
-              <rect x="86.5" y="113.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
-              <rect x="153.5" y="113.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1"/>
+              <rect x="16.5" y="16.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1"/>
+              <rect x="86.5" y="16.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1"/>
+              <rect x="153.5" y="16.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1"/>
+              <rect x="16.5" y="66.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1"/>
+              <rect x="153.5" y="66.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1"/>
+              <rect x="16.5" y="113.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1"/>
+              <rect x="86.5" y="113.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1"/>
+              <rect x="153.5" y="113.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1"/>
             </svg>
           </div>
           <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
-            stroke-width: 2 · drop-shadow glow<br>
-            8 resize handles: 7×7 · fill #0f172a · stroke #94a3b8<br>
+            stroke-width: 2 · drop-shadow glow (indigo, matches result/intersection hue)<br>
+            8 resize handles: 7×7 · fill var(--canvas-handle-fill) · stroke var(--canvas-handle-stroke)<br>
             (polygon: vertex drag handles instead of resize handles)
           </div>
         </div>
@@ -893,31 +897,31 @@
       <div class="ds-row" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
 
         <div class="ds-group">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Rectangle / cuboid (spawn)</div>
-          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Rectangle / cuboid</div>
+          <div style="background:var(--canvas-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
             <svg width="150" height="120" style="display:block">
               <rect x="15" y="15" width="120" height="90"
-                style="fill:var(--cat-spawn);fill-opacity:0.20;stroke:var(--cat-spawn);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2"/>
+                style="fill:var(--canvas-region);fill-opacity:0.20;stroke:var(--canvas-region);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2"/>
             </svg>
           </div>
         </div>
 
         <div class="ds-group">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Cylinder / circle (wool room)</div>
-          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Cylinder / circle</div>
+          <div style="background:var(--canvas-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
             <svg width="150" height="120" style="display:block">
-              <ellipse cx="75" cy="60" rx="60" ry="45"
-                style="fill:var(--cat-wool);fill-opacity:0.20;stroke:var(--cat-wool);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2"/>
+              <circle cx="75" cy="60" r="45"
+                style="fill:var(--canvas-region);fill-opacity:0.20;stroke:var(--canvas-region);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2"/>
             </svg>
           </div>
         </div>
 
         <div class="ds-group">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Polygon (polygon_2d)</div>
-          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Polygon</div>
+          <div style="background:var(--canvas-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
             <svg width="150" height="120" style="display:block">
               <polygon points="75,12 135,45 115,105 35,105 15,45"
-                style="fill:var(--cat-build);fill-opacity:0.20;stroke:var(--cat-build);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2;fill-rule:evenodd"/>
+                style="fill:var(--canvas-region);fill-opacity:0.20;stroke:var(--canvas-region);stroke-opacity:0.55;stroke-width:1.5;stroke-dasharray:4,2;fill-rule:evenodd"/>
             </svg>
           </div>
         </div>
@@ -925,7 +929,7 @@
       </div>
       <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:6px;line-height:1.8">
         All types: fill-opacity: 0.20 · stroke-opacity: 0.55 · stroke-dasharray: 4,2 · stroke-width: 1.5<br>
-        Colour from region category: --cat-spawn / --cat-wool / --cat-build / --cat-other
+        fill + stroke: var(--canvas-region) — runtime substitutes the region's assigned category colour
       </div>
 
       <!-- ── Editor region selected ── -->
@@ -933,76 +937,76 @@
       <div class="ds-row" style="align-items:flex-start;gap:20px;flex-wrap:wrap">
 
         <div class="ds-group">
-          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+          <div style="background:var(--canvas-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
             <svg width="290" height="185" style="display:block">
               <!-- Label above -->
               <text x="30" y="22"
-                style="fill:var(--cat-spawn);font-size:10px;font-family:ui-monospace,monospace">blue-spawn-region</text>
+                style="fill:var(--canvas-region);font-size:10px;font-family:ui-monospace,monospace">example-region</text>
               <!-- Selected region: solid, no dasharray, fill-opacity 0.22 -->
               <rect x="30" y="28" width="210" height="130"
-                style="fill:var(--cat-spawn);fill-opacity:0.22;stroke:var(--cat-spawn);stroke-opacity:0.85;stroke-width:2.5"/>
+                style="fill:var(--canvas-region);fill-opacity:0.22;stroke:var(--canvas-region);stroke-opacity:0.85;stroke-width:2.5"/>
               <!-- Anchor block: top-left (min) corner block -->
               <rect x="30" y="28" width="8" height="8"
-                style="fill:var(--cat-spawn);fill-opacity:0.5;stroke:var(--cat-spawn);stroke-width:2"/>
+                style="fill:var(--canvas-region);fill-opacity:0.5;stroke:var(--canvas-region);stroke-width:2"/>
               <!-- Anchor block: bottom-right (max) corner block -->
               <rect x="232" y="150" width="8" height="8"
-                style="fill:var(--cat-spawn);fill-opacity:0.5;stroke:var(--cat-spawn);stroke-width:2"/>
+                style="fill:var(--canvas-region);fill-opacity:0.5;stroke:var(--canvas-region);stroke-width:2"/>
               <!-- 8 resize handles -->
-              <rect x="26.5" y="24.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="131.5" y="24.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="236.5" y="24.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="26.5" y="89.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="236.5" y="89.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="26.5" y="154.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="131.5" y="154.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="236.5" y="154.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+              <rect x="26.5" y="24.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="131.5" y="24.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="236.5" y="24.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="26.5" y="89.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="236.5" y="89.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="26.5" y="154.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="131.5" y="154.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="236.5" y="154.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
               <!-- Dimension pill -->
               <rect x="102" y="167" width="66" height="16" rx="3"
-                style="fill:var(--cat-spawn);fill-opacity:0.85"/>
+                style="fill:var(--canvas-region);fill-opacity:0.85"/>
               <text x="135" y="179" text-anchor="middle"
-                style="fill:#0f172a;font-size:10px;font-family:ui-monospace,monospace;font-weight:600">210 × 130</text>
+                style="fill:var(--canvas-handle-fill);font-size:10px;font-family:ui-monospace,monospace;font-weight:600">210 × 130</text>
             </svg>
           </div>
           <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
             selected: fill-opacity 0.22 · stroke-opacity 0.85 · no dasharray · stroke-width 2.5<br>
-            anchors: 1-block square at min and max corner · fill-opacity 0.5 · stroke-width 2<br>
-            handles: 7×7 · fill #0f172a · stroke #94a3b8 · screen-space fixed size<br>
-            label: monospace · region color · above shape · truncated to 36 chars<br>
-            dimension pill: colored bg 85% · dark text · centered below shape
+            anchors: min + max corner blocks · colour = region colour · fill-opacity 0.5 · stroke-width 2<br>
+            handles: 7×7 · fill var(--canvas-handle-fill) · stroke var(--canvas-handle-stroke) · screen-space fixed size<br>
+            label: monospace · region colour · above shape · truncated to 36 chars<br>
+            dimension pill: region colour bg at 85% · var(--canvas-handle-fill) text · centered below shape
           </div>
         </div>
 
         <div class="ds-group">
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">Cylinder — selected (single center anchor)</div>
-          <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+          <div style="background:var(--canvas-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
             <svg width="180" height="165" style="display:block">
               <!-- Label -->
-              <text x="15" y="16" style="fill:var(--cat-wool);font-size:10px;font-family:ui-monospace,monospace">red-wool-room</text>
-              <!-- Selected ellipse -->
-              <ellipse cx="90" cy="85" rx="70" ry="55"
-                style="fill:var(--cat-wool);fill-opacity:0.22;stroke:var(--cat-wool);stroke-opacity:0.85;stroke-width:2.5"/>
-              <!-- Center anchor block -->
+              <text x="15" y="16" style="fill:var(--canvas-region);font-size:10px;font-family:ui-monospace,monospace">example-cylinder</text>
+              <!-- Selected circle — r=55 → bounding box (35,30) to (145,140) = 110×110 -->
+              <circle cx="90" cy="85" r="55"
+                style="fill:var(--canvas-region);fill-opacity:0.22;stroke:var(--canvas-region);stroke-opacity:0.85;stroke-width:2.5"/>
+              <!-- Center anchor block — cylinder anchor is the center point -->
               <rect x="86" y="81" width="8" height="8"
-                style="fill:var(--cat-wool);fill-opacity:0.5;stroke:var(--cat-wool);stroke-width:2"/>
-              <!-- 8 handles around bounding box (20,30) to (160,140) -->
-              <rect x="16.5" y="26.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="86.5" y="26.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="153.5" y="26.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="16.5" y="81.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="153.5" y="81.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="16.5" y="136.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="86.5" y="136.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
-              <rect x="153.5" y="136.5" width="7" height="7" style="fill:#0f172a;stroke:#94a3b8;stroke-width:1.5"/>
+                style="fill:var(--canvas-region);fill-opacity:0.5;stroke:var(--canvas-region);stroke-width:2"/>
+              <!-- 8 handles around square bounding box (35,30) to (145,140) -->
+              <rect x="31.5" y="26.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="86.5" y="26.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="141.5" y="26.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="31.5" y="81.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="141.5" y="81.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="31.5" y="136.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="86.5" y="136.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
+              <rect x="141.5" y="136.5" width="7" height="7" style="fill:var(--canvas-handle-fill);stroke:var(--canvas-handle-stroke);stroke-width:1.5"/>
               <!-- Dimension pill -->
-              <rect x="57" y="149" width="66" height="16" rx="3"
-                style="fill:var(--cat-wool);fill-opacity:0.85"/>
-              <text x="90" y="161" text-anchor="middle"
-                style="fill:#0f172a;font-size:10px;font-family:ui-monospace,monospace;font-weight:600">140 × 110</text>
+              <rect x="57" y="148" width="66" height="16" rx="3"
+                style="fill:var(--canvas-region);fill-opacity:0.85"/>
+              <text x="90" y="160" text-anchor="middle"
+                style="fill:var(--canvas-handle-fill);font-size:10px;font-family:ui-monospace,monospace;font-weight:600">110 × 110</text>
             </svg>
           </div>
           <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
-            cylinder/circle/sphere: single center anchor<br>
-            handles on bounding box (not on ellipse outline)
+            cylinder/circle/sphere: single center anchor · equal diameter in both axes<br>
+            bounding box is always square · handles sit on the square bbox, not the circle edge
           </div>
         </div>
 

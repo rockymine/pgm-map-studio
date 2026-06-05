@@ -75,6 +75,16 @@
   /* Symmetry axis indicator — center crosshair and axis line in Setup */
   --canvas-axis: #a78bfa;   /* violet-400 */
 
+  /* Canvas SVG area background */
+  --canvas-bg: #080f1a;   /* = --bg-deep */
+
+  /* Region shapes — editor canvas (all types share one colour; runtime supplies per-region value) */
+  --canvas-region: #94a3b8;   /* slate-400 — fallback / design-doc placeholder */
+
+  /* Resize handles — sketch selected + editor selected */
+  --canvas-handle-fill:   #0f172a;   /* slate-950 */
+  --canvas-handle-stroke: #94a3b8;   /* slate-400 */
+
   /* ── Sidebar widths ─────────────────────────────────────────────────── */
   --sidebar-width:   280px;   /* left panels — list / form content */
   --inspector-width: 280px;   /* right panels — detail / property view */
