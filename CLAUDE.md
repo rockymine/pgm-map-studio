@@ -49,6 +49,21 @@ Key rules — read the doc for full detail:
 
 The `/design` page (start the app, navigate to `/design`) is the living visual reference.
 
+## Accessibility
+
+All text and interactive elements must meet **WCAG AA** contrast minimums:
+
+- **Normal text** (< 18pt / 14pt bold, i.e. all sizes in this app): 4.5:1 against its background.
+- **UI component boundaries** (input borders, focus rings): 3:1 against adjacent colour.
+- Decorative elements (dividers, inactive canvas shapes) are exempt.
+
+**Token rules:**
+
+- Never introduce a new text colour token below 4.5:1 on `--bg-panel` or `--bg-base`. Verify with the formula `(lighter + 0.05) / (darker + 0.05)` or a contrast checker before committing.
+- The five text levels in `tokens.css` are the complete set — do not add a sixth dimmer level to express "quiet" text. Use `--text-muted` (4.9:1) as the floor.
+- Derived colour tokens (opacity variants, darkened strokes, tinted surfaces) must be expressed with `color-mix()` or `oklch()` relative syntax rather than hardcoded hex. This ensures they track their source token if the source changes.
+- Shadow values belong in `--shadow-ring` / `--shadow-float` — do not write inline `box-shadow` values in component rules.
+
 ## Dev server
 
 The studio runs on **port 7892** via the `run-studio` skill.
