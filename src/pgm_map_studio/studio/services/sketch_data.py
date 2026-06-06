@@ -76,3 +76,32 @@ def save_overview(sketch_id: str, fields: dict) -> None:
     _path(sketch_id).write_text(
         json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
     )
+
+
+def list_sketches() -> list[dict]:
+    """Return summary rows for all sketch sessions, newest-modified first."""
+    if not SKETCHES_DIR.exists():
+        return []
+    rows = []
+    for p in SKETCHES_DIR.glob("*/sketch.json"):
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            rows.append({
+                "id":          data.get("id", p.parent.name),
+                "name":        data.get("name", ""),
+                "export_slug": data.get("export_slug"),
+                "modified":    p.stat().st_mtime,
+            })
+        except Exception:
+            pass
+    rows.sort(key=lambda r: r["modified"], reverse=True)
+    return rows
+
+
+def save_export_slug(sketch_id: str, slug: str) -> None:
+    """Record the output slug produced by a sketch export. Raises KeyError if not found."""
+    data = load_sketch(sketch_id)
+    data["export_slug"] = slug
+    _path(sketch_id).write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )

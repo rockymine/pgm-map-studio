@@ -175,6 +175,12 @@ export async function deleteSpawn(mapName, regionId) {
 
 // ── Sketch ───────────────────────────────────────────────────────────────
 
+export async function fetchSketches() {
+  const r = await fetch("/api/sketch");
+  if (!r.ok) throw new Error(`Failed to load sketches (${r.status})`);
+  return r.json();
+}
+
 export async function createSketch() {
   const r = await fetch("/api/sketch", { method: "POST" });
   if (!r.ok) throw new Error(`Failed to create sketch (${r.status})`);
@@ -215,6 +221,15 @@ export async function saveSketchOverview(sketchId, fields) {
   });
   if (!r.ok) throw new Error(`Failed to save overview (${r.status})`);
   return r.json();
+}
+
+export async function exportSketch(sketchId) {
+  const r = await fetch(`/api/sketch/${encodeURIComponent(sketchId)}/export`, {
+    method: "POST",
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Export failed (${r.status})`);
+  return body;
 }
 
 // ── Minecraft ────────────────────────────────────────────────────────────

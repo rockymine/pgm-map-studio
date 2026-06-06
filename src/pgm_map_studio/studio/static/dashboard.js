@@ -30,13 +30,18 @@ const state = {
 
 const $ = id => document.getElementById(id);
 
+const tabMapsBtn       = $("tab-maps-btn");
+const tabSketchesBtn   = $("tab-sketches-btn");
+const tabMapsContent   = $("tab-maps-content");
+const tabSketchContent = $("tab-sketches-content");
+const sketchListEl     = $("sketch-list");
+const newSketchBtn     = $("new-sketch-btn");
 const mapListEl        = $("map-list");
 const mapFilterEl      = $("map-filter");
 const mapCountBadge    = $("map-count-badge");
 const filterBtn        = $("filter-btn");
 const filterPanel      = $("filter-panel");
 const urlImportInput   = $("url-import-input");
-const newSketchBtn     = $("new-sketch-btn");
 const urlImportBtn     = $("url-import-btn");
 const urlImportStatus  = $("url-import-status");
 const mapDetailEmpty   = $("map-detail-empty");
@@ -46,22 +51,35 @@ const detailName       = $("detail-name");
 const detailVersion    = $("detail-version");
 const detailAuthors    = $("detail-authors");
 const detailSteps      = $("detail-steps");
-const detailThumb      = $("detail-thumb");
-const detailThumbPH    = $("detail-thumb-placeholder");
-const openEditorBtn    = $("open-editor-btn");
-const runPipelineBtn   = $("run-pipeline-btn");
-const pipelineConsole  = $("pipeline-console");
-const consoleOutput    = $("console-output");
-const consoleClearBtn  = $("console-clear-btn");
-const mapsFolderInput  = $("maps-folder-input");
-const outputFolderInput= $("output-folder-input");
-const saveSettingsBtn  = $("save-settings-btn");
-const settingsMsg      = $("settings-msg");
-const errorDismissBtn  = $("error-dismiss-btn");
+const detailThumb           = $("detail-thumb");
+const detailThumbPH         = $("detail-thumb-placeholder");
+const openEditorBtn         = $("open-editor-btn");
+const runPipelineBtn        = $("run-pipeline-btn");
+const pipelineConsole       = $("pipeline-console");
+const consoleOutput         = $("console-output");
+const consoleClearBtn       = $("console-clear-btn");
+const mapsFolderInput       = $("maps-folder-input");
+const outputFolderInput     = $("output-folder-input");
+const saveSettingsBtn       = $("save-settings-btn");
+const settingsMsg           = $("settings-msg");
+const errorDismissBtn       = $("error-dismiss-btn");
+const sketchDetailContent   = $("sketch-detail-content");
+const sketchDetailBadges    = $("sketch-detail-badges");
+const sketchDetailName      = $("sketch-detail-name");
+const sketchDetailVersion   = $("sketch-detail-version");
+const sketchDetailSteps     = $("sketch-detail-steps");
+const sketchDetailActions   = $("sketch-detail-actions");
 
 // ── Init ──────────────────────────────────────────────────────────────────
 
 errorDismissBtn.addEventListener("click", clearSystemError);
+
+function showDetailEmpty() {
+  mapDetailEmpty.hidden      = false;
+  mapDetailContent.hidden    = true;
+  sketchDetailContent.hidden = true;
+  mapDetailEmpty.textContent = "Select an item from the list.";
+}
 
 newSketchBtn.addEventListener("click", async () => {
   newSketchBtn.disabled = true;
@@ -74,9 +92,170 @@ newSketchBtn.addEventListener("click", async () => {
   }
 });
 
+// ── Tab switching ─────────────────────────────────────────────────────────
+
+let _activeTab = "maps";
+
+function switchTab(tab) {
+  _activeTab = tab;
+  const isMaps = tab === "maps";
+  tabMapsBtn.classList.toggle("sidebar-tab--active", isMaps);
+  tabSketchesBtn.classList.toggle("sidebar-tab--active", !isMaps);
+  tabMapsContent.hidden   = !isMaps;
+  tabSketchContent.hidden = isMaps;
+
+  if (isMaps) {
+    if (state.selected && state.status) {
+      sketchDetailContent.hidden = true;
+      mapDetailEmpty.hidden      = true;
+      mapDetailContent.hidden    = false;
+      renderDetail(state.selected, state.status);
+    } else if (state.sources.length) {
+      selectMap(state.sources[0].slug);
+    } else {
+      showDetailEmpty();
+    }
+  } else {
+    if (_selectedSketchId && _selectedSketchData) {
+      mapDetailContent.hidden    = true;
+      mapDetailEmpty.hidden      = true;
+      sketchDetailContent.hidden = false;
+      renderSketchDetail(_selectedSketchData);
+    } else if (_sketches.length) {
+      selectSketch(_sketches[0].id);
+    } else {
+      showDetailEmpty();
+    }
+  }
+}
+
+tabMapsBtn.addEventListener("click",     () => switchTab("maps"));
+tabSketchesBtn.addEventListener("click", () => switchTab("sketches"));
+
 async function init() {
   await loadConfig();
-  await loadSources();
+  await Promise.all([loadSources(), loadSketches()]);
+}
+
+// ── Sketch list ───────────────────────────────────────────────────────────
+
+async function loadSketches() {
+  try {
+    const sketches = await api.fetchSketches();
+    renderSketches(sketches);
+    if (_activeTab === "sketches" && !_selectedSketchId && sketches.length) {
+      selectSketch(sketches[0].id);
+    }
+  } catch {
+    sketchListEl.innerHTML = '<div class="list-empty">Could not load sketches.</div>';
+  }
+}
+
+let _sketches = [];
+let _selectedSketchId   = null;
+let _selectedSketchData = null;
+
+function renderSketches(sketches) {
+  _sketches = sketches;
+  if (!sketches.length) {
+    sketchListEl.innerHTML = '<div class="list-empty">No sketches yet.</div>';
+    return;
+  }
+  sketchListEl.innerHTML = "";
+  for (const s of sketches) {
+    const row = document.createElement("div");
+    const isExported = !!s.export_slug;
+    const dotClass   = isExported ? "map-status-dot--ready" : "map-status-dot--partial";
+    const hasName    = !!s.name?.trim();
+    const displayName = hasName ? s.name : "Untitled sketch";
+
+    row.className = "list-row" + (s.id === _selectedSketchId ? " list-row--selected" : "");
+    row.dataset.sketchId = s.id;
+    row.innerHTML = `
+      <span class="map-status-dot ${dotClass}"></span>
+      <span class="map-list-name${hasName ? "" : " map-list-name--muted"}">${displayName}</span>
+    `;
+    row.addEventListener("click", () => selectSketch(s.id));
+    sketchListEl.appendChild(row);
+  }
+}
+
+async function selectSketch(id) {
+  _selectedSketchId   = id;
+  _selectedSketchData = null;
+  renderSketches(_sketches);
+
+  showDetailEmpty();
+  mapDetailEmpty.textContent = "Loading…";
+
+  try {
+    const data = await api.fetchSketch(id);
+    _selectedSketchData = data;
+    renderSketchDetail(data);
+  } catch (err) {
+    mapDetailEmpty.textContent = `Could not load sketch: ${err.message}`;
+  }
+}
+
+function renderSketchDetail(data) {
+  const isExported = !!data.export_slug;
+  const hasName    = !!data.name?.trim();
+
+  mapDetailEmpty.hidden     = true;
+  mapDetailContent.hidden   = true;
+  sketchDetailContent.hidden = false;
+
+  // Badges
+  sketchDetailBadges.innerHTML = "";
+  _addSketchBadge(isExported ? "exported" : "in progress", isExported ? "success" : "warning");
+  if (data.setup?.mirror_mode) _addSketchBadge(data.setup.mirror_mode.replace("_", " "), "neutral");
+
+  // Name + version
+  sketchDetailName.textContent    = hasName ? data.name : "Untitled sketch";
+  sketchDetailName.className      = "map-detail-name" + (hasName ? "" : " map-detail-name--muted");
+  sketchDetailVersion.textContent = data.version ? `v${data.version}` : "";
+
+  // Layout summary
+  const shapes  = data.layout?.shapes  ?? [];
+  const islands = data.layout?.islands ?? [];
+  sketchDetailSteps.innerHTML = "";
+  const rows = [
+    { label: "Shapes",  value: shapes.length  || "none" },
+    { label: "Islands", value: islands.length || "none" },
+  ];
+  if (data.setup?.bbox) {
+    const b = data.setup.bbox;
+    rows.push({ label: "Bounds", value: `${b.max_x - b.min_x} × ${b.max_z - b.min_z}` });
+  }
+  for (const { label, value } of rows) {
+    const r = document.createElement("div");
+    r.className = "step-row";
+    r.innerHTML = `<span class="step-label">${label}</span><span class="step-detail">${value}</span>`;
+    sketchDetailSteps.appendChild(r);
+  }
+
+  // Action buttons
+  sketchDetailActions.innerHTML = "";
+  const continueBtn = document.createElement("a");
+  continueBtn.className = "action-btn action-btn--primary";
+  continueBtn.href = `/sketch?id=${encodeURIComponent(data.id)}`;
+  continueBtn.textContent = "Continue editing →";
+  sketchDetailActions.appendChild(continueBtn);
+
+  if (isExported) {
+    const editorBtn = document.createElement("a");
+    editorBtn.className = "action-btn";
+    editorBtn.href = `/editor?map=${encodeURIComponent(data.export_slug)}`;
+    editorBtn.textContent = "Open in Editor →";
+    sketchDetailActions.appendChild(editorBtn);
+  }
+}
+
+function _addSketchBadge(text, variant) {
+  const span = document.createElement("span");
+  span.className = `badge badge--${variant}`;
+  span.textContent = text;
+  sketchDetailBadges.appendChild(span);
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────
@@ -200,6 +379,9 @@ async function loadSources() {
     state.sources = await api.fetchSources();
     renderList();
     clearSystemError();
+    if (_activeTab === "maps" && !state.selected && state.sources.length) {
+      selectMap(state.sources[0].slug);
+    }
   } catch (err) {
     mapListEl.innerHTML = `<div class="list-empty" style="color:var(--color-error)">${err.message}</div>`;
   }
@@ -257,9 +439,11 @@ mapFilterEl.addEventListener("input", renderList);
 
 async function selectMap(slug) {
   state.selected = slug;
+  _selectedSketchId = null;
   renderList();
-  mapDetailEmpty.hidden   = true;
-  mapDetailContent.hidden = false;
+  sketchDetailContent.hidden = true;
+  mapDetailEmpty.hidden      = true;
+  mapDetailContent.hidden    = false;
 
   detailBadges.innerHTML    = "";
   detailName.textContent    = "";

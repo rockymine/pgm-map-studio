@@ -82,7 +82,7 @@ Mental model: `docs/sketch-workflow.md §Island model`, `§Symmetry model §Live
 | Inspector | Shape type, operation, coordinate table; lasso: area + Visvalingam–Whyatt controls |
 | Handles | Resize handles (8-point) for rectangles; vertex drag for polygons; screen-space fixed size |
 
-Status: 🔲
+Status: ✅
 
 ---
 
@@ -98,7 +98,7 @@ Mental model: `docs/sketch-workflow.md §Synthetic scan layer output`
 | Handoff | Editor enters post-Configure state; Configure step skipped |
 | Session state | Shapes, island names, participation flags, bbox, center, mirror mode all restorable |
 
-Status: 🔲
+Status: ✅
 
 ---
 

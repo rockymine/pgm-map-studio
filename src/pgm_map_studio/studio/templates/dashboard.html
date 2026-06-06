@@ -32,42 +32,59 @@
   <!-- ── Left sidebar ───────────────────────────────────────────────────── -->
   <div id="map-list-panel">
 
-    <!-- Zone 1: Import + Search -->
-    <div class="sidebar-actions">
-      <button id="new-sketch-btn" class="action-btn action-btn--primary" style="justify-content:center">
-        <i data-lucide="pencil-ruler"></i>New sketch
-      </button>
-      <div class="sidebar-import-row">
-        <input type="text" id="url-import-input" class="field-input" placeholder="Paste map URL…"/>
-        <button class="action-btn" id="url-import-btn"><i data-lucide="download"></i>Import</button>
-      </div>
-      <div id="url-import-status" class="url-import-status" hidden></div>
-      <div class="sidebar-search-row">
-        <div class="sidebar-search-wrap">
-          <span class="sidebar-search-icon"><i data-lucide="search"></i></span>
-          <input type="text" id="map-filter" class="sidebar-search-input" placeholder="Search…"/>
+    <!-- Tab bar -->
+    <div class="sidebar-tab-bar">
+      <button class="sidebar-tab sidebar-tab--active" id="tab-maps-btn" data-tab="maps">Maps</button>
+      <button class="sidebar-tab" id="tab-sketches-btn" data-tab="sketches">Sketches</button>
+    </div>
+
+    <!-- Maps tab -->
+    <div id="tab-maps-content" class="sidebar-tab-content">
+      <div class="sidebar-actions">
+        <div class="sidebar-import-row">
+          <input type="text" id="url-import-input" class="field-input" placeholder="Paste map URL…"/>
+          <button class="action-btn" id="url-import-btn"><i data-lucide="download"></i>Import</button>
         </div>
-        <button class="action-btn action-btn--icon" id="filter-btn" title="Filter"><i data-lucide="sliders-horizontal"></i></button>
+        <div id="url-import-status" class="url-import-status" hidden></div>
+        <div class="sidebar-search-row">
+          <div class="sidebar-search-wrap">
+            <span class="sidebar-search-icon"><i data-lucide="search"></i></span>
+            <input type="text" id="map-filter" class="sidebar-search-input" placeholder="Search…"/>
+          </div>
+          <button class="action-btn action-btn--icon" id="filter-btn" title="Filter"><i data-lucide="sliders-horizontal"></i></button>
+        </div>
+      </div>
+
+      <div id="filter-panel" class="sidebar-filter-panel" hidden></div>
+
+      <div class="sidebar-maps">
+        <section class="panel-section">
+          <div class="section-header section-header--ruled">
+            <h2 class="section-title">Maps</h2>
+            <span id="map-count-badge" class="badge badge--dim"></span>
+          </div>
+          <div id="map-list" class="panel-list">
+            <div class="list-empty">Configure paths below to load maps.</div>
+          </div>
+        </section>
       </div>
     </div>
 
-    <!-- Filter panel (shown when Filter is active) -->
-    <div id="filter-panel" class="sidebar-filter-panel" hidden></div>
-
-    <!-- Zone 2: Maps list -->
-    <div class="sidebar-maps">
-      <section class="panel-section">
-        <div class="section-header section-header--ruled">
-          <h2 class="section-title">Maps</h2>
-          <span id="map-count-badge" class="badge badge--dim"></span>
+    <!-- Sketches tab -->
+    <div id="tab-sketches-content" class="sidebar-tab-content" hidden>
+      <div class="sidebar-actions">
+        <button id="new-sketch-btn" class="action-btn action-btn--primary" style="justify-content:center">
+          <i data-lucide="pencil-ruler"></i>New sketch
+        </button>
+      </div>
+      <div class="sidebar-maps">
+        <div id="sketch-list" class="panel-list">
+          <div class="list-empty">Loading…</div>
         </div>
-        <div id="map-list" class="panel-list">
-          <div class="list-empty">Configure paths below to load maps.</div>
-        </div>
-      </section>
+      </div>
     </div>
 
-    <!-- Zone 3: Settings (snapped to bottom) -->
+    <!-- Zone 3: Settings (always visible) -->
     <div class="sidebar-settings">
       <div class="section-header section-header--ruled">
         <h2 class="section-title">Settings</h2>
@@ -88,22 +105,19 @@
 
   </div>
 
-  <!-- ── Map detail panel ───────────────────────────────────────────────── -->
+  <!-- ── Detail panel ───────────────────────────────────────────────────── -->
   <div id="map-detail-panel">
 
     <div class="map-detail-empty" id="map-detail-empty">
-      Select a map from the list.
+      Select an item from the list.
     </div>
 
+    <!-- Map detail -->
     <div id="map-detail-content" hidden>
 
-      <!-- Badge row -->
       <div id="detail-badges" class="map-detail-badges"></div>
 
-      <!-- Two-column layout -->
       <div class="map-detail-header">
-
-        <!-- Left: name, version, authors, pipeline -->
         <div class="map-detail-main">
           <div class="map-detail-name" id="detail-name"></div>
           <div class="map-detail-version" id="detail-version"></div>
@@ -114,7 +128,6 @@
           </div>
         </div>
 
-        <!-- Right: thumbnail + action buttons -->
         <div class="map-detail-aside">
           <div class="map-detail-thumb">
             <img id="detail-thumb" class="map-thumb-img" alt="Map thumbnail" hidden/>
@@ -125,7 +138,6 @@
             <button id="run-pipeline-btn" class="action-btn" hidden>Run Pipeline</button>
           </div>
         </div>
-
       </div>
 
       <div class="console-wrap" id="pipeline-console" hidden>
@@ -137,6 +149,29 @@
       </div>
 
     </div>
+
+    <!-- Sketch detail -->
+    <div id="sketch-detail-content" hidden>
+
+      <div id="sketch-detail-badges" class="map-detail-badges"></div>
+
+      <div class="map-detail-header">
+        <div class="map-detail-main">
+          <div class="map-detail-name" id="sketch-detail-name"></div>
+          <div class="map-detail-version" id="sketch-detail-version"></div>
+          <div id="sketch-detail-info" class="detail-block">
+            <div class="detail-block-title">Layout</div>
+            <div id="sketch-detail-steps"></div>
+          </div>
+        </div>
+
+        <div class="map-detail-aside">
+          <div class="map-detail-actions" id="sketch-detail-actions"></div>
+        </div>
+      </div>
+
+    </div>
+
   </div>
 
 </div>

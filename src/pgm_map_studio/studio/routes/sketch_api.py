@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
-from pgm_map_studio.studio.services import sketch_data
+from pgm_map_studio.studio.services import sketch_data, sketch_export
 
 bp = Blueprint("sketch_api", __name__, url_prefix="/api/sketch")
+
+
+@bp.route("", methods=["GET"])
+def list_all():
+    return jsonify(sketch_data.list_sketches())
 
 
 @bp.route("", methods=["POST"])
@@ -53,3 +58,16 @@ def patch_overview(sid: str):
     except KeyError:
         return jsonify({"error": "Sketch not found"}), 404
     return jsonify({"ok": True})
+
+
+@bp.route("/<sid>/export", methods=["POST"])
+def post_export(sid: str):
+    try:
+        result = sketch_export.export_sketch(sid)
+    except KeyError:
+        return jsonify({"error": "Sketch not found"}), 404
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 422
+    except Exception as exc:
+        return jsonify({"error": f"Export failed: {exc}"}), 500
+    return jsonify(result), 200
