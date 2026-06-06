@@ -5,6 +5,8 @@ Produces editor-ready output files in the configured output root:
   islands.json    — island polygons with sketch metadata (name, mirrors)
   symmetry.json   — confirmed symmetry axis + center from Setup
   xml_data.json   — map identity from Overview
+  <map_name>/level.dat    — Minecraft 1.8 world metadata (gzip NBT)
+  <map_name>/region/*.mca — Anvil region files with island blocks placed at Y=0
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ from shapely.affinity import affine_transform
 from shapely.geometry import Point, Polygon, box, mapping
 from shapely.ops import unary_union
 
+from pgm_map_studio.minecraft.world_writer import write_world
 from pgm_map_studio.studio.services import sketch_data
 from pgm_map_studio.studio.services.config import get_output_root
 
@@ -319,6 +322,11 @@ def _make_slug(name: str, sketch_id: str) -> str:
     return f"{s}-{suffix}" if s else suffix
 
 
+def _world_folder_name(name: str) -> str:
+    """Convert a map name to a lowercase-underscore folder name."""
+    return re.sub(r"[^a-z0-9]+", "_", name.strip().lower()).strip("_") or "world"
+
+
 # ── Public entry point ────────────────────────────────────────────────────────
 
 def export_sketch(sketch_id: str) -> dict:
@@ -362,6 +370,9 @@ def export_sketch(sketch_id: str) -> dict:
     _write_islands_json(island_polys, island_metas, setup, out_dir / "islands.json")
     _write_symmetry_json(setup, out_dir / "symmetry.json")
     _write_xml_data_json(data, out_dir / "xml_data.json")
+    map_name = data.get("name", slug)
+    world_dir = out_dir / _world_folder_name(map_name)
+    write_world(all_blocks, world_dir, y=0, level_name=map_name)
 
     if not data.get("export_slug"):
         sketch_data.save_export_slug(sketch_id, slug)

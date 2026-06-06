@@ -7,6 +7,7 @@ Low-level Minecraft file I/O and block scanning. This package has no knowledge o
 | Module | Purpose |
 |---|---|
 | `region_reader.py` | Streams chunks from Anvil `.mca` region files |
+| `world_writer.py` | Writes (x, z) block positions into a Minecraft 1.8 Anvil world |
 | `layers.py` | Layer extractors — scan the full map, one row per column |
 | `features.py` | Feature extractors — locate specific block types, one row per instance |
 | `colors.py` | Block ID → RGB colour lookup |
