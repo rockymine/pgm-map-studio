@@ -166,7 +166,7 @@ export class CanvasBase {
     // Click (select / inspect)
     this._svg.addEventListener("click", (e) => {
       if (this.#clickWasDrag) { this.#clickWasDrag = false; return; }
-      if (this._activeTool !== null) return;  // only select/null tool dispatches clicks
+      if (this._activeTool !== null && this._activeTool !== "select") return;
       this._onCanvasClick(e, this._clientToSvg(e.clientX, e.clientY));
     });
 

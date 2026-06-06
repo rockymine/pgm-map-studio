@@ -197,6 +197,16 @@ export async function saveSketchSetup(sketchId, fields) {
   return r.json();
 }
 
+export async function saveSketchLayout(sketchId, shapes, islands) {
+  const r = await fetch(`/api/sketch/${encodeURIComponent(sketchId)}/layout`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ shapes, islands }),
+  });
+  if (!r.ok) throw new Error(`Failed to save layout (${r.status})`);
+  return r.json();
+}
+
 export async function saveSketchOverview(sketchId, fields) {
   const r = await fetch(`/api/sketch/${encodeURIComponent(sketchId)}/overview`, {
     method: "PATCH",

@@ -13,6 +13,7 @@ export class SketchSetupPanel {
   #sketchId       = null;
   #dirty          = false;
   #onStatusChange = null;
+  #onSetupSaved   = null;
 
   // form refs
   #minXEl; #minZEl; #maxXEl; #maxZEl;
@@ -27,9 +28,10 @@ export class SketchSetupPanel {
   // canvas
   #canvas;
 
-  constructor(el, { onStatusChange } = {}) {
+  constructor(el, { onStatusChange, onSetupSaved } = {}) {
     this.#el             = el;
     this.#onStatusChange = onStatusChange ?? null;
+    this.#onSetupSaved   = onSetupSaved   ?? null;
 
     this.#minXEl  = el.querySelector("#sk-bbox-min-x");
     this.#minZEl  = el.querySelector("#sk-bbox-min-z");
@@ -271,6 +273,7 @@ export class SketchSetupPanel {
       this.#setDirty(false);
       showToast("Setup saved", "success");
       this.#statusEl.textContent = "";
+      this.#onSetupSaved?.(payload);
     } catch (err) {
       this.#statusEl.textContent = `Save failed: ${err.message}`;
       showToast(`Save failed: ${err.message}`, "error");

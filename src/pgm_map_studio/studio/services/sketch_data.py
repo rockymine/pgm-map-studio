@@ -17,6 +17,7 @@ _DEFAULTS: dict = {
     "objective": "",
     "authors":   [],
     "setup":     None,
+    "layout":    None,
 }
 
 
@@ -52,6 +53,15 @@ def save_setup(sketch_id: str, fields: dict) -> None:
         if key in fields:
             setup[key] = fields[key]
     data["setup"] = setup
+    _path(sketch_id).write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def save_layout(sketch_id: str, shapes: list, islands: list) -> None:
+    """Persist layout shapes and island metadata. Raises KeyError if not found."""
+    data = load_sketch(sketch_id)
+    data["layout"] = {"shapes": shapes, "islands": islands}
     _path(sketch_id).write_text(
         json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
     )

@@ -156,3 +156,60 @@ def test_save_setup_ignores_unknown_keys():
 def test_save_setup_not_found_raises():
     with pytest.raises(KeyError):
         sketch_data.save_setup("00000000-0000-0000-0000-000000000000", {})
+
+
+# ── layout ─────────────────────────────────────────────────────────────────────
+
+_SAMPLE_SHAPES = [
+    {"id": "s1", "type": "rectangle", "operation": "add", "override": False,
+     "min_x": -256, "max_x": 256, "min_z": -256, "max_z": 256},
+    {"id": "s2", "type": "circle", "operation": "subtract", "override": False,
+     "center_x": 0, "center_z": 0, "radius": 50},
+]
+_SAMPLE_ISLANDS = [
+    {"id": "isl_1", "name": "Base", "color": "#4ade80", "mirrors": True},
+]
+
+
+def test_create_sketch_layout_is_none():
+    sid = sketch_data.create_sketch()
+    data = sketch_data.load_sketch(sid)
+    assert data["layout"] is None
+
+
+def test_save_layout_persists_shapes():
+    sid = sketch_data.create_sketch()
+    sketch_data.save_layout(sid, _SAMPLE_SHAPES, _SAMPLE_ISLANDS)
+    data = sketch_data.load_sketch(sid)
+    assert data["layout"]["shapes"] == _SAMPLE_SHAPES
+
+
+def test_save_layout_persists_islands():
+    sid = sketch_data.create_sketch()
+    sketch_data.save_layout(sid, _SAMPLE_SHAPES, _SAMPLE_ISLANDS)
+    data = sketch_data.load_sketch(sid)
+    assert data["layout"]["islands"] == _SAMPLE_ISLANDS
+
+
+def test_save_layout_overwrites_previous():
+    sid = sketch_data.create_sketch()
+    sketch_data.save_layout(sid, _SAMPLE_SHAPES, _SAMPLE_ISLANDS)
+    new_shapes = [{"id": "s3", "type": "rectangle", "operation": "add", "override": False,
+                   "min_x": 0, "max_x": 10, "min_z": 0, "max_z": 10}]
+    sketch_data.save_layout(sid, new_shapes, [])
+    data = sketch_data.load_sketch(sid)
+    assert len(data["layout"]["shapes"]) == 1
+    assert data["layout"]["shapes"][0]["id"] == "s3"
+    assert data["layout"]["islands"] == []
+
+
+def test_save_layout_empty_shapes_and_islands():
+    sid = sketch_data.create_sketch()
+    sketch_data.save_layout(sid, [], [])
+    data = sketch_data.load_sketch(sid)
+    assert data["layout"] == {"shapes": [], "islands": []}
+
+
+def test_save_layout_not_found_raises():
+    with pytest.raises(KeyError):
+        sketch_data.save_layout("00000000-0000-0000-0000-000000000000", [], [])

@@ -31,6 +31,20 @@ def patch_setup(sid: str):
     return jsonify({"ok": True})
 
 
+@bp.route("/<sid>/layout", methods=["PATCH"])
+def patch_layout(sid: str):
+    payload = request.get_json(force=True) or {}
+    shapes  = payload.get("shapes", [])
+    islands = payload.get("islands", [])
+    if not isinstance(shapes, list) or not isinstance(islands, list):
+        return jsonify({"error": "shapes and islands must be arrays"}), 400
+    try:
+        sketch_data.save_layout(sid, shapes, islands)
+    except KeyError:
+        return jsonify({"error": "Sketch not found"}), 404
+    return jsonify({"ok": True})
+
+
 @bp.route("/<sid>/overview", methods=["PATCH"])
 def patch_overview(sid: str):
     payload = request.get_json(force=True) or {}

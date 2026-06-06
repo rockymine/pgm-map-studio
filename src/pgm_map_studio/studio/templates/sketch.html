@@ -237,9 +237,98 @@
       </div>
     </div>
 
+    <!-- Layout workspace -->
+    <div id="sk-layout-workspace" class="workspace" hidden>
+
+      <!-- Left sidebar: overlays + island tree -->
+      <div id="sk-layout-left" class="workspace-sidebar">
+        <div id="sk-layout-scroll" class="workspace-scroll">
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Overlays</h2>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <label class="sk-mode-group" style="cursor:pointer">
+                <input type="checkbox" id="sk-layout-toggle-mirror" checked/>
+                <span>Mirror preview</span>
+              </label>
+              <label class="sk-mode-group" style="cursor:pointer">
+                <input type="checkbox" id="sk-layout-toggle-shapes"/>
+                <span>Shapes overlay</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Islands</h2>
+            </div>
+            <div id="sk-layout-tree"></div>
+          </section>
+
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="sk-layout-handle"></div>
+
+      <!-- Canvas with draw toolbar subbar -->
+      <div id="sk-layout-canvas-wrap" class="workspace-canvas">
+        <div class="canvas-subbar">
+          <div class="canvas-toolbar">
+            <button class="draw-tool-btn draw-tool-btn--active" data-tool="move" title="Pan (H)">
+              <i data-lucide="hand"></i>
+            </button>
+            <button class="draw-tool-btn" data-tool="select" title="Select (S)">
+              <i data-lucide="mouse-pointer-2"></i>
+            </button>
+            <button class="draw-tool-btn" data-tool="rectangle" title="Rectangle (R)">
+              <i data-lucide="rectangle-horizontal"></i>
+            </button>
+            <button class="draw-tool-btn" data-tool="circle" title="Circle (O)">
+              <i data-lucide="circle"></i>
+            </button>
+            <button class="draw-tool-btn" data-tool="polygon" title="Polygon (P)">
+              <i data-lucide="pentagon"></i>
+            </button>
+            <button class="draw-tool-btn" data-tool="lasso" title="Lasso (L)">
+              <i data-lucide="lasso"></i>
+            </button>
+          </div>
+          <div class="subbar-sep"></div>
+          <div class="canvas-toolbar">
+            <button class="draw-tool-btn draw-tool-btn--op-add" data-op="add" title="Add mode">
+              <i data-lucide="plus-square"></i>
+              <span class="draw-tool-label">Add</span>
+            </button>
+            <button class="draw-tool-btn" data-op="subtract" title="Subtract mode">
+              <i data-lucide="minus-square"></i>
+              <span class="draw-tool-label">Sub</span>
+            </button>
+          </div>
+          <span class="canvas-cursor" id="sk-layout-cursor"></span>
+          <div class="canvas-subbar-right">
+            <span class="canvas-zoom" id="sk-layout-zoom">100%</span>
+          </div>
+        </div>
+        <svg id="sk-layout-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+
+      <!-- Right inspector panel -->
+      <div id="sk-layout-right" class="workspace-inspector">
+        <div class="workspace-scroll">
+          <div id="sk-layout-inspector">
+            <p class="section-desc">Select a shape to inspect.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   </div><!-- /activity-viewport -->
 </div><!-- /main -->
 
+<script type="importmap">{"imports": {"polygon-clipping": "https://cdn.jsdelivr.net/npm/polygon-clipping@0.15.7/+esm"}}</script>
 <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
 <script type="module" src="{{ url_for('static', filename='sketch-main.js') }}"></script>
 </body>
