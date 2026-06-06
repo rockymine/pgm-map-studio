@@ -67,7 +67,7 @@ export class SketchLayoutCanvas extends CanvasBase {
   #selectedId  = null;
 
   // island polygons (computed result)
-  #islands     = [];  // [{ exterior, holes, color }]
+  #islands     = [];  // [{ exterior, holes }]
 
   // mirror preview polygons
   #mirrorPolys = [];  // [{ exterior, holes }]
@@ -480,11 +480,9 @@ export class SketchLayoutCanvas extends CanvasBase {
     while (this.#islandLayer.firstChild) this.#islandLayer.removeChild(this.#islandLayer.firstChild);
     for (const isl of this.#islands) {
       if (!isl?.exterior?.length) continue;
-      const fill   = isl.color ?? DEFAULT_ISLAND_FILL;
-      const stroke = isl.color ?? DEFAULT_ISLAND_STROKE;
       this.#islandLayer.appendChild(svgEl("path", {
         d: this.#polyToSvgPath(isl.exterior, isl.holes ?? []),
-        fill, stroke,
+        fill: DEFAULT_ISLAND_FILL, stroke: DEFAULT_ISLAND_STROKE,
         "stroke-width": "1.5", "fill-opacity": "0.22",
         "fill-rule": "evenodd", "vector-effect": "non-scaling-stroke",
       }));

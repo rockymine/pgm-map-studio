@@ -4,9 +4,9 @@ export class SketchOverviewActivity {
   #el    = null;
   #panel = null;
 
-  constructor({ onStatusChange } = {}) {
+  constructor({ onStatusChange, onChanged } = {}) {
     this.#el    = document.getElementById("sk-overview-workspace");
-    this.#panel = new SketchOverviewPanel(this.#el, { onStatusChange });
+    this.#panel = new SketchOverviewPanel(this.#el, { onStatusChange, onChanged });
   }
 
   activate({ sketchId } = {}) {
@@ -16,5 +16,9 @@ export class SketchOverviewActivity {
 
   deactivate() {
     this.#el.hidden = true;
+  }
+
+  resize() {
+    this.#panel.resize();
   }
 }

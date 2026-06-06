@@ -1,5 +1,7 @@
 import * as api from "../api.js";
 import { showToast } from "../shared/ui-helpers.js";
+import { computeIslands, assignShapesToIslands, computeMirrorPreview, restoreIslandMeta } from "../sketch/geometry.js";
+import { buildTransform, svgEl as mkSvg, polyToPath, boundsToRingPath } from "../canvas/transform.js";
 
 const _AVATAR_EMPTY = "data:image/gif;base64,R0lGODlhEAAQAAAAACwAAAAAEAAQAAABEIQBADs=";
 
@@ -17,6 +19,7 @@ export class SketchOverviewPanel {
   #data           = null;
   #dirty          = false;
   #onStatusChange = null;
+  #onChanged      = null;
 
   #nameEl;
   #versionEl;
@@ -25,10 +28,16 @@ export class SketchOverviewPanel {
   #contributorsEl;
   #saveBtn;
   #statusEl;
+  #svgEl;
+  #wrapEl;
+  #emptyEl;
+  #cachedIslands = null;  // computed once per load; reused on resize
+  #cachedSetup   = null;
 
-  constructor(el, { onStatusChange } = {}) {
+  constructor(el, { onStatusChange, onChanged } = {}) {
     this.#el             = el;
     this.#onStatusChange = onStatusChange ?? null;
+    this.#onChanged      = onChanged      ?? null;
 
     this.#nameEl         = el.querySelector("#sk-name");
     this.#versionEl      = el.querySelector("#sk-version");
@@ -37,6 +46,9 @@ export class SketchOverviewPanel {
     this.#contributorsEl = el.querySelector("#sk-contributors-list");
     this.#saveBtn        = el.querySelector("#sk-save-btn");
     this.#statusEl       = el.querySelector("#sk-save-status");
+    this.#svgEl          = el.querySelector("#sk-ov-svg");
+    this.#wrapEl         = el.querySelector("#sk-ov-canvas-wrap");
+    this.#emptyEl        = el.querySelector("#sk-ov-canvas-empty");
 
     for (const field of [this.#nameEl, this.#versionEl, this.#objectiveEl]) {
       field.addEventListener("input", () => this.#setDirty(true));
@@ -66,6 +78,10 @@ export class SketchOverviewPanel {
     }
   }
 
+  resize() {
+    this.#renderPreview();
+  }
+
   // ── private ───────────────────────────────────────────────────────────────
 
   #populate() {
@@ -81,6 +97,87 @@ export class SketchOverviewPanel {
     }
     this.#setDirty(false);
     this.#updateTopbarName();
+    this.#computeIslands();
+    this.#renderPreview();
+  }
+
+  #computeIslands() {
+    if (!this.#data) return;
+    const shapes    = this.#data.layout?.shapes ?? [];
+    const savedMeta = this.#data.layout?.islands ?? [];
+
+    if (!shapes.length) { this.#cachedIslands = []; this.#cachedSetup = null; return; }
+
+    const { islands, addUnion, overrideAddUnion } = computeIslands(shapes, []);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion);
+
+    restoreIslandMeta(islands, savedMeta, ["mirrors"]);
+
+    this.#cachedIslands = islands;
+    this.#cachedSetup   = this.#data.setup ?? {};
+  }
+
+  #renderPreview() {
+    if (!this.#svgEl || !this.#wrapEl) return;
+
+    const islands = this.#cachedIslands;
+    const setup   = this.#cachedSetup ?? {};
+    const bbox    = setup.bbox ?? { min_x: -256, max_x: 256, min_z: -256, max_z: 256 };
+
+    const svgW = this.#wrapEl.clientWidth  || 400;
+    const svgH = this.#wrapEl.clientHeight || 400;
+
+    while (this.#svgEl.firstChild) this.#svgEl.removeChild(this.#svgEl.firstChild);
+    this.#svgEl.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
+    this.#svgEl.setAttribute("width",  svgW);
+    this.#svgEl.setAttribute("height", svgH);
+
+    if (!islands?.length) {
+      if (this.#emptyEl) this.#emptyEl.hidden = false;
+      return;
+    }
+    if (this.#emptyEl) this.#emptyEl.hidden = true;
+
+    const toSvg = buildTransform(bbox, svgW, svgH);
+    const g     = mkSvg("g");
+
+    // Bounding box outline
+    g.appendChild(mkSvg("path", {
+      d:              boundsToRingPath(bbox, toSvg),
+      fill:           "none",
+      stroke:         "var(--border)",
+      "stroke-width": "1",
+    }));
+
+    // Mirror preview
+    const cx = setup.center?.cx ?? 0;
+    const cz = setup.center?.cz ?? 0;
+    if (setup.mirror_mode) {
+      const preview = computeMirrorPreview(islands, setup.mirror_mode, cx, cz);
+      for (const m of preview) {
+        g.appendChild(mkSvg("path", {
+          d:              polyToPath(m, toSvg),
+          fill:           "var(--canvas-mirror-fill)",
+          stroke:         "var(--canvas-mirror-stroke)",
+          "stroke-width": "1",
+          "fill-rule":    "evenodd",
+        }));
+      }
+    }
+
+    // Primary islands
+    for (const isl of islands) {
+      g.appendChild(mkSvg("path", {
+        d:              polyToPath(isl, toSvg),
+        fill:           "var(--canvas-result-fill)",
+        "fill-opacity": "0.45",
+        stroke:         "var(--canvas-result-stroke)",
+        "stroke-width": "1.5",
+        "fill-rule":    "evenodd",
+      }));
+    }
+
+    this.#svgEl.appendChild(g);
   }
 
   #addPersonRow(listEl, { uuid = "", name = "", contribution = "" } = {}) {
@@ -172,6 +269,7 @@ export class SketchOverviewPanel {
       this.#data = { ...this.#data, ...payload };
       this.#setDirty(false);
       this.#updateTopbarName();
+      this.#onChanged?.();
       showToast("Overview saved", "success");
       this.#statusEl.textContent = "";
     } catch (err) {

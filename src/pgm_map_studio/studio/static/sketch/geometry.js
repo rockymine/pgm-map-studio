@@ -117,7 +117,7 @@ export function ringCentroid(ring) {
  *
  * Returns:
  *   {
- *     islands:          [{ id, name, color, exterior, holes, shapeIds, mirrors }]
+ *     islands:          [{ id, name, exterior, holes, shapeIds, mirrors }]
  *     addUnion:         MultiPolygon from step 1 (used by assignShapesToIslands)
  *     overrideAddUnion: MultiPolygon after step 3 (used for override-sub assignment)
  *   }
@@ -177,11 +177,6 @@ export function computeIslands(shapes, previousIslands = []) {
 
   // Build island objects, preserving name/mirror from previous islands by
   // matching on centroid proximity (nearest previous centroid within threshold).
-  const ISLAND_COLORS = [
-    "#4ade80", "#60a5fa", "#f472b6", "#fb923c",
-    "#a78bfa", "#34d399", "#facc15", "#f87171",
-  ];
-
   const prevCentroids = previousIslands.map(isl => ({
     isl,
     cx: ringCentroid(isl.exterior)[0],
@@ -205,7 +200,6 @@ export function computeIslands(shapes, previousIslands = []) {
     return {
       id:       best?.id      ?? `isl_${Date.now()}_${i}`,
       name:     best?.name    ?? `Island ${i + 1}`,
-      color:    best?.color   ?? ISLAND_COLORS[i % ISLAND_COLORS.length],
       mirrors:  best?.mirrors ?? true,
       exterior,
       holes,
@@ -345,4 +339,25 @@ function _transformRing(ring, axis, cx, cz) {
     });
   }
   return ring.map(([x, z]) => applySymmetry(x, z, axis, cx, cz));
+}
+
+/**
+ * Apply saved island metadata to computed islands by matching on shapeId overlap.
+ * @param {object[]} islands   - From computeIslands (with .shapeIds populated by assignShapesToIslands)
+ * @param {object[]} savedMeta - Persisted island records ({shapeIds, ...fields})
+ * @param {string[]} fields    - Which fields to copy from the best match onto each island
+ */
+export function restoreIslandMeta(islands, savedMeta, fields) {
+  if (!savedMeta.length) return;
+  for (const isl of islands) {
+    let best = null, bestScore = 0;
+    for (const meta of savedMeta) {
+      const overlap = isl.shapeIds.filter(sid => (meta.shapeIds ?? []).includes(sid)).length;
+      if (overlap > bestScore) { bestScore = overlap; best = meta; }
+    }
+    if (!best || bestScore === 0) continue;
+    for (const field of fields) {
+      if (best[field] !== undefined) isl[field] = best[field];
+    }
+  }
 }

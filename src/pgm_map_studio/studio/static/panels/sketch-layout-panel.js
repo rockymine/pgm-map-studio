@@ -100,6 +100,7 @@ export class SketchLayoutPanel {
 
     this.#selectedId = prev;
     this.#highlightSelected();
+    if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "14", height: "14" } });
   }
 
   #makeIslandRow(isl, collapsed) {
@@ -135,7 +136,7 @@ export class SketchLayoutPanel {
     nameInput.title = "Double-click to rename";
     nameInput.readOnly = true;
     nameInput.addEventListener("dblclick", () => { nameInput.readOnly = false; nameInput.focus(); nameInput.select(); });
-    nameInput.addEventListener("blur",  () => { nameInput.readOnly = true; this.#onIslandRename?.(isl.id, nameInput.value.trim() || isl.name); });
+    nameInput.addEventListener("blur",  () => { if (!nameInput.readOnly) { nameInput.readOnly = true; this.#onIslandRename?.(isl.id, nameInput.value.trim() || isl.name); } });
     nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") nameInput.blur(); if (e.key === "Escape") { nameInput.value = isl.name; nameInput.blur(); } });
     row.appendChild(nameInput);
 
