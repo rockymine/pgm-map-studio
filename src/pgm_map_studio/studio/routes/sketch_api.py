@@ -1,0 +1,31 @@
+from __future__ import annotations
+
+from flask import Blueprint, jsonify, request
+
+from pgm_map_studio.studio.services import sketch_data
+
+bp = Blueprint("sketch_api", __name__, url_prefix="/api/sketch")
+
+
+@bp.route("", methods=["POST"])
+def create():
+    sid = sketch_data.create_sketch()
+    return jsonify({"id": sid}), 201
+
+
+@bp.route("/<sid>")
+def get(sid: str):
+    try:
+        return jsonify(sketch_data.load_sketch(sid))
+    except KeyError:
+        return jsonify({"error": "Sketch not found"}), 404
+
+
+@bp.route("/<sid>/overview", methods=["PATCH"])
+def patch_overview(sid: str):
+    payload = request.get_json(force=True) or {}
+    try:
+        sketch_data.save_overview(sid, payload)
+    except KeyError:
+        return jsonify({"error": "Sketch not found"}), 404
+    return jsonify({"ok": True})

@@ -21,6 +21,11 @@ def configure():
     return render_template("configure.html", map_name=map_name)
 
 
+@bp.route("/sketch")
+def sketch():
+    return render_template("sketch.html")
+
+
 @bp.route("/design")
 def design():
     return render_template("design.html")

@@ -5,7 +5,7 @@ import logging
 
 from flask import Flask
 
-from .routes import config, map_api, minecraft, pages, pipeline, sources, teams, spawns
+from .routes import config, map_api, minecraft, pages, pipeline, sketch_api, sources, teams, spawns
 
 
 def create_app() -> Flask:
@@ -19,6 +19,7 @@ def create_app() -> Flask:
     app.register_blueprint(teams.bp)
     app.register_blueprint(spawns.bp)
     app.register_blueprint(minecraft.bp)
+    app.register_blueprint(sketch_api.bp)
 
     return app
 

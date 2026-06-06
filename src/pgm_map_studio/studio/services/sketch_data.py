@@ -1,0 +1,52 @@
+from __future__ import annotations
+
+import json
+import uuid
+from pathlib import Path
+
+SKETCHES_DIR = Path.home() / ".config" / "pgm-map-studio" / "sketches"
+
+_OVERVIEW_FIELDS = {"name", "version", "objective", "authors"}
+
+_DEFAULTS: dict = {
+    "gamemode":  "ctw",
+    "name":      "",
+    "version":   "1.0",
+    "objective": "",
+    "authors":   [],
+}
+
+
+def _path(sketch_id: str) -> Path:
+    return SKETCHES_DIR / sketch_id / "sketch.json"
+
+
+def create_sketch() -> str:
+    """Create a new blank sketch session. Returns the session ID."""
+    sid = str(uuid.uuid4())
+    p = _path(sid)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(
+        json.dumps({"id": sid, **_DEFAULTS}, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return sid
+
+
+def load_sketch(sketch_id: str) -> dict:
+    """Load a sketch session. Raises KeyError if not found."""
+    p = _path(sketch_id)
+    if not p.exists():
+        raise KeyError(sketch_id)
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def save_overview(sketch_id: str, fields: dict) -> None:
+    """Persist overview fields (name, version, objective, authors). Raises KeyError if not found."""
+    data = load_sketch(sketch_id)
+    for key in _OVERVIEW_FIELDS:
+        if key in fields:
+            data[key] = fields[key]
+    _path(sketch_id).write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )

@@ -36,6 +36,7 @@ const mapCountBadge    = $("map-count-badge");
 const filterBtn        = $("filter-btn");
 const filterPanel      = $("filter-panel");
 const urlImportInput   = $("url-import-input");
+const newSketchBtn     = $("new-sketch-btn");
 const urlImportBtn     = $("url-import-btn");
 const urlImportStatus  = $("url-import-status");
 const mapDetailEmpty   = $("map-detail-empty");
@@ -61,6 +62,17 @@ const errorDismissBtn  = $("error-dismiss-btn");
 // ── Init ──────────────────────────────────────────────────────────────────
 
 errorDismissBtn.addEventListener("click", clearSystemError);
+
+newSketchBtn.addEventListener("click", async () => {
+  newSketchBtn.disabled = true;
+  try {
+    const { id } = await api.createSketch();
+    window.location.href = `/sketch?id=${encodeURIComponent(id)}`;
+  } catch (err) {
+    showSystemError(`Could not create sketch: ${err.message}`);
+    newSketchBtn.disabled = false;
+  }
+});
 
 async function init() {
   await loadConfig();

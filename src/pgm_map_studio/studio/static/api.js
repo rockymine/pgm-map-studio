@@ -173,6 +173,30 @@ export async function deleteSpawn(mapName, regionId) {
   return body;
 }
 
+// ── Sketch ───────────────────────────────────────────────────────────────
+
+export async function createSketch() {
+  const r = await fetch("/api/sketch", { method: "POST" });
+  if (!r.ok) throw new Error(`Failed to create sketch (${r.status})`);
+  return r.json();
+}
+
+export async function fetchSketch(sketchId) {
+  const r = await fetch(`/api/sketch/${encodeURIComponent(sketchId)}`);
+  if (!r.ok) throw new Error(`Sketch not found (${r.status})`);
+  return r.json();
+}
+
+export async function saveSketchOverview(sketchId, fields) {
+  const r = await fetch(`/api/sketch/${encodeURIComponent(sketchId)}/overview`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
+  });
+  if (!r.ok) throw new Error(`Failed to save overview (${r.status})`);
+  return r.json();
+}
+
 // ── Minecraft ────────────────────────────────────────────────────────────
 
 export async function fetchMinecraftPlayer(nameOrUuid) {

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PGM Map Studio — Sketch</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}"/>
+</head>
+<body>
+
+<div id="topbar">
+  <a href="/" class="topbar-breadcrumb-home" title="Back to dashboard">
+    <i data-lucide="house"></i>
+    <span>Maps</span>
+  </a>
+  <span class="topbar-sep">›</span>
+  <span id="topbar-sketch-name" class="topbar-crumb">New sketch</span>
+
+  <div class="topbar-right">
+    <div id="topbar-error" role="alert">
+      <span class="topbar-error-text"></span>
+      <button class="topbar-error-dismiss" id="error-dismiss-btn"><i data-lucide="x"></i></button>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <nav id="activity-rail">
+    <div class="activity-logo">
+      <div class="activity-logo-box">
+        <span class="activity-logo-pgm">pgm</span>
+        <span class="activity-logo-sub">STUDIO</span>
+      </div>
+    </div>
+    <button class="activity-btn active" id="sk-activity-overview" title="Overview" data-status="">
+      <i data-lucide="book-open-text"></i>
+    </button>
+    <button class="activity-btn" id="sk-activity-setup" title="Setup" disabled data-status="">
+      <i data-lucide="ruler"></i>
+    </button>
+    <button class="activity-btn" id="sk-activity-layout" title="Layout" disabled data-status="">
+      <i data-lucide="pencil-ruler"></i>
+    </button>
+    <button class="activity-btn" id="sk-activity-export" title="Export" disabled data-status="">
+      <i data-lucide="archive"></i>
+    </button>
+  </nav>
+
+  <div id="activity-viewport">
+
+    <!-- Overview workspace -->
+    <div id="sk-overview-workspace" class="workspace">
+      <div id="sk-ov-left" class="workspace-sidebar">
+        <div id="sk-ov-scroll" class="workspace-scroll">
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Map Identity</h2>
+            </div>
+            <div class="field">
+              <label class="field-label" for="sk-name">Map Name <span class="field-required">*</span></label>
+              <input id="sk-name" class="field-input" type="text" placeholder="My CTW Map"/>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="sk-version">Version</label>
+                <input id="sk-version" class="field-input" type="text" placeholder="1.0"/>
+              </div>
+              <div class="field field--compact">
+                <label class="field-label">Gamemode</label>
+                <input class="field-input" type="text" value="ctw" disabled/>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="sk-objective">Objective</label>
+              <textarea id="sk-objective" class="field-input field-input--textarea" rows="2"
+                placeholder="Capture all enemy wools!"></textarea>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Authors <span class="field-required">*</span></h2>
+              <button id="sk-add-author" class="action-btn">+ Add</button>
+            </div>
+            <div id="sk-authors-list"></div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Contributors</h2>
+              <button id="sk-add-contributor" class="action-btn">+ Add</button>
+            </div>
+            <div id="sk-contributors-list"></div>
+          </section>
+
+          <section class="panel-section">
+            <div class="panel-actions">
+              <button id="sk-save-btn" class="action-btn action-btn--primary" disabled>Save changes</button>
+              <span id="sk-save-status" class="panel-save-status"></span>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="sk-ov-handle"></div>
+
+      <div id="sk-ov-canvas-wrap" class="workspace-canvas">
+        <svg id="sk-ov-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="sk-ov-canvas-empty" style="
+          position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+          font-size:var(--font-base);color:var(--text-muted);pointer-events:none;
+          text-align:center;line-height:1.8
+        ">No layout yet.<br>Draw islands in the Layout step.</div>
+      </div>
+    </div>
+
+  </div><!-- /activity-viewport -->
+</div><!-- /main -->
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<script type="module" src="{{ url_for('static', filename='sketch-main.js') }}"></script>
+</body>
+</html>
