@@ -4,9 +4,9 @@ export class SketchSetupActivity {
   #el    = null;
   #panel = null;
 
-  constructor({ onStatusChange, onSetupSaved } = {}) {
+  constructor({ onStatusChange, onSetupSaved, onChanged } = {}) {
     this.#el    = document.getElementById("sk-setup-workspace");
-    this.#panel = new SketchSetupPanel(this.#el, { onStatusChange, onSetupSaved });
+    this.#panel = new SketchSetupPanel(this.#el, { onStatusChange, onSetupSaved, onChanged });
   }
 
   activate({ sketchId } = {}) {

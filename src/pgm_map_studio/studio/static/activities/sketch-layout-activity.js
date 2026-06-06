@@ -14,7 +14,7 @@ import * as api from "../api.js";
 import { showToast } from "../shared/ui-helpers.js";
 import { SketchLayoutCanvas } from "../canvas/sketch-layout-canvas.js";
 import { SketchLayoutPanel }  from "../panels/sketch-layout-panel.js";
-import { computeIslands, assignShapesToIslands, computeMirrorPreview } from "../sketch/geometry.js";
+import { computeIslands, assignShapesToIslands, computeMirrorPreview, restoreIslandMeta } from "../sketch/geometry.js";
 
 let _nextId = 1;
 function genId() { return `s${Date.now()}_${_nextId++}`; }
@@ -41,9 +41,13 @@ export class SketchLayoutActivity {
 
   // external callbacks
   #onStatusChange = null;
+  #onExportReady  = null;
+  #onChanged      = null;
 
-  constructor({ onStatusChange } = {}) {
+  constructor({ onStatusChange, onExportReady, onChanged } = {}) {
     this.#onStatusChange = onStatusChange ?? null;
+    this.#onExportReady  = onExportReady  ?? null;
+    this.#onChanged      = onChanged      ?? null;
 
     this.#el = document.getElementById("sk-layout-workspace");
 
@@ -141,26 +145,11 @@ export class SketchLayoutActivity {
 
         // Restore saved name/color/mirrors by matching on shapeId set overlap.
         const savedMeta = layout.islands ?? [];
-        if (savedMeta.length > 0) {
-          for (const isl of islands) {
-            let best = null, bestScore = 0;
-            for (const meta of savedMeta) {
-              const overlap = isl.shapeIds.filter(sid => (meta.shapeIds ?? []).includes(sid)).length;
-              if (overlap > bestScore) { bestScore = overlap; best = meta; }
-            }
-            if (best && bestScore > 0) {
-              isl.id      = best.id;
-              isl.name    = best.name;
-              isl.color   = best.color;
-              isl.mirrors = best.mirrors ?? true;
-            }
-          }
-        }
+        restoreIslandMeta(islands, savedMeta, ["id", "name", "mirrors"]);
 
         this.#islands = islands;
         this.#canvas.setIslands(islands.map(isl => ({
           exterior: isl.exterior, holes: isl.holes,
-          color: "var(--canvas-result-fill)",
         })));
         this.#panel.setShapes(this.#shapes);
         this.#panel.setIslands(islands);
@@ -317,7 +306,6 @@ export class SketchLayoutActivity {
     this.#canvas.setIslands(islands.map(isl => ({
       exterior: isl.exterior,
       holes:    isl.holes,
-      color:    "var(--canvas-result-fill)",
     })));
 
     this.#panel.setShapes(this.#shapes);
@@ -345,12 +333,14 @@ export class SketchLayoutActivity {
   #updateStatus() {
     const valid = this.#islands.length >= 1;
     this.#onStatusChange?.(valid ? "green" : "yellow");
+    this.#onExportReady?.(this.#islands.length >= 2);
   }
 
   // ── Persistence ───────────────────────────────────────────────────────────────
 
   #scheduleSave() {
     clearTimeout(this.#saveTimer);
+    this.#onChanged?.();
     this.#saveTimer = setTimeout(() => this.#save(), 800);
   }
 
@@ -359,7 +349,6 @@ export class SketchLayoutActivity {
     const islandMeta = this.#islands.map(isl => ({
       id:       isl.id,
       name:     isl.name,
-      color:    isl.color,
       mirrors:  isl.mirrors,
       shapeIds: isl.shapeIds,
     }));

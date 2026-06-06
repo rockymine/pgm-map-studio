@@ -19,6 +19,15 @@
   <span id="topbar-sketch-name" class="topbar-crumb">New sketch</span>
 
   <div class="topbar-right">
+    <div id="sk-topbar-actions">
+      <span id="sk-changes-badge" class="topbar-changes-badge" hidden>
+        <i data-lucide="triangle-alert"></i>Changes detected — re-export needed
+      </span>
+      <a id="sk-open-editor-btn" class="action-btn" hidden>Open in Editor →</a>
+      <button id="sk-export-btn" class="action-btn action-btn--primary" disabled>
+        <i data-lucide="archive"></i>Export
+      </button>
+    </div>
     <div id="topbar-error" role="alert">
       <span class="topbar-error-text"></span>
       <button class="topbar-error-dismiss" id="error-dismiss-btn"><i data-lucide="x"></i></button>
@@ -42,9 +51,6 @@
     </button>
     <button class="activity-btn" id="sk-activity-layout" title="Layout" disabled data-status="">
       <i data-lucide="pencil-ruler"></i>
-    </button>
-    <button class="activity-btn" id="sk-activity-export" title="Export" disabled data-status="">
-      <i data-lucide="archive"></i>
     </button>
   </nav>
 

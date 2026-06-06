@@ -14,6 +14,7 @@ export class SketchSetupPanel {
   #dirty          = false;
   #onStatusChange = null;
   #onSetupSaved   = null;
+  #onChanged      = null;
 
   // form refs
   #minXEl; #minZEl; #maxXEl; #maxZEl;
@@ -28,10 +29,11 @@ export class SketchSetupPanel {
   // canvas
   #canvas;
 
-  constructor(el, { onStatusChange, onSetupSaved } = {}) {
+  constructor(el, { onStatusChange, onSetupSaved, onChanged } = {}) {
     this.#el             = el;
     this.#onStatusChange = onStatusChange ?? null;
     this.#onSetupSaved   = onSetupSaved   ?? null;
+    this.#onChanged      = onChanged      ?? null;
 
     this.#minXEl  = el.querySelector("#sk-bbox-min-x");
     this.#minZEl  = el.querySelector("#sk-bbox-min-z");
@@ -271,6 +273,7 @@ export class SketchSetupPanel {
     try {
       await api.saveSketchSetup(this.#sketchId, payload);
       this.#setDirty(false);
+      this.#onChanged?.();
       showToast("Setup saved", "success");
       this.#statusEl.textContent = "";
       this.#onSetupSaved?.(payload);
