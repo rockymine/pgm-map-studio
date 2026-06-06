@@ -95,3 +95,64 @@ def test_save_sketch_authors():
 def test_save_overview_not_found_raises():
     with pytest.raises(KeyError):
         sketch_data.save_overview("00000000-0000-0000-0000-000000000000", {"name": "x"})
+
+
+# ── setup ──────────────────────────────────────────────────────────────────
+
+
+def test_create_sketch_setup_is_none():
+    sid = sketch_data.create_sketch()
+    data = sketch_data.load_sketch(sid)
+    assert data["setup"] is None
+
+
+def test_save_setup_persists_bbox():
+    sid = sketch_data.create_sketch()
+    sketch_data.save_setup(sid, {
+        "bbox": {"min_x": -256, "max_x": 256, "min_z": -256, "max_z": 256},
+        "center": {"cx": 0, "cz": 0},
+        "mirror_mode": "rot_180",
+    })
+    data = sketch_data.load_sketch(sid)
+    assert data["setup"]["bbox"] == {"min_x": -256, "max_x": 256, "min_z": -256, "max_z": 256}
+
+
+def test_save_setup_persists_center():
+    sid = sketch_data.create_sketch()
+    sketch_data.save_setup(sid, {
+        "bbox": {"min_x": 0, "max_x": 128, "min_z": 0, "max_z": 128},
+        "center": {"cx": 64, "cz": 64},
+        "mirror_mode": "mirror_x",
+    })
+    data = sketch_data.load_sketch(sid)
+    assert data["setup"]["center"] == {"cx": 64, "cz": 64}
+
+
+def test_save_setup_persists_mirror_mode():
+    sid = sketch_data.create_sketch()
+    sketch_data.save_setup(sid, {
+        "bbox": {"min_x": 0, "max_x": 128, "min_z": 0, "max_z": 128},
+        "center": {"cx": 0, "cz": 0},
+        "mirror_mode": "rot_90",
+    })
+    data = sketch_data.load_sketch(sid)
+    assert data["setup"]["mirror_mode"] == "rot_90"
+
+
+def test_save_setup_ignores_unknown_keys():
+    sid = sketch_data.create_sketch()
+    sketch_data.save_setup(sid, {
+        "bbox": {"min_x": 0, "max_x": 64, "min_z": 0, "max_z": 64},
+        "center": {"cx": 0, "cz": 0},
+        "mirror_mode": "rot_180",
+        "injected": "bad",
+    })
+    raw = json.loads(
+        (sketch_data.SKETCHES_DIR / sid / "sketch.json").read_text()
+    )
+    assert "injected" not in raw["setup"]
+
+
+def test_save_setup_not_found_raises():
+    with pytest.raises(KeyError):
+        sketch_data.save_setup("00000000-0000-0000-0000-000000000000", {})

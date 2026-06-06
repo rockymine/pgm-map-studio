@@ -548,6 +548,27 @@
         </div>
       </div>
       <div class="ds-label" style="margin-top:8px">.filter-group-options → .filter-chip[.filter-chip--active] &nbsp;·&nbsp; group labels use .section-title</div>
+
+      <div class="ds-sub" style="margin-top:var(--space-4)">Labeled chip rows — used in Setup activity for symmetry mode selection. <code style="color:var(--code-color)">.filter-group-options--fill</code> stretches chips to fill the row. <code style="color:var(--code-color)">.sk-mode-group</code> aligns a label with a chip group; <code style="color:var(--code-color)">.sk-mode-stack</code> stacks multiple rows.</div>
+      <div class="ds-group" style="max-width:280px">
+        <div class="sk-mode-stack">
+          <div class="sk-mode-group">
+            <span class="field-label sk-mode-group__label">Mirror</span>
+            <div class="filter-group-options filter-group-options--fill">
+              <button class="filter-chip">X-Axis</button>
+              <button class="filter-chip filter-chip--active">Z-Axis</button>
+            </div>
+          </div>
+          <div class="sk-mode-group">
+            <span class="field-label sk-mode-group__label">Rotate</span>
+            <div class="filter-group-options filter-group-options--fill">
+              <button class="filter-chip filter-chip--active">180°</button>
+              <button class="filter-chip" disabled>90°</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-label" style="margin-top:8px">.sk-mode-stack → .sk-mode-group → .sk-mode-group__label + .filter-group-options.filter-group-options--fill</div>
     </section>
 
     <!-- ── Preview cards ── -->
@@ -1300,7 +1321,56 @@
       </div>
     </section>
 
-      <div class="ds-subhead" style="margin-top:24px">Sketch inspector — detail table + simplify widget</div>
+      <div class="ds-subhead" style="margin-top:24px">Bounding box — Setup panel</div>
+      <div class="ds-sub">The same <code style="color:var(--code-color)">.detail-table</code> used in the sketch inspector also drives the bounding box form in the Setup activity. The SIZE column is derived (read-only) and updates on every input event.</div>
+
+      <div class="ds-row" style="align-items:flex-start;margin-bottom:24px">
+        <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--space-4) 14px">
+          <table class="detail-table">
+            <thead><tr><th>Min</th><th>Max</th><th class="detail-size-head">Size</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="detail-val">
+                  <div class="detail-prefixed-field">
+                    <span class="detail-prefix">X</span>
+                    <input class="detail-bounds-input" type="number" value="-200"/>
+                  </div>
+                </td>
+                <td class="detail-val">
+                  <div class="detail-prefixed-field">
+                    <span class="detail-prefix">X</span>
+                    <input class="detail-bounds-input" type="number" value="200"/>
+                  </div>
+                </td>
+                <td class="detail-size">400</td>
+              </tr>
+              <tr>
+                <td class="detail-val">
+                  <div class="detail-prefixed-field">
+                    <span class="detail-prefix">Z</span>
+                    <input class="detail-bounds-input" type="number" value="-200"/>
+                  </div>
+                </td>
+                <td class="detail-val">
+                  <div class="detail-prefixed-field">
+                    <span class="detail-prefix">Z</span>
+                    <input class="detail-bounds-input" type="number" value="200"/>
+                  </div>
+                </td>
+                <td class="detail-size">400</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
+          <div class="ds-label">.detail-table — 3 columns: MIN · MAX · SIZE</div>
+          <div class="ds-label">.detail-val → .detail-prefixed-field (fills cell via width:100%)</div>
+          <div class="ds-label">.detail-prefix — X / Z inside the input</div>
+          <div class="ds-label">.detail-size — derived, read-only</div>
+        </div>
+      </div>
+
+      <div class="ds-subhead">Sketch inspector — detail table + simplify widget</div>
       <div class="ds-sub">The sketch right-panel inspector uses <code style="color:var(--code-color)">.detail-table</code> for rectangle (MIN/MAX/SIZE) and polygon (vertex list). Lasso shapes additionally show a <code style="color:var(--code-color)">.simplify-section</code> with area readout, tolerance input, and Generalize button. Defined in <code style="color:var(--code-color)">components.css</code>.</div>
 
       <div class="ds-row" style="align-items:flex-start">
@@ -1316,7 +1386,7 @@
             <div>
               <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Geometry</div>
               <table class="detail-table">
-                <thead><tr><th></th><th>MIN</th><th>MAX</th><th>SIZE</th></tr></thead>
+                <thead><tr><th></th><th>Min</th><th>Max</th><th class="detail-size-head">Size</th></tr></thead>
                 <tbody>
                   <tr>
                     <td class="detail-axis">X</td>

@@ -47,7 +47,7 @@ Mental model: `docs/sketch-workflow.md §Identity and role`
 | Validation | Name non-empty + at least one author before Sketch is considered complete |
 | Canvas | Read-only (pan + zoom only); shows current island layout if any |
 
-Status: 🔲
+Status: ✅
 
 ---
 
@@ -62,7 +62,7 @@ Mental model: `docs/sketch-workflow.md §Symmetry model`
 | Center point | Canvas crosshair draggable + numeric inputs; both update same value |
 | Mirror mode | Mirror X / Mirror Z / Rotate 180° / Rotate 90°; axis line shown on canvas |
 
-Status: 🔲
+Status: ✅
 
 ---
 

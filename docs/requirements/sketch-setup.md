@@ -16,6 +16,8 @@
 - When bounding box changes, resize the canvas accordingly.
 - Derive and display the size (width, depth in blocks) from the min/max values.
 - Center is not moved automatically when the bounding box changes.
+- Provide preset buttons (Square, Wide, Tall) that fill the bounding box inputs with common starting values and select the canvas view to fit the new extent.
+- When the user edits inputs manually, deselect any active preset; re-select a preset automatically if the entered values match one exactly.
 
 ---
 
@@ -23,11 +25,13 @@
 
 **User requirements**
 - Place or move the center point directly on the canvas, or enter coordinates numerically. Both inputs update the same value.
+- Reset the center to (0, 0) with a single button press.
 
 **System requirements**
 - Render a crosshair on the canvas at the current center position at all times.
 - Center is draggable on the canvas; dragging updates the numeric inputs live.
 - Numeric inputs update the crosshair position immediately on commit (blur or Enter).
+- The reset button sets both numeric inputs and the canvas crosshair to (0, 0) immediately.
 - Store: center X, center Z.
 - When center changes, update the axis visual (see Sub-step 3) immediately.
 
@@ -52,6 +56,7 @@
 - When mirror mode or center changes, update the axis visual immediately.
 - Store: mirror mode.
 - The selected mirror mode becomes the default symmetry applied to all newly created islands in the Layout activity.
+- Rotate 90° requires a square bounding box (width == depth). If the current bounding box is not square, the 90° option must be disabled and its tooltip must explain the constraint. If the bounding box changes to non-square while 90° is active, the system automatically falls back to Rotate 180°.
 
 ---
 

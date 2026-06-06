@@ -187,6 +187,16 @@ export async function fetchSketch(sketchId) {
   return r.json();
 }
 
+export async function saveSketchSetup(sketchId, fields) {
+  const r = await fetch(`/api/sketch/${encodeURIComponent(sketchId)}/setup`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
+  });
+  if (!r.ok) throw new Error(`Failed to save setup (${r.status})`);
+  return r.json();
+}
+
 export async function saveSketchOverview(sketchId, fields) {
   const r = await fetch(`/api/sketch/${encodeURIComponent(sketchId)}/overview`, {
     method: "PATCH",

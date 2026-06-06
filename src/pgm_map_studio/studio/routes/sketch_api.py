@@ -21,6 +21,16 @@ def get(sid: str):
         return jsonify({"error": "Sketch not found"}), 404
 
 
+@bp.route("/<sid>/setup", methods=["PATCH"])
+def patch_setup(sid: str):
+    payload = request.get_json(force=True) or {}
+    try:
+        sketch_data.save_setup(sid, payload)
+    except KeyError:
+        return jsonify({"error": "Sketch not found"}), 404
+    return jsonify({"ok": True})
+
+
 @bp.route("/<sid>/overview", methods=["PATCH"])
 def patch_overview(sid: str):
     payload = request.get_json(force=True) or {}

@@ -118,6 +118,125 @@
       </div>
     </div>
 
+    <!-- Setup workspace -->
+    <div id="sk-setup-workspace" class="workspace" hidden>
+      <div id="sk-setup-left" class="workspace-sidebar">
+        <div id="sk-setup-scroll" class="workspace-scroll">
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Bounding Box <span class="field-required">*</span></h2>
+            </div>
+            <table class="detail-table">
+              <thead>
+                <tr><th>Min</th><th>Max</th><th class="detail-size-head">Size</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="detail-val">
+                    <div class="detail-prefixed-field">
+                      <span class="detail-prefix">X</span>
+                      <input id="sk-bbox-min-x" class="detail-bounds-input" type="number" placeholder="-256"/>
+                    </div>
+                  </td>
+                  <td class="detail-val">
+                    <div class="detail-prefixed-field">
+                      <span class="detail-prefix">X</span>
+                      <input id="sk-bbox-max-x" class="detail-bounds-input" type="number" placeholder="256"/>
+                    </div>
+                  </td>
+                  <td id="sk-bbox-size-x" class="detail-size"></td>
+                </tr>
+                <tr>
+                  <td class="detail-val">
+                    <div class="detail-prefixed-field">
+                      <span class="detail-prefix">Z</span>
+                      <input id="sk-bbox-min-z" class="detail-bounds-input" type="number" placeholder="-256"/>
+                    </div>
+                  </td>
+                  <td class="detail-val">
+                    <div class="detail-prefixed-field">
+                      <span class="detail-prefix">Z</span>
+                      <input id="sk-bbox-max-z" class="detail-bounds-input" type="number" placeholder="256"/>
+                    </div>
+                  </td>
+                  <td id="sk-bbox-size-z" class="detail-size"></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="filter-group-options filter-group-options--fill filter-group-options--mt">
+              <button class="filter-chip sk-bbox-preset" data-preset="square">Square</button>
+              <button class="filter-chip sk-bbox-preset" data-preset="wide">Wide</button>
+              <button class="filter-chip sk-bbox-preset" data-preset="tall">Tall</button>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Center Point</h2>
+            </div>
+            <p class="section-desc">Drag the violet dot on the canvas, or enter coordinates below. This anchors the symmetry axis.</p>
+            <div class="sk-mode-group">
+              <div class="detail-prefixed-field">
+                <span class="detail-prefix">X</span>
+                <input id="sk-center-x" class="detail-bounds-input" type="number" value="0"/>
+              </div>
+              <div class="detail-prefixed-field">
+                <span class="detail-prefix">Z</span>
+                <input id="sk-center-z" class="detail-bounds-input" type="number" value="0"/>
+              </div>
+              <button id="sk-center-reset" class="action-btn action-btn--icon" title="Reset center to 0, 0">
+                <i data-lucide="crosshair"></i>
+              </button>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Symmetry Mode <span class="field-required">*</span></h2>
+            </div>
+            <div class="sk-mode-stack">
+              <div class="sk-mode-group">
+                <span class="field-label sk-mode-group__label">Mirror</span>
+                <div class="filter-group-options filter-group-options--fill">
+                  <button class="filter-chip sk-mode-chip" data-mode="mirror_x"
+                    title="Reflect across Z = center — 2 teams">X-Axis</button>
+                  <button class="filter-chip sk-mode-chip" data-mode="mirror_z"
+                    title="Reflect across X = center — 2 teams">Z-Axis</button>
+                </div>
+              </div>
+              <div class="sk-mode-group">
+                <span class="field-label sk-mode-group__label">Rotate</span>
+                <div class="filter-group-options filter-group-options--fill">
+                  <button class="filter-chip sk-mode-chip filter-chip--active" data-mode="rot_180"
+                    title="Half-turn rotation around center — 2 teams">180°</button>
+                  <button class="filter-chip sk-mode-chip" data-mode="rot_90"
+                    title="Quadrant symmetry around center — 4 teams">90°</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="panel-actions">
+              <button id="sk-setup-save-btn" class="action-btn action-btn--primary" disabled>Save changes</button>
+              <span id="sk-setup-status" class="panel-save-status"></span>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="sk-setup-handle"></div>
+
+      <div id="sk-setup-canvas-wrap" class="workspace-canvas">
+        <div class="canvas-subbar">
+          <span class="canvas-cursor" id="sk-setup-cursor">Enter a bounding box to begin</span>
+        </div>
+        <svg id="sk-setup-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
   </div><!-- /activity-viewport -->
 </div><!-- /main -->
 

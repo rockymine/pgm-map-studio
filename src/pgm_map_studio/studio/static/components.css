@@ -387,6 +387,20 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 .filter-group-options { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+/* Expanded chip row — chips stretch to fill available width */
+.filter-group-options--fill .filter-chip { flex: 1; justify-content: center; }
+
+/* Labeled chip row — label + chip group side-by-side; also used for input rows */
+.sk-mode-group { display: flex; align-items: center; gap: var(--space-2); }
+.sk-mode-group__label { flex-shrink: 0; min-width: calc(var(--space-5) + var(--space-6)); }
+.sk-mode-group .filter-group-options,
+.sk-mode-group .detail-prefixed-field { flex: 1; }
+
+/* Stack of labeled chip rows */
+.sk-mode-stack { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Modifier: add top gap before a filter-group-options row */
+.filter-group-options--mt { margin-top: var(--space-2); }
 .filter-chip {
   display: inline-flex; align-items: center;
   font-size: var(--font-sm); font-family: inherit;
@@ -395,8 +409,9 @@
   background: var(--bg-base); color: var(--text-secondary);
   cursor: pointer;
 }
-.filter-chip:hover     { border-color: var(--text-muted); color: var(--text-primary); }
+.filter-chip:hover:not(:disabled) { border-color: var(--text-muted); color: var(--text-primary); }
 .filter-chip--active   { background: var(--bg-selected); border-color: var(--accent); color: var(--accent-lighter); }
+.filter-chip:disabled  { opacity: 0.35; cursor: default; }
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -489,16 +504,14 @@
   font-variant-numeric: tabular-nums;
 }
 .detail-table th {
-  font-size: var(--font-xs);
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  text-align: right;
+  font-size: var(--font-sm);
+  font-weight: normal;
+  color: var(--text-secondary);
+  text-align: left;
   padding: 0 4px 4px;
   user-select: none;
 }
-.detail-table th:first-child { text-align: left; }
+.detail-size-head { text-align: right; }
 .detail-axis {
   color: var(--text-muted);
   font-size: var(--font-xs);
@@ -510,6 +523,9 @@
 }
 .detail-val { padding: 2px 2px; }
 .detail-val .detail-bounds-input { width: 60px; }
+/* When a detail-prefixed-field sits inside a table cell it has no flex parent,
+   so flex:1 won't expand it — this makes it fill the cell instead. */
+.detail-val .detail-prefixed-field { width: 100%; }
 .detail-size {
   text-align: right;
   padding: 2px 4px;

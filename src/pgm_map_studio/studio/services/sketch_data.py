@@ -8,12 +8,15 @@ SKETCHES_DIR = Path.home() / ".config" / "pgm-map-studio" / "sketches"
 
 _OVERVIEW_FIELDS = {"name", "version", "objective", "authors"}
 
+_SETUP_FIELDS = {"bbox", "center", "mirror_mode"}
+
 _DEFAULTS: dict = {
     "gamemode":  "ctw",
     "name":      "",
     "version":   "1.0",
     "objective": "",
     "authors":   [],
+    "setup":     None,
 }
 
 
@@ -39,6 +42,19 @@ def load_sketch(sketch_id: str) -> dict:
     if not p.exists():
         raise KeyError(sketch_id)
     return json.loads(p.read_text(encoding="utf-8"))
+
+
+def save_setup(sketch_id: str, fields: dict) -> None:
+    """Persist setup fields (bbox, center, mirror_mode). Raises KeyError if not found."""
+    data = load_sketch(sketch_id)
+    setup = data.get("setup") or {}
+    for key in _SETUP_FIELDS:
+        if key in fields:
+            setup[key] = fields[key]
+    data["setup"] = setup
+    _path(sketch_id).write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def save_overview(sketch_id: str, fields: dict) -> None:
