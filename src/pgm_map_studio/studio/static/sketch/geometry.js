@@ -267,7 +267,7 @@ export function assignShapesToIslands(shapes, islands, addUnion, overrideAddUnio
       for (let j = 0; j < addUnion.length; j++) {
         if (!_intersects(sp, [addUnion[j]])) continue;
         const peers = islands.reduce((acc, _, i) => {
-          if (toNormalIdx[i] === j) acc.push(i);
+          if (toNormalIdx[i] === j && normalPath.has(i)) acc.push(i);
           return acc;
         }, []);
         if (peers.length === 1) {

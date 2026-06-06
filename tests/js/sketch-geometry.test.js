@@ -443,6 +443,43 @@ describe("assignShapesToIslands", () => {
     expect(innerIsland.shapeIds).toContain("p3");
   });
 
+  it("outer normal-add shape does not appear in the shapeIds of the override-add island inside its hole", () => {
+    // Regression: the outer rectangle's centroid falls inside the raw addUnion
+    // (before holes are applied), so both islands mapped to the same addUnion
+    // component. The fallback spatial-intersection check then incorrectly assigned
+    // the outer rectangle to the inner (pure override-add) island because the inner
+    // island polygon is geometrically inside the rectangle's bounds.
+    const shapes = [
+      rect(0, 0, 100, 100, { id: "outer" }),
+      rect(30, 30, 70, 70, { id: "hole", op: "subtract" }),
+      rect(40, 40, 60, 60, { id: "inner", op: "add", override: true }),
+    ];
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
+
+    const innerIsland = islands.find(isl => pointInIsland(50, 50, isl));
+    expect(innerIsland).toBeDefined();
+    expect(innerIsland.shapeIds).toContain("inner");
+    // The outer normal-add shape must NOT bleed into the inner island's contributors.
+    expect(innerIsland.shapeIds).not.toContain("outer");
+  });
+
+  it("outer normal-add shape with a circle override-add inside hole: only circle in inner island", () => {
+    // Mirror of the real 'polygon inside hole test' sketch: outer rectangle,
+    // diamond subtract, circle override-add inside the diamond hole.
+    const shapes = [
+      rect(-246, -247, -28, -25, { id: "rect" }),
+      polygon([[-221,-164],[-145,-229],[-46,-147],[-139,-51]], { id: "diamond", op: "subtract" }),
+      circle(-157, -175, 26, { id: "circ", op: "add", override: true }),
+    ];
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
+
+    const innerIsland = islands.find(isl => pointInIsland(-157, -175, isl));
+    expect(innerIsland).toBeDefined();
+    expect(innerIsland.shapeIds).toEqual(["circ"]);
+  });
+
   it("override-add inside hole does not appear in the outer island's shapeIds", () => {
     const shapes = [
       rect(0, 0, 100, 100, { id: "p1" }),
