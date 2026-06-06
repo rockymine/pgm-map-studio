@@ -103,16 +103,16 @@
       </div>
 
       <div class="ds-subhead">Text hierarchy</div>
+      <div class="ds-sub" style="margin-bottom:12px">All levels pass WCAG AA (≥ 4.5:1) on both <code style="color:var(--code-color)">--bg-panel</code> and <code style="color:var(--code-color)">--bg-base</code>. Five levels — no dimmer level below muted.</div>
       <div class="ds-swatches">
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-muted)"></div><div class="ds-swatch-name">--text-muted</div><div class="ds-swatch-val">.section-title, .list-tag, section group labels</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-dim)"></div><div class="ds-swatch-name">--text-dim</div><div class="ds-swatch-val">.geo-label--synthetic, .badge--dim, .console-line</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-secondary)"></div><div class="ds-swatch-name">--text-secondary</div><div class="ds-swatch-val">.field-label, .action-btn text, .section-desc</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-primary)"></div><div class="ds-swatch-name">--text-primary</div><div class="ds-swatch-val">.list-label, .geo-label, .field-input text</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-bright)"></div><div class="ds-swatch-name">--text-bright</div><div class="ds-swatch-val">body default, topbar titles, cat-header</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-white)"></div><div class="ds-swatch-name">--text-white</div><div class="ds-swatch-val">.action-btn:hover, active activity-btn</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-muted)"></div><div class="ds-swatch-name">--text-muted</div><div class="ds-swatch-val">#8397b0 · 4.9:1 — .section-title, .list-tag, section group labels, .console-line</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-secondary)"></div><div class="ds-swatch-name">--text-secondary</div><div class="ds-swatch-val">#94a3b8 · 5.7:1 — .field-label, .action-btn text, .section-desc</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-primary)"></div><div class="ds-swatch-name">--text-primary</div><div class="ds-swatch-val">#cbd5e1 · 9.9:1 — .list-label, .geo-label, .field-input text</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-bright)"></div><div class="ds-swatch-name">--text-bright</div><div class="ds-swatch-val">#e2e8f0 · 11.9:1 — body default, topbar titles, cat-header</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--text-white)"></div><div class="ds-swatch-name">--text-white</div><div class="ds-swatch-val">#fff — .action-btn:hover, active activity-btn (coloured surfaces only)</div></div>
       </div>
 
-      <div class="ds-subhead">Border &amp; accent</div>
+      <div class="ds-subhead">Border, accent &amp; shadows</div>
       <div class="ds-swatches">
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--border)"></div><div class="ds-swatch-name">--border</div><div class="ds-swatch-val">all dividers, input borders, panel edges</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--border-swatch)"></div><div class="ds-swatch-name">--border-swatch</div><div class="ds-swatch-val">rgba(255,255,255,0.15) — overlay edge on color-filled swatches and team dots</div></div>
@@ -120,17 +120,22 @@
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--accent-light)"></div><div class="ds-swatch-name">--accent-light</div><div class="ds-swatch-val">.draw-tool-btn--active text, focus highlights</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--code-color)"></div><div class="ds-swatch-name">--code-color</div><div class="ds-swatch-val">.detail-xml-pre, inline &lt;code&gt; text</div></div>
       </div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-muted);line-height:2">
+        Shadows: <code style="color:var(--code-color)">--shadow-ring</code> — selection outline on list rows and inputs (0 0 0 1px --accent)
+        &ensp;·&ensp;
+        <code style="color:var(--code-color)">--shadow-float</code> — elevated surfaces: context menus and overlays (0 8px 24px oklch 0.40 alpha)
+      </div>
 
       <div class="ds-subhead">Canvas SVG</div>
       <div class="ds-swatches">
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-island)"></div><div class="ds-swatch-name">--canvas-island</div><div class="ds-swatch-val">Island polygon fill — editor + sketch. Single shared gray.</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-island-stroke)"></div><div class="ds-swatch-name">--canvas-island-stroke</div><div class="ds-swatch-val">Island polygon stroke — darken(fill, 0.55)</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-island-stroke)"></div><div class="ds-swatch-name">--canvas-island-stroke</div><div class="ds-swatch-val">oklch(from --canvas-island calc(l × 0.55) c h) — darkened stroke, computed</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-add-fill)"></div><div class="ds-swatch-name">--canvas-add-fill</div><div class="ds-swatch-val">Sketch add-shape fill</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-sub-fill)"></div><div class="ds-swatch-name">--canvas-sub-fill</div><div class="ds-swatch-val">Sketch subtract-shape fill</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-result-fill)"></div><div class="ds-swatch-name">--canvas-result-fill</div><div class="ds-swatch-val">Sketch computed island polygon fill</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-mirror-fill);border:1px solid var(--canvas-mirror-stroke)"></div><div class="ds-swatch-name">--canvas-mirror-fill/stroke</div><div class="ds-swatch-val">Mirror preview overlay (lower opacity)</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-axis)"></div><div class="ds-swatch-name">--canvas-axis</div><div class="ds-swatch-val">Symmetry axis line and center crosshair</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-bg)"></div><div class="ds-swatch-name">--canvas-bg</div><div class="ds-swatch-val">SVG canvas area fill (= --bg-deep)</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-bg)"></div><div class="ds-swatch-name">--canvas-bg</div><div class="ds-swatch-val">alias of --bg-deep — SVG canvas area fill</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-region)"></div><div class="ds-swatch-name">--canvas-region</div><div class="ds-swatch-val">Region shape fill + stroke — all types. Runtime supplies category colour; this is the fallback.</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-handle-fill)"></div><div class="ds-swatch-name">--canvas-handle-fill</div><div class="ds-swatch-val">Resize handle interior (slate-950)</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-handle-stroke)"></div><div class="ds-swatch-name">--canvas-handle-stroke</div><div class="ds-swatch-val">Resize handle border (slate-400)</div></div>
@@ -141,20 +146,20 @@
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-lg);color:var(--text-bright)">Aa</span></div><div class="ds-swatch-name">--font-lg</div><div class="ds-swatch-val">14px — body, topbar</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-md);color:var(--text-primary)">Aa</span></div><div class="ds-swatch-name">--font-md</div><div class="ds-swatch-val">13px — inputs, list labels</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-base);color:var(--text-secondary)">Aa</span></div><div class="ds-swatch-name">--font-base</div><div class="ds-swatch-val">12px — badges, buttons, panels</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-sm);color:var(--text-dim)">Aa</span></div><div class="ds-swatch-name">--font-sm</div><div class="ds-swatch-val">11px — field labels, helper text</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-sm);color:var(--text-muted)">Aa</span></div><div class="ds-swatch-name">--font-sm</div><div class="ds-swatch-val">11px — field labels, helper text</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--bg-panel);display:flex;align-items:center;justify-content:center"><span style="font-size:var(--font-xs);color:var(--text-muted)">Aa</span></div><div class="ds-swatch-name">--font-xs</div><div class="ds-swatch-val">10px — smallest prose</div></div>
       </div>
 
       <div class="ds-subhead">Semantic status</div>
+      <div class="ds-sub" style="margin-bottom:12px">All foreground colors pass WCAG AA on their respective backgrounds. <code style="color:var(--code-color)">--color-error</code> was upgraded from red-500 (3.9:1, sub-AA) to red-400 (5.3:1). The <code style="color:var(--code-color)">-bg</code> variants are computed via <code style="color:var(--code-color)">color-mix()</code> so they automatically track <code style="color:var(--code-color)">--bg-panel</code> changes.</div>
       <div class="ds-swatches">
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success)"></div><div class="ds-swatch-name">--color-success</div><div class="ds-swatch-val">.badge--success, .step-dot--done, .map-status-dot--ready</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success-bg)"></div><div class="ds-swatch-name">--color-success-bg</div><div class="ds-swatch-val">.badge--success bg, .toast--success bg</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning)"></div><div class="ds-swatch-name">--color-warning</div><div class="ds-swatch-val">.badge--warning text/border, .panel-warning border+text, .map-status-dot--partial</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning-bg)"></div><div class="ds-swatch-name">--color-warning-bg</div><div class="ds-swatch-val">amber-900 @ 26.7% — .badge--warning bg, .panel-warning bg</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error)"></div><div class="ds-swatch-name">--color-error</div><div class="ds-swatch-val">.badge--error, .field-input--error border, .btn-remove:hover, #topbar-error</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-bg)"></div><div class="ds-swatch-name">--color-error-bg</div><div class="ds-swatch-val">.badge--error bg, .toast--error bg</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-light)"></div><div class="ds-swatch-name">--color-error-light</div><div class="ds-swatch-val">.toast--error text, #topbar-error text</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-hover)"></div><div class="ds-swatch-name">--color-error-hover</div><div class="ds-swatch-val">rgba(239,68,68,0.1) — subtle red tint for .action-btn--danger:hover</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success)"></div><div class="ds-swatch-name">--color-success</div><div class="ds-swatch-val">#22c55e · 6.4:1 — .badge--success, .step-dot--done, .map-status-dot--ready</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success-bg)"></div><div class="ds-swatch-name">--color-success-bg</div><div class="ds-swatch-val">color-mix: green-900 27% into --bg-panel — .badge--success bg, .toast--success bg</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning)"></div><div class="ds-swatch-name">--color-warning</div><div class="ds-swatch-val">#f59e0b · 6.8:1 — .badge--warning, .panel-warning, .map-status-dot--partial</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning-bg)"></div><div class="ds-swatch-name">--color-warning-bg</div><div class="ds-swatch-val">color-mix: amber-900 27% into --bg-panel — .badge--warning bg, .panel-warning bg</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error)"></div><div class="ds-swatch-name">--color-error</div><div class="ds-swatch-val">#f87171 · 5.3:1 — .badge--error, .field-input--error border, .btn-remove:hover, #topbar-error, .toast--error text</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-bg)"></div><div class="ds-swatch-name">--color-error-bg</div><div class="ds-swatch-val">color-mix: red-900 27% into --bg-panel — .badge--error bg, .toast--error bg</div></div>
+<div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-hover)"></div><div class="ds-swatch-name">--color-error-hover</div><div class="ds-swatch-val">color-mix: --color-error 10% transparent — subtle red tint for .action-btn--danger:hover</div></div>
       </div>
     </section>
 
@@ -170,7 +175,7 @@
         <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-5)"></div><div class="ds-space-lbl">--space-5 = 20px</div><span style="font-size:11px;color:var(--text-muted)">between sections</span></div>
         <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-6)"></div><div class="ds-space-lbl">--space-6 = 24px</div><span style="font-size:11px;color:var(--text-muted)">page-level outer padding</span></div>
       </div>
-      <div style="margin-top:20px;font-size:12px;color:var(--text-dim);line-height:2">
+      <div style="margin-top:20px;font-size:12px;color:var(--text-muted);line-height:2">
         Radii: <code style="color:var(--code-color)">--radius-sm (3px)</code> — rows, badges, small controls, inputs
         &ensp;·&ensp;
         <code style="color:var(--code-color)">--radius-md (6px)</code> — cards, panels, menus
@@ -201,7 +206,7 @@
           <span style="font-size:var(--font-sm);color:var(--text-muted)">12px — most common: badges, buttons, panel labels</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:16px">
-          <span class="text-sm" style="color:var(--text-dim);min-width:160px">The quick brown fox</span>
+          <span class="text-sm" style="color:var(--text-muted);min-width:160px">The quick brown fox</span>
           <code style="color:var(--code-color);font-size:var(--font-sm)">.text-sm / var(--font-sm)</code>
           <span style="font-size:var(--font-sm);color:var(--text-muted)">11px — field labels, helper text, tags</span>
         </div>
@@ -519,7 +524,7 @@
         <div class="ds-group"><span class="badge badge--dim">Skipped</span><div class="ds-label">--dim (inactive)</div></div>
       </div>
 
-      <div style="font-size:12px;color:var(--text-dim);max-width:540px;line-height:1.6">
+      <div style="font-size:12px;color:var(--text-muted);max-width:540px;line-height:1.6">
         Example usages: symmetry confirmation → <code style="color:var(--code-color)">--success / --warning</code> &nbsp;·&nbsp;
         pipeline step result → <code style="color:var(--code-color)">--success / --error / --dim</code> &nbsp;·&nbsp;
         gamemode label → <code style="color:var(--code-color)">--neutral</code>
@@ -622,7 +627,7 @@
           <div class="ds-subhead" style="margin-bottom:6px">1 — System error (topbar)</div>
           <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 14px;width:320px">
             <div id="topbar-error" class="visible" style="position:relative;display:flex;align-items:center;gap:6px;background:var(--color-error-bg);border:1px solid var(--color-error);border-radius:var(--radius-sm);padding:3px 10px">
-              <span style="font-size:12px;color:var(--color-error-light)">Map not found</span>
+              <span style="font-size:12px;color:var(--color-error)">Map not found</span>
               <button class="topbar-error-dismiss"><i data-lucide="x"></i></button>
             </div>
           </div>
@@ -1395,7 +1400,7 @@
               <span class="topbar-sep">›</span>
               <span style="color:var(--text-primary)">Annealing IV</span>
               <span class="topbar-sep">›</span>
-              <span style="color:var(--text-dim)">1.0.2</span>
+              <span style="color:var(--text-muted)">1.0.2</span>
               <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
                 <button class="action-btn" disabled style="font-size:10px;padding:2px 8px">Export XML</button>
               </div>
@@ -1430,7 +1435,7 @@
       <div class="ds-subhead" style="margin-top:4px">System error zone — inside .topbar-right</div>
       <div style="width:360px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);padding:6px 10px;display:flex;align-items:center;gap:8px">
         <div id="topbar-error" class="visible" style="position:relative;display:flex;align-items:center;gap:6px;background:var(--color-error-bg);border:1px solid var(--color-error);border-radius:var(--radius-sm);padding:3px 10px">
-          <span style="font-size:11px;color:var(--color-error-light)">map.xml not found</span>
+          <span style="font-size:11px;color:var(--color-error)">map.xml not found</span>
           <button class="topbar-error-dismiss">✕</button>
         </div>
       </div>
@@ -1449,7 +1454,7 @@
           <div class="ds-mock-topbar" style="font-size:10px">
             <span style="background:var(--bg-base);width:18px;height:18px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:8px;letter-spacing:.04em">pgm</span>
             <span style="color:var(--text-primary);margin-left:4px">Map Studio</span>
-            <span style="margin-left:auto;color:var(--text-dim)">#topbar</span>
+            <span style="margin-left:auto;color:var(--text-muted)">#topbar</span>
           </div>
           <div style="display:flex;flex:1;overflow:hidden">
             <!-- Map list panel -->
@@ -1544,8 +1549,8 @@
             <span class="topbar-sep">›</span>
             <span style="color:var(--text-primary)">Annealing IV</span>
             <span class="topbar-sep">›</span>
-            <span style="color:var(--text-dim)">1.0.2</span>
-            <span style="margin-left:auto;color:var(--text-dim)">#topbar</span>
+            <span style="color:var(--text-muted)">1.0.2</span>
+            <span style="margin-left:auto;color:var(--text-muted)">#topbar</span>
           </div>
           <div style="display:flex;flex:1;overflow:hidden">
             <!-- Activity rail -->
@@ -1618,7 +1623,7 @@
           <code style="color:var(--code-color)">#ov-left-scroll.workspace-scroll</code>
           <span>Same — class handles all layout including gap. The ID is a JS handle only; no CSS rule targets it.</span>
         </div>
-        <div style="margin-top:10px;color:var(--text-dim)">Rule: if you see <code style="color:var(--code-color)">#id.class</code>, the ID never appears as a selector in any CSS file. If you see a bare <code style="color:var(--code-color)">#id</code>, the element is one-of-a-kind and CSS uses the ID directly.</div>
+        <div style="margin-top:10px;color:var(--text-muted)">Rule: if you see <code style="color:var(--code-color)">#id.class</code>, the ID never appears as a selector in any CSS file. If you see a bare <code style="color:var(--code-color)">#id</code>, the element is one-of-a-kind and CSS uses the ID directly.</div>
       </div>
 
       <div class="ds-subhead">Shared structural classes</div>
@@ -1758,7 +1763,7 @@
         </tbody>
       </table>
 
-      <div style="font-size:12px;color:var(--text-dim);max-width:560px;line-height:1.6">
+      <div style="font-size:12px;color:var(--text-muted);max-width:560px;line-height:1.6">
         <strong style="color:var(--text-secondary)">Compound types</strong> are listed in <code style="color:var(--code-color)">COMPOUND_TYPES</code> (region-types.js).
         Synthetic / generated regions use <code style="color:var(--code-color)">.geo-label--synthetic</code> (italic, dimmed) and <code style="color:var(--code-color)">.geo-type-icon--synthetic</code>.
         Unknown types fall back to <code style="color:var(--code-color)">lucide.HelpCircle</code>.

@@ -118,7 +118,7 @@
 .list-row:hover     { background: var(--bg-selected-hover); }
 .list-row--selected {
   background: var(--bg-selected);
-  box-shadow: 0 0 0 1px var(--accent);
+  box-shadow: var(--shadow-ring);
 }
 .list-row--compact  { min-height: 28px; padding: 5px 4px; gap: 8px; }
 
@@ -330,7 +330,7 @@
 .toast--error {
   background: var(--color-error-bg);
   border-color: var(--color-error);
-  color: var(--color-error-light);
+  color: var(--color-error);
 }
 .toast--info {
   background: var(--bg-panel);
@@ -358,7 +358,7 @@
 .badge--warning { color: var(--color-warning);  background: var(--color-warning-bg); }
 .badge--error   { color: var(--color-error);    background: var(--color-error-bg); }
 .badge--neutral { color: var(--text-secondary); background: var(--bg-panel); border: 1px solid var(--border); }
-.badge--dim     { color: var(--text-dim);       background: var(--bg-base); }
+.badge--dim     { color: var(--text-muted);       background: var(--bg-base); }
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -439,11 +439,11 @@
   height: 160px; overflow-y: auto;
   font-size: var(--font-base); line-height: 1.6;
 }
-.console-line          { color: var(--text-dim);      white-space: pre-wrap; }
+.console-line          { color: var(--text-muted);      white-space: pre-wrap; }
 .console-line--success { color: var(--color-success); }
 .console-line--error   { color: var(--color-error); }
 .console-line--warning { color: var(--color-warning); }
-.console-line--info    { color: var(--text-dim); }
+.console-line--info    { color: var(--text-muted); }
 
 
 /* ══════════════════════════════════════════════════════════════════════════

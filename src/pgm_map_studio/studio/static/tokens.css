@@ -9,40 +9,42 @@
   --bg-panel:           #1e293b;   /* sidebars, panels, topbar */
   --bg-multi:           #1a3a2f;   /* multi-team selection tint */
   --bg-selected:        #1e3a5f;   /* selected row / active fill */
-  --bg-selected-hover:  #1e3a5f44;
-  --bg-selected-child:  #1e3a5f77;
+  --bg-selected-hover:  color-mix(in oklch, var(--bg-selected) 27%, transparent);
+  --bg-selected-child:  color-mix(in oklch, var(--bg-selected) 47%, transparent);
   --bg-vis-hover:       #162032;   /* visibility button hover */
-  --bg-base-glass:      #0f172acc;
-  --bg-panel-glass:     #1e293bcc;
+  --bg-base-glass:      color-mix(in oklch, var(--bg-base)  80%, transparent);
+  --bg-panel-glass:     color-mix(in oklch, var(--bg-panel) 80%, transparent);
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
   --border:        #334155;
   --border-swatch: rgba(255,255,255,0.15); /* overlay edge on color-filled swatches/dots */
 
-  /* ── Text hierarchy (muted → bright) ────────────────────────────────── */
-  --text-muted:     #475569;   /* labels, metadata, disabled */
-  --text-dim:       #64748b;   /* helper text, decorative */
-  --text-secondary: #94a3b8;   /* secondary content, form labels */
-  --text-primary:   #cbd5e1;   /* default body text */
-  --text-bright:    #e2e8f0;   /* headings, emphasis */
-  --text-white:     #fff;      /* active / selected text */
+  /* ── Text hierarchy (quiet → strong) — all pass WCAG AA on bg-panel and bg-base ── */
+  --text-muted:     #8397b0;   /* 4.9:1 — section headers, metadata, tags */
+  --text-secondary: #94a3b8;   /* 5.7:1 — form labels, secondary content */
+  --text-primary:   #cbd5e1;   /* 9.9:1 — default body text */
+  --text-bright:    #e2e8f0;   /* 11.9:1 — headings, emphasis */
+  --text-white:     #fff;      /* active / selected text on coloured surfaces */
 
   /* ── Accent (primary action colour) ─────────────────────────────────── */
   --accent:          #3b82f6;
   --accent-light:    #60a5fa;
   --accent-lighter:  #93c5fd;
-  --accent-bg-hover: #1d4ed8;
+  --accent-bg-hover: oklch(from var(--accent) calc(l - 0.12) c h); /* darkened accent for hover */
+
+  /* ── Shadows ─────────────────────────────────────────────────────────── */
+  --shadow-ring:  0 0 0 1px var(--accent);                   /* selection outline — list rows, inputs */
+  --shadow-float: 0 8px 24px oklch(0% 0 0 / 0.40);          /* elevated surfaces — menus, overlays */
 
   /* ── Semantic status ─────────────────────────────────────────────────── */
-  /* -bg values follow the pattern: Tailwind 900 + hex alpha 44 (26.7% opacity) */
-  --color-success:     #22c55e;   /* green-500 */
-  --color-success-bg:  #14532d44; /* green-900 @ 26.7% */
-  --color-error:       #ef4444;   /* red-500   */
-  --color-error-bg:    #7f1d1d44; /* red-900   @ 26.7% */
-  --color-error-light: #f87171;   /* red-400   — lighter text on error-bg */
-  --color-error-hover: rgba(239,68,68,0.1); /* subtle red tint for danger hover states */
-  --color-warning:     #f59e0b;   /* amber-500 */
-  --color-warning-bg:  #451a0344; /* amber-900 @ 26.7% */
+  /* -bg: Tailwind 900 blended into --bg-panel (color-mix preserves bg-panel tracking) */
+  --color-success:     #22c55e;   /* green-500  — 6.4:1 on bg-panel */
+  --color-success-bg:  color-mix(in srgb, #14532d 27%, var(--bg-panel)); /* green-900 @ 27% */
+  --color-error:       #f87171;   /* red-400    — 5.3:1 on bg-panel (was red-500 at 3.9:1, sub-AA) */
+  --color-error-bg:    color-mix(in srgb, #7f1d1d 27%, var(--bg-panel)); /* red-900 @ 27% */
+  --color-error-hover: color-mix(in oklch, var(--color-error) 10%, transparent); /* danger hover tint */
+  --color-warning:     #f59e0b;   /* amber-500 — 6.8:1 on bg-panel */
+  --color-warning-bg:  color-mix(in srgb, #451a03 27%, var(--bg-panel)); /* amber-900 @ 27% */
 
   /* ── Code / monospace highlight ──────────────────────────────────────── */
   --code-color: #7dd3fc;
@@ -56,7 +58,7 @@
   /* ── Canvas SVG colours ───────────────────────────────────────────────── */
   /* Island polygons — single fill for both editor and sketch */
   --canvas-island:        #6b7280;   /* gray-500 — island fill */
-  --canvas-island-stroke: #3b3f46;   /* darken(--canvas-island, 0.55) */
+  --canvas-island-stroke: oklch(from var(--canvas-island) calc(l * 0.55) c h); /* darkened stroke */
 
   /* Sketch shape operations */
   --canvas-add-fill:    #0d9488;   /* teal-600 */
@@ -76,7 +78,7 @@
   --canvas-axis: #a78bfa;   /* violet-400 */
 
   /* Canvas SVG area background */
-  --canvas-bg: #080f1a;   /* = --bg-deep */
+  --canvas-bg: var(--bg-deep);   /* alias — always equals --bg-deep */
 
   /* Region shapes — editor canvas (all types share one colour; runtime supplies per-region value) */
   --canvas-region: #94a3b8;   /* slate-400 — fallback / design-doc placeholder */

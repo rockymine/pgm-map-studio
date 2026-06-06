@@ -17,7 +17,7 @@
 
 .ds-section     { margin-bottom: 56px; scroll-margin-top: 24px; }
 .ds-heading     { font-size: 18px; font-weight: 600; color: var(--text-white); margin-bottom: 4px; }
-.ds-sub         { font-size: 12px; color: var(--text-dim); margin-bottom: 24px; line-height: 1.6; }
+.ds-sub         { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
 .ds-row         { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
 .ds-group       { display: flex; flex-direction: column; gap: 10px; }
 .ds-label       { font-size: 10px; color: var(--text-muted); font-family: ui-monospace, monospace; margin-top: 4px; }
@@ -41,7 +41,7 @@
 .ds-swatch       { display: flex; flex-direction: column; gap: 3px; }
 .ds-swatch-block { height: 36px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,.06); }
 .ds-swatch-name  { font-size: 10px; font-family: ui-monospace, monospace; color: var(--text-muted); }
-.ds-swatch-val   { font-size: 10px; font-family: ui-monospace, monospace; color: var(--text-dim); }
+.ds-swatch-val   { font-size: 10px; font-family: ui-monospace, monospace; color: var(--text-muted); }
 
 /* ── Space scale visualisation ────────────────────────────────────────────── */
 
