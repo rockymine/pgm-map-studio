@@ -184,18 +184,22 @@ export function computeIslands(shapes, previousIslands = []) {
   }));
 
   const MATCH_THRESHOLD = 32; // blocks — centroids further apart → new island
+  const matchedPrev = new Set(); // each previous island may be claimed by at most one new island
 
   const islands = result.map((poly, i) => {
     const exterior = poly[0];
     const holes    = poly.slice(1);
     const [ncx, ncz] = ringCentroid(exterior);
 
-    // Find the closest previous island whose centroid is within threshold.
-    let best = null, bestDist = MATCH_THRESHOLD;
-    for (const prev of prevCentroids) {
-      const d = Math.hypot(ncx - prev.cx, ncz - prev.cz);
-      if (d < bestDist) { bestDist = d; best = prev.isl; }
+    // Find the closest unclaimed previous island whose centroid is within threshold.
+    let best = null, bestDist = MATCH_THRESHOLD, bestIdx = -1;
+    for (let j = 0; j < prevCentroids.length; j++) {
+      if (matchedPrev.has(j)) continue;
+      const { cx, cz, isl } = prevCentroids[j];
+      const d = Math.hypot(ncx - cx, ncz - cz);
+      if (d < bestDist) { bestDist = d; best = isl; bestIdx = j; }
     }
+    if (bestIdx !== -1) matchedPrev.add(bestIdx);
 
     return {
       id:       best?.id      ?? `isl_${Date.now()}_${i}`,
@@ -207,7 +211,7 @@ export function computeIslands(shapes, previousIslands = []) {
     };
   });
 
-  return { islands, addUnion: normalUnion, overrideAddUnion: afterOverrideAdd };
+  return { islands, addUnion: normalUnion, afterSub, overrideAddUnion: afterOverrideAdd };
 }
 
 // ── Shape → island assignment ─────────────────────────────────────────────────
@@ -219,7 +223,7 @@ export function computeIslands(shapes, previousIslands = []) {
  *
  * Mutates the islands array in place.
  */
-export function assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion) {
+export function assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub) {
   if (!islands.length) return;
 
   const islandPolys = islands.map(isl => [[isl.exterior, ...isl.holes]]);
@@ -228,14 +232,25 @@ export function assignShapesToIslands(shapes, islands, addUnion, overrideAddUnio
   const toNormalIdx   = _mapIslandsToUnion(islands, addUnion);
   const toOverrideIdx = _mapIslandsToUnion(islands, overrideAddUnion ?? []);
 
+  // Islands whose exterior polygon has solid area in afterSub were produced by the
+  // normal-subtract path and can legitimately receive subtract attribution.
+  // Pure override-add islands (sitting in holes) must not inherit subtract shapes.
+  const normalPath = _normalPathSet(islands, afterSub);
+
   for (const shape of shapes) {
     const sp = shapeToMultiPoly(shape);
     if (!sp.length) continue;
     const toAssign = new Set();
 
     if (shape.operation === "subtract" && !shape.override) {
-      // Normal subtract: assigned to islands from every addUnion component it intersects.
-      _intersectUnionComponents(sp, addUnion, toNormalIdx, islands, toAssign);
+      // Normal subtract: assign to islands from every addUnion component it intersects,
+      // restricted to islands that were on the normal computation path.
+      for (let j = 0; j < addUnion.length; j++) {
+        if (!_intersects(sp, [addUnion[j]])) continue;
+        for (let i = 0; i < islands.length; i++) {
+          if (toNormalIdx[i] === j && normalPath.has(i)) toAssign.add(i);
+        }
+      }
 
     } else if (shape.operation === "subtract" && shape.override) {
       // Override subtract: assigned to islands from overrideAddUnion it intersects.
@@ -275,7 +290,8 @@ function _mapIslandsToUnion(islands, union) {
     if (!union.length) return -1;
     const [cx, cz] = ringCentroid(isl.exterior);
     for (let j = 0; j < union.length; j++) {
-      if (pointInRing(cx, cz, union[j][0])) return j;
+      const comp = union[j];
+      if (pointInIsland(cx, cz, { exterior: comp[0], holes: comp.slice(1) })) return j;
     }
     return -1;
   });
@@ -292,6 +308,21 @@ function _intersectUnionComponents(sp, union, toComponentIdx, islands, toAssign)
 
 function _intersects(a, b) {
   try { return polygonClipping.intersection(a, b).length > 0; } catch { return false; }
+}
+
+// Returns the set of island indices that have solid area in afterSub (i.e. they were
+// produced by the normal-subtract step, not purely by an override-add inside a hole).
+// When afterSub is unavailable, all islands are assumed to be on the normal path.
+function _normalPathSet(islands, afterSub) {
+  if (!afterSub || !afterSub.length) return new Set(islands.map((_, i) => i));
+  const result = new Set();
+  for (let i = 0; i < islands.length; i++) {
+    const extPoly = [[islands[i].exterior]]; // exterior ring treated as filled polygon
+    for (const comp of afterSub) {
+      if (_intersects(extPoly, [comp])) { result.add(i); break; }
+    }
+  }
+  return result;
 }
 
 // ── Mirror preview ────────────────────────────────────────────────────────────

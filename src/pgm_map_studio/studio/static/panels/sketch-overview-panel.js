@@ -108,8 +108,8 @@ export class SketchOverviewPanel {
 
     if (!shapes.length) { this.#cachedIslands = []; this.#cachedSetup = null; return; }
 
-    const { islands, addUnion, overrideAddUnion } = computeIslands(shapes, []);
-    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion);
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes, []);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
 
     restoreIslandMeta(islands, savedMeta, ["mirrors"]);
 

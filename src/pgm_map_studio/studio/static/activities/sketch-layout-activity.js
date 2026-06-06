@@ -140,8 +140,8 @@ export class SketchLayoutActivity {
         this.#shapes = layout.shapes.map(s => ({ ...s }));
 
         // Compute islands fresh (no prev) to get real exterior geometry + shapeIds.
-        const { islands, addUnion, overrideAddUnion } = computeIslands(this.#shapes, []);
-        assignShapesToIslands(this.#shapes, islands, addUnion, overrideAddUnion);
+        const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(this.#shapes, []);
+        assignShapesToIslands(this.#shapes, islands, addUnion, overrideAddUnion, afterSub);
 
         // Restore saved name/color/mirrors by matching on shapeId set overlap.
         const savedMeta = layout.islands ?? [];
@@ -297,10 +297,10 @@ export class SketchLayoutActivity {
   // ── Island recompute ──────────────────────────────────────────────────────────
 
   #recompute(prevIslands = null) {
-    const { islands, addUnion, overrideAddUnion } = computeIslands(
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(
       this.#shapes, prevIslands ?? this.#islands,
     );
-    assignShapesToIslands(this.#shapes, islands, addUnion, overrideAddUnion);
+    assignShapesToIslands(this.#shapes, islands, addUnion, overrideAddUnion, afterSub);
     this.#islands = islands;
 
     this.#canvas.setIslands(islands.map(isl => ({

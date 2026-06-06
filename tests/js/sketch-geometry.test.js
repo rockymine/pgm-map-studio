@@ -332,7 +332,7 @@ describe("computeIslands — name/mirror persistence", () => {
   it("preserves name and mirror flag when centroid is nearby", () => {
     const prev = [
       {
-        id: "isl_old", name: "My Island", color: "#aaa", mirrors: false,
+        id: "isl_old", name: "My Island", mirrors: false,
         exterior: [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
         holes: [], shapeIds: [],
       },
@@ -347,7 +347,7 @@ describe("computeIslands — name/mirror persistence", () => {
   it("new island (centroid too far) gets default name", () => {
     const prev = [
       {
-        id: "isl_old", name: "My Island", color: "#aaa", mirrors: true,
+        id: "isl_old", name: "My Island", mirrors: true,
         exterior: [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
         holes: [], shapeIds: [],
       },
@@ -362,8 +362,8 @@ describe("computeIslands — name/mirror persistence", () => {
 describe("assignShapesToIslands", () => {
   it("add shape is assigned to the island it creates", () => {
     const shapes = [rect(0, 0, 10, 10, { id: "r1" })];
-    const { islands, addUnion, overrideAddUnion } = computeIslands(shapes);
-    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion);
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
     expect(islands[0].shapeIds).toContain("r1");
   });
 
@@ -373,8 +373,8 @@ describe("assignShapesToIslands", () => {
       rect(12, 0, 20, 10, { id: "right" }),
       rect(0, 3, 20, 7, { id: "sub", op: "subtract" }), // carves both
     ];
-    const { islands, addUnion, overrideAddUnion } = computeIslands(shapes);
-    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion);
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
     const subIslands = islands.filter(isl => isl.shapeIds.includes("sub"));
     // Sub shape intersects both original rects' extents
     expect(subIslands.length).toBeGreaterThanOrEqual(1);
@@ -385,8 +385,8 @@ describe("assignShapesToIslands", () => {
       rect(0, 0, 10, 10, { id: "a" }),
       rect(50, 50, 60, 60, { id: "b" }),
     ];
-    const { islands, addUnion, overrideAddUnion } = computeIslands(shapes);
-    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion);
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
     const sorted = sortIslands(islands);
     // Island near (5,5) should only have "a"
     const near0 = sorted.find(isl => ringCentroid(isl.exterior)[0] < 30);
@@ -399,10 +399,98 @@ describe("assignShapesToIslands", () => {
       rect(5, 0, 15, 10, { id: "sub", op: "subtract" }),
       rect(7, 2, 13, 8, { id: "ovradd", op: "add", override: true }),
     ];
-    const { islands, addUnion, overrideAddUnion } = computeIslands(shapes);
-    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion);
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
     const ovrIsland = islands.find(isl => isl.shapeIds.includes("ovradd"));
     expect(ovrIsland).toBeDefined();
+  });
+
+  // ── polygon-inside-hole scenario ──────────────────────────────────────────────
+  // P1 (add, large) → P2 (subtract, inside P1) → P3 (override add, inside hole)
+  // Expected: 2 islands. Island with P1 has {P1, P2}. Island with P3 has {P3} only.
+
+  it("override-add inside a subtract hole creates a separate island", () => {
+    const shapes = [
+      rect(0, 0, 100, 100, { id: "p1" }),
+      rect(30, 30, 70, 70, { id: "p2", op: "subtract" }),
+      rect(40, 40, 60, 60, { id: "p3", op: "add", override: true }),
+    ];
+    const { islands } = computeIslands(shapes);
+    expect(islands).toHaveLength(2);
+    // P3 centroid ~(50,50) is inside the hole, P1 centroid ~(50,50) of outer ring
+    // — islands must exist at both locations
+    const outerIsland = islands.find(isl => pointInIsland(10, 10, isl));
+    const innerIsland = islands.find(isl => pointInIsland(50, 50, isl));
+    expect(outerIsland).toBeDefined();
+    expect(innerIsland).toBeDefined();
+    expect(outerIsland).not.toBe(innerIsland);
+  });
+
+  it("subtract does not appear in the shapeIds of the override-add island inside the hole", () => {
+    const shapes = [
+      rect(0, 0, 100, 100, { id: "p1" }),
+      rect(30, 30, 70, 70, { id: "p2", op: "subtract" }),
+      rect(40, 40, 60, 60, { id: "p3", op: "add", override: true }),
+    ];
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
+
+    const innerIsland = islands.find(isl => pointInIsland(50, 50, isl));
+    expect(innerIsland).toBeDefined();
+    // The subtract (p2) created the hole in the outer island — it has nothing to
+    // do with the inner island and must not appear in its contributors.
+    expect(innerIsland.shapeIds).not.toContain("p2");
+    expect(innerIsland.shapeIds).toContain("p3");
+  });
+
+  it("override-add inside hole does not appear in the outer island's shapeIds", () => {
+    const shapes = [
+      rect(0, 0, 100, 100, { id: "p1" }),
+      rect(30, 30, 70, 70, { id: "p2", op: "subtract" }),
+      rect(40, 40, 60, 60, { id: "p3", op: "add", override: true }),
+    ];
+    const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+    assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
+
+    const outerIsland = islands.find(isl => pointInIsland(10, 10, isl));
+    expect(outerIsland).toBeDefined();
+    expect(outerIsland.shapeIds).toContain("p1");
+    expect(outerIsland.shapeIds).toContain("p2");
+    expect(outerIsland.shapeIds).not.toContain("p3");
+  });
+});
+
+describe("computeIslands — exclusive name/mirror matching", () => {
+  it("two islands created from scratch get distinct default names", () => {
+    const shapes = [
+      rect(0, 0, 10, 10, { id: "a" }),
+      rect(50, 0, 60, 10, { id: "b" }),
+    ];
+    const { islands } = computeIslands(shapes);
+    expect(islands).toHaveLength(2);
+    const names = islands.map(i => i.name);
+    expect(new Set(names).size).toBe(2); // both names must be distinct
+  });
+
+  it("adding a second island does not cause both to inherit the same previous name", () => {
+    // Start with one previous island named "Alpha"
+    const prev = [{
+      id: "isl_old", name: "Alpha", mirrors: true,
+      exterior: [[0, 0], [100, 0], [100, 100], [0, 100], [0, 0]],
+      holes: [], shapeIds: [],
+    }];
+    // New layout: outer island (matches "Alpha") + override-add in its hole
+    const shapes = [
+      rect(0, 0, 100, 100, { id: "p1" }),
+      rect(30, 30, 70, 70, { id: "p2", op: "subtract" }),
+      rect(40, 40, 60, 60, { id: "p3", op: "add", override: true }),
+    ];
+    const { islands } = computeIslands(shapes, prev);
+    expect(islands).toHaveLength(2);
+    const names = islands.map(i => i.name);
+    // "Alpha" should be assigned to exactly one island; the other gets a default
+    expect(names.filter(n => n === "Alpha")).toHaveLength(1);
+    expect(new Set(names).size).toBe(2);
   });
 });
 
