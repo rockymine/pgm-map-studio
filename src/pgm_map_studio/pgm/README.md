@@ -14,6 +14,7 @@ Parses a PGM `map.xml` file and produces a `MapXml` dataclass and `xml_data.json
 | `filter_parser.py` | All filter type parsers |
 | `region_parser.py` | All region type parsers; synthetic ID injection; flat registry building |
 | `serializer.py` | `MapXml → dict → xml_data.json` |
+| `deserializer.py` | `xml_data.json → MapXml` |
 | `xml_writer.py` | `MapXml → map.xml` export |
 
 ## Key Concepts
@@ -257,10 +258,46 @@ All filter objects carry `id` and `type`. Apply rule fields are all optional; on
 
 ## Usage
 
+**Import path (existing map):**
+
 ```python
-from pgm_map_studio.pgm import parse
+from pgm_map_studio.pgm import parse, to_xml
 from pgm_map_studio.pgm import serializer
 
 xml_data = parse("path/to/map.xml")
 serializer.save(xml_data, "output/xml_data.json")
+```
+
+**Export path (new map or editor-only map):**
+
+```python
+from pgm_map_studio.pgm import from_dict, to_xml
+import json
+
+d = json.loads(Path("output/xml_data.json").read_text())
+xml_data = from_dict(d)
+Path("output/map.xml").write_text(to_xml(xml_data))
+```
+
+Or using the file helper:
+
+```python
+from pgm_map_studio.pgm import load, to_xml
+
+xml_data = load("output/xml_data.json")
+Path("output/map.xml").write_text(to_xml(xml_data))
+```
+
+**Full roundtrip (import → edit → re-export):**
+
+```python
+# Import
+xml_data = parse("path/to/map.xml")
+serializer.save(xml_data, "output/xml_data.json")
+
+# ... editor modifies xml_data.json ...
+
+# Export
+xml_data = load("output/xml_data.json")
+Path("output/map.xml").write_text(to_xml(xml_data))
 ```
