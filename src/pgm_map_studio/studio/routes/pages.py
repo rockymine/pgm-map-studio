@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template
 
 bp = Blueprint("pages", __name__)
 
@@ -13,12 +13,6 @@ def dashboard():
 @bp.route("/editor")
 def editor():
     return render_template("editor.html")
-
-
-@bp.route("/configure")
-def configure():
-    map_name = request.args.get("map", "")
-    return render_template("configure.html", map_name=map_name)
 
 
 @bp.route("/sketch")

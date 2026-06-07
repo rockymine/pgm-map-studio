@@ -149,6 +149,48 @@ for _bid in (35, 95, 159, 160, 171):
     _bc_stained(_bid)
 
 
+_BLOCK_NAMES: dict[int, str] = {
+    0: "Air",          1: "Stone",             2: "Grass",         3: "Dirt",
+    4: "Cobblestone",  7: "Bedrock",            8: "Water",         9: "Water",
+    10: "Lava",        11: "Lava",             12: "Sand",         13: "Gravel",
+    14: "Gold Ore",    15: "Iron Ore",         16: "Coal Ore",     17: "Wood",
+    18: "Leaves",      19: "Sponge",           20: "Glass",        21: "Lapis Ore",
+    22: "Lapis Block", 24: "Sandstone",        25: "Note Block",   26: "Bed",
+    30: "Cobweb",      31: "Tall Grass",       36: "Piston Head",  41: "Gold Block",
+    42: "Iron Block",  43: "Double Slab",      44: "Slab",         45: "Brick",
+    46: "TNT",         47: "Bookshelf",        48: "Mossy Cobble", 49: "Obsidian",
+    53: "Oak Stairs",  54: "Chest",            55: "Redstone Wire", 57: "Diamond Block",
+    58: "Crafting Table", 61: "Furnace",       67: "Stone Stairs", 77: "Stone Button",
+    80: "Snow",        85: "Oak Fence",        87: "Netherrack",   88: "Soul Sand",
+    89: "Glowstone",   91: "Jack o'Lantern",   96: "Trapdoor",     97: "Monster Egg",
+    98: "Stone Bricks", 103: "Melon",          106: "Vines",       107: "Fence Gate",
+    108: "Brick Stairs", 109: "Stone Brick Stairs", 111: "Lily Pad", 112: "Nether Bricks",
+    120: "End Portal Frame", 121: "End Stone", 123: "Redstone Lamp", 124: "Redstone Lamp",
+    125: "Wood Slab",  126: "Wood Slab",       128: "Sandstone Stairs", 129: "Emerald Ore",
+    130: "Ender Chest", 131: "Tripwire Hook",  133: "Emerald Block", 134: "Spruce Stairs",
+    135: "Birch Stairs", 136: "Jungle Stairs", 138: "Beacon",      139: "Cobblestone Wall",
+    143: "Wood Button", 144: "Mob Head",       145: "Anvil",       146: "Trapped Chest",
+    148: "Comparator", 155: "Quartz Block",    156: "Quartz Stairs", 161: "Acacia Leaves",
+    162: "Acacia Wood", 163: "Acacia Stairs",  164: "Dark Oak Stairs", 165: "Slime Block",
+    166: "Barrier",    167: "Iron Trapdoor",   168: "Prismarine",  169: "Sea Lantern",
+    170: "Hay Bale",   172: "Hardened Clay",   173: "Coal Block",  174: "Packed Ice",
+    179: "Red Sandstone", 180: "Red Sandstone Stairs", 181: "Red Double Slab", 182: "Red Slab",
+    183: "Spruce Fence Gate", 184: "Birch Fence Gate", 185: "Jungle Fence Gate",
+    186: "Dark Oak Fence Gate", 187: "Acacia Fence Gate", 188: "Spruce Fence",
+    189: "Birch Fence", 190: "Jungle Fence",  191: "Dark Oak Fence", 192: "Acacia Fence",
+    193: "Spruce Door", 196: "Dark Oak Door",
+}
+_STAIN_COLOR_NAMES = [
+    "White", "Orange", "Magenta", "Light Blue", "Yellow", "Lime",
+    "Pink", "Gray", "Light Gray", "Cyan", "Purple", "Blue",
+    "Brown", "Green", "Red", "Black",
+]
+_STAIN_BLOCK_BASE_NAMES = {
+    35: "Wool", 95: "Stained Glass", 159: "Stained Clay",
+    160: "Stained Glass Pane", 171: "Carpet",
+}
+
+
 def block_color(block_id: int, block_data: int) -> tuple[int, int, int]:
     """Return (r, g, b) for a block ID + data value.
 
@@ -162,3 +204,11 @@ def block_color(block_id: int, block_data: int) -> tuple[int, int, int]:
     # Deterministic fallback — no numpy needed
     h = hash((block_id, block_data)) & 0xFFFFFF
     return ((h >> 16) & 0xFF + 80) % 220, ((h >> 8) & 0xFF + 80) % 220, (h & 0xFF + 80) % 220
+
+
+def block_name(block_id: int, block_data: int) -> str:
+    """Return a human-readable name for a block ID + data value."""
+    if block_id in _STAIN_BLOCK_BASE_NAMES:
+        color = _STAIN_COLOR_NAMES[block_data % 16] if 0 <= block_data < 16 else ""
+        return f"{color} {_STAIN_BLOCK_BASE_NAMES[block_id]}" if color else _STAIN_BLOCK_BASE_NAMES[block_id]
+    return _BLOCK_NAMES.get(block_id, f"Block {block_id}")

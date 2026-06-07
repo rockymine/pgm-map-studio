@@ -20,12 +20,14 @@ class MapConfig:
     exclude_islands: list[int] = field(default_factory=list)
     exclude_blocks: list[int] = field(default_factory=list)
     scan_layer: LayerChoice = 'surface'
+    scan_layer_confirmed: bool = False
 
     def to_dict(self) -> dict:
         return {
             'exclude_islands': self.exclude_islands,
             'exclude_blocks': self.exclude_blocks,
             'scan_layer': self.scan_layer,
+            'scan_layer_confirmed': self.scan_layer_confirmed,
         }
 
     @classmethod
@@ -34,6 +36,7 @@ class MapConfig:
             exclude_islands=d.get('exclude_islands', []),
             exclude_blocks=d.get('exclude_blocks', []),
             scan_layer=d.get('scan_layer', 'surface'),
+            scan_layer_confirmed=d.get('scan_layer_confirmed', False),
         )
 
 

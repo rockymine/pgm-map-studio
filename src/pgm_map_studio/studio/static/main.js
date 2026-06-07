@@ -1,19 +1,22 @@
 /**
  * main.js — Editor page bootstrap.
  *
- * Wires the activity rail, handles map loading, and manages the export button.
- * Only Overview and Teams are active in M1 — other rail buttons exist but are disabled.
+ * Wires the activity rail and manages the active activity.
+ * Configure is the first activity; the editor auto-opens it when the map
+ * has not yet been configured (symmetry.status == "unconfirmed").
  */
 
-import { OverviewActivity } from "./activities/overview-activity.js";
-import { TeamsActivity }    from "./activities/teams-activity.js";
-import * as api             from "./api.js";
+import { ConfigureActivity } from "./activities/configure-activity.js";
+import { OverviewActivity }  from "./activities/overview-activity.js";
+import { TeamsActivity }     from "./activities/teams-activity.js";
+import * as api              from "./api.js";
 import { showSystemError, clearSystemError, showToast, getMapParam } from "./shared/ui-helpers.js";
 
 lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "16", height: "16" } });
 
 // ── DOM ───────────────────────────────────────────────────────────────────
 
+const configureBtn = document.getElementById("activity-configure");
 const overviewBtn  = document.getElementById("activity-overview");
 const teamsBtn     = document.getElementById("activity-teams");
 const objectiveBtn = document.getElementById("activity-objective");
@@ -26,6 +29,10 @@ errorDismiss?.addEventListener("click", clearSystemError);
 // ── Activity setup ────────────────────────────────────────────────────────
 
 const ACTIVITIES = {
+  "activity-configure": new ConfigureActivity({
+    onStatusChange: dot => { configureBtn.dataset.status = dot ?? ""; },
+    onComplete:     ()  => switchActivity("activity-overview"),
+  }),
   "activity-overview": new OverviewActivity({
     onStatusChange: dot => { overviewBtn.dataset.status = dot ?? ""; },
   }),
@@ -34,7 +41,6 @@ const ACTIVITIES = {
   }),
 };
 
-// Stub activities (stubs show placeholder message)
 const STUB_IDS = ["activity-objective", "activity-regions"];
 
 let currentId  = "activity-overview";
@@ -43,20 +49,22 @@ let currentMap = null;
 function switchActivity(id) {
   if (ACTIVITIES[currentId]) ACTIVITIES[currentId].deactivate();
 
-  // Show/hide stub workspaces
   for (const stubId of STUB_IDS) {
     const ws = document.getElementById(stubId.replace("activity-", "") + "-workspace");
     if (ws) ws.hidden = (id !== stubId);
   }
 
   currentId = id;
-  document.querySelectorAll(".activity-btn").forEach(btn => btn.classList.toggle("active", btn.id === id));
+  document.querySelectorAll(".activity-btn").forEach(btn =>
+    btn.classList.toggle("active", btn.id === id)
+  );
   if (ACTIVITIES[id]) {
     ACTIVITIES[id].activate({ mapName: currentMap });
     requestAnimationFrame(() => ACTIVITIES[id].resize());
   }
 }
 
+configureBtn.addEventListener("click", () => { if (!configureBtn.disabled) switchActivity("activity-configure"); });
 overviewBtn.addEventListener("click",  () => { if (!overviewBtn.disabled)  switchActivity("activity-overview"); });
 teamsBtn.addEventListener("click",     () => { if (!teamsBtn.disabled)     switchActivity("activity-teams"); });
 objectiveBtn.addEventListener("click", () => { if (!objectiveBtn.disabled) switchActivity("activity-objective"); });
@@ -79,6 +87,7 @@ exportBtn.addEventListener("click", async () => {
 
 async function loadMap(name) {
   currentMap = name;
+  configureBtn.disabled = true;
   overviewBtn.disabled  = true;
   teamsBtn.disabled     = true;
   objectiveBtn.disabled = true;
@@ -92,20 +101,35 @@ async function loadMap(name) {
     if (nameEl) nameEl.textContent = data.name || name.replace(/_/g, " ");
     if (verEl)  verEl.textContent  = data.version ? `v${data.version}` : "";
 
+    configureBtn.disabled = false;
     overviewBtn.disabled  = false;
     teamsBtn.disabled     = false;
     exportBtn.disabled    = false;
     clearSystemError();
 
-    switchActivity("activity-overview");
+    // Open Configure if map hasn't been configured yet
+    const cfgState = await _fetchConfigureState(name);
+    if (!cfgState?.configure_complete) {
+      switchActivity("activity-configure");
+    } else {
+      switchActivity("activity-overview");
+    }
   } catch (err) {
     showSystemError(err.status === 404 ? "Map not found" : "Could not load map");
   }
 }
 
+async function _fetchConfigureState(name) {
+  try {
+    const r = await fetch(`/api/configure/${encodeURIComponent(name)}/state`);
+    return r.ok ? await r.json() : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────
 
-// Activate overview workspace so it's visible on load
 ACTIVITIES["activity-overview"].activate({});
 
 const mapParam = getMapParam();

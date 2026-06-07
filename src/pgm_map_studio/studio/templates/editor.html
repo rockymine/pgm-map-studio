@@ -21,6 +21,10 @@
   <span id="topbar-version"  class="topbar-crumb topbar-crumb--dim"></span>
 
   <div class="topbar-right">
+    <span id="cfg-topbar-notice" class="topbar-changes-badge" hidden>
+      <i data-lucide="triangle-alert"></i>
+      <span id="cfg-topbar-notice-text"></span>
+    </span>
     <div id="topbar-error" role="alert">
       <span class="topbar-error-text"></span>
       <button class="topbar-error-dismiss" id="error-dismiss-btn"><i data-lucide="x"></i></button>
@@ -37,6 +41,9 @@
         <span class="activity-logo-sub">STUDIO</span>
       </div>
     </div>
+    <button class="activity-btn" id="activity-configure" title="Configure" disabled data-status="">
+      <i data-lucide="settings-2"></i>
+    </button>
     <button class="activity-btn active" id="activity-overview"  title="Overview"  disabled data-status="">
       <i data-lucide="book-open-text"></i>
     </button>
@@ -59,8 +66,149 @@
 
   <div id="activity-viewport">
 
+    <!-- Configure workspace -->
+    <div id="cfg-workspace" class="workspace" hidden>
+      <div id="cfg-left" class="workspace-sidebar">
+
+        <div id="cfg-scroll" class="workspace-scroll">
+
+          <!-- Step 1: Scan Layer -->
+          <div class="cfg-step-panel" data-step="1">
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Scan Layer</h2>
+                <span class="badge badge--dim">Step 1</span>
+              </div>
+              <p class="section-desc">
+                Choose which extractor to use. Click a type to preview it on the canvas.
+              </p>
+              <div id="cfg-layer-list" class="layer-grid">
+                <button class="filter-chip" data-layer="surface"
+                  title="Highest solid block per column">Surface</button>
+                <button class="filter-chip" data-layer="y0"
+                  title="Non-air blocks at world y=0">Y=0</button>
+                <button class="filter-chip" data-layer="bedrock"
+                  title="Lowest bedrock block per column">Bedrock</button>
+                <button class="filter-chip" data-layer="base"
+                  title="Lowest non-air block per column">Base</button>
+              </div>
+
+            </section>
+
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Included Blocks</h2>
+              </div>
+              <p class="section-desc">
+                Exclude blocks that are not part of the map structure (e.g. water, vines, leaves).
+              </p>
+              <div id="cfg-block-included" class="panel-list"></div>
+            </section>
+
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Excluded Blocks</h2>
+              </div>
+              <div id="cfg-block-excluded" class="panel-list">
+                <div class="list-empty">No blocks excluded.</div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Step 2: Islands -->
+          <div class="cfg-step-panel" data-step="2" hidden>
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Islands</h2>
+                <span class="badge badge--dim">Step 2</span>
+              </div>
+              <p class="section-desc">
+                Exclude islands that are not part of the playable layout (e.g. observer towers).
+              </p>
+              <div id="cfg-island-list" class="panel-list"></div>
+            </section>
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Excluded Islands</h2>
+              </div>
+              <div id="cfg-island-excluded" class="panel-list">
+                <div class="list-empty">No islands excluded.</div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Step 3: Symmetry -->
+          <div class="cfg-step-panel" data-step="3" hidden>
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Symmetry</h2>
+                <span class="badge badge--dim">Step 3</span>
+              </div>
+              <p class="section-desc">
+                Choose the symmetry that matches this map. The axis and center will drive
+                mirroring suggestions in later steps.
+              </p>
+              <div id="cfg-sym-modes"></div>
+              <div class="cfg-sub-section" id="cfg-sym-axis-section">
+                <div class="section-header section-header--ruled">
+                  <h2 class="section-title">Center Point</h2>
+                </div>
+                <div class="ctrl-row">
+                  <div class="coord-field">
+                    <span class="coord-prefix">X</span>
+                    <input id="cfg-center-x" class="coord-input" type="number" step="0.5"/>
+                  </div>
+                  <div class="coord-field">
+                    <span class="coord-prefix">Z</span>
+                    <input id="cfg-center-z" class="coord-input" type="number" step="0.5"/>
+                  </div>
+                  <button id="cfg-center-reset" class="action-btn action-btn--icon" title="Reset to detected center">
+                    <i data-lucide="crosshair"></i>
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+        </div><!-- /cfg-scroll -->
+
+        <!-- Footer nav (outside scroll so it's always visible) -->
+        <div class="cfg-sidebar-nav">
+          <button id="cfg-prev-btn" class="action-btn" hidden>
+            <i data-lucide="arrow-left"></i>
+          </button>
+          <button id="cfg-next-btn" class="action-btn action-btn--primary" style="margin-left:auto">
+            Next <i data-lucide="arrow-right"></i>
+          </button>
+          <button id="cfg-finish-btn" class="action-btn action-btn--primary" style="margin-left:auto" hidden>
+            Continue to Overview <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+
+      </div><!-- /cfg-left -->
+
+      <div id="cfg-canvas-wrap" class="workspace-canvas">
+        <div class="canvas-subbar">
+          <div class="cfg-step-bar">
+            <div class="step-item active" data-step="1">
+              <span class="step-number">1</span><span class="step-item-label">Scan Layer</span>
+            </div>
+            <div class="step-sep"></div>
+            <div class="step-item" data-step="2">
+              <span class="step-number">2</span><span class="step-item-label">Islands</span>
+            </div>
+            <div class="step-sep"></div>
+            <div class="step-item" data-step="3">
+              <span class="step-number">3</span><span class="step-item-label">Symmetry</span>
+            </div>
+          </div>
+        </div>
+        <svg id="cfg-canvas" style="width:100%;height:100%"></svg>
+      </div>
+    </div><!-- /cfg-workspace -->
+
     <!-- Overview workspace -->
-    <div id="overview-workspace" class="workspace">
+    <div id="ov-workspace" class="workspace">
       <div id="ov-left" class="workspace-sidebar">
         <div id="ov-left-scroll" class="workspace-scroll">
           <section class="panel-section">
