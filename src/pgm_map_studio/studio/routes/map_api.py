@@ -131,8 +131,8 @@ def layer_top_surface(name: str):
 def _compute_categories(regions: dict, data: dict) -> dict:
     """Categorise regions by their role in the map data.
 
-    Uses exact references from spawns/wools/spawners — not name heuristics —
-    so only regions actually assigned to a role get that category.
+    Precedence: actual spawn/wool references > stored region_categories hints > name heuristics.
+    The stored hints let newly drawn (not-yet-linked) regions appear in the correct category.
     """
     cats: dict[str, str] = {}
 
@@ -152,6 +152,11 @@ def _compute_categories(regions: dict, data: dict) -> dict:
             if spawner.get(field):
                 wool_ids.add(spawner[field])
 
+    hints: dict[str, str] = {}
+    for cat_name, ids in data.get("region_categories", {}).items():
+        for hint_id in ids:
+            hints[hint_id] = cat_name
+
     for rid in regions:
         if rid in spawn_ids:
             cats[rid] = "spawn"
@@ -160,7 +165,7 @@ def _compute_categories(regions: dict, data: dict) -> dict:
         elif "build" in rid.lower():
             cats[rid] = "build"
         else:
-            cats[rid] = "other"
+            cats[rid] = hints.get(rid, "other")
 
     return cats
 

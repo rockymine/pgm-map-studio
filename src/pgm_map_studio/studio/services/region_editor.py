@@ -44,6 +44,21 @@ class InvalidRegionPayload(RegionEditorError):
 SUPPORTED_CREATE_TYPES = {"rectangle", "cuboid", "point", "block", "cylinder", "circle"}
 
 
+def _regions_dict(data: dict) -> dict:
+    """Return data["regions"] as a mutable dict, normalising list form in-place."""
+    regions = data.get("regions")
+    if regions is None:
+        regions = {}
+        data["regions"] = regions
+    elif isinstance(regions, list):
+        regions = {r["id"]: r for r in regions if r.get("id")}
+        data["regions"] = regions
+    elif not isinstance(regions, dict):
+        regions = {}
+        data["regions"] = regions
+    return regions
+
+
 def create_region(data: dict, payload: dict) -> dict:
     """Create a new region and register it in *data*.
 
@@ -54,7 +69,7 @@ def create_region(data: dict, payload: dict) -> dict:
     if region_type not in SUPPORTED_CREATE_TYPES:
         raise InvalidRegionPayload(f"unsupported type {region_type!r}")
 
-    regions = data.setdefault("regions", {})
+    regions = _regions_dict(data)
 
     region_id = (payload.get("id") or "").strip()
     if not region_id:
@@ -87,7 +102,7 @@ def group_regions(data: dict, payload: dict) -> dict:
     if len(child_ids) < 2:
         raise InvalidRegionPayload("at least 2 regions required")
 
-    regions = data.setdefault("regions", {})
+    regions = _regions_dict(data)
 
     missing = [cid for cid in child_ids if cid not in regions]
     if missing:
@@ -132,7 +147,7 @@ def change_region_type(data: dict, region_id: str, payload: dict) -> dict:
         raise InvalidRegionPayload("type required")
     if new_type not in _COMPOUND_TYPES:
         raise InvalidRegionPayload(f"{new_type!r} is not a compound type")
-    regions = data.get("regions", {})
+    regions = _regions_dict(data)
     region = regions.get(region_id)
     if region is None:
         raise RegionNotFound(f"region {region_id!r} not found")
@@ -151,7 +166,7 @@ def remove_from_group(data: dict, region_id: str, payload: dict) -> dict:
     child_id = str(payload.get("child_id", "")).strip()
     if not child_id:
         raise InvalidRegionPayload("child_id required")
-    regions = data.get("regions", {})
+    regions = _regions_dict(data)
     region = regions.get(region_id)
     if region is None:
         raise RegionNotFound(f"region {region_id!r} not found")
@@ -177,7 +192,7 @@ def set_base_child(data: dict, region_id: str, payload: dict) -> dict:
     child_id = str(payload.get("child_id", "")).strip()
     if not child_id:
         raise InvalidRegionPayload("child_id required")
-    regions = data.get("regions", {})
+    regions = _regions_dict(data)
     region = regions.get(region_id)
     if region is None:
         raise RegionNotFound(f"region {region_id!r} not found")
@@ -202,7 +217,7 @@ def ungroup_region(data: dict, payload: dict) -> dict:
     if not region_id:
         raise InvalidRegionPayload("region_id required")
 
-    regions = data.get("regions", {})
+    regions = _regions_dict(data)
     if region_id not in regions:
         raise RegionNotFound(f"region {region_id!r} not found")
 
@@ -239,7 +254,7 @@ def delete_region(data: dict, region_id: str) -> dict:
     Returns a snapshot dict suitable for passing to restore_region.
     Raises RegionNotFound if region_id cannot be located anywhere.
     """
-    regions = data.get("regions", {})
+    regions = _regions_dict(data)
 
     if region_id in regions:
         subtree_ids = collect_region_subtree_ids(regions, region_id)
@@ -297,7 +312,7 @@ def restore_region(data: dict, snapshot: dict) -> dict:
     if not root_id or not region_entries:
         raise InvalidRegionPayload("invalid snapshot")
 
-    regions = data.setdefault("regions", {})
+    regions = _regions_dict(data)
 
     parent_id = snapshot.get("parent_id")
     if parent_id is not None:
@@ -331,7 +346,7 @@ def patch_region(data: dict, region_id: str, payload: dict) -> dict:
     if not payload.get("id") and bounds is None and coords is None:
         raise InvalidRegionPayload("provide 'id', 'bounds', or 'coords'")
 
-    regions = data.get("regions", {})
+    regions = _regions_dict(data)
 
     region = regions.get(region_id)
     is_top_level = region is not None

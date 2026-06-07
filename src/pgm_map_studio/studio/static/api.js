@@ -140,6 +140,39 @@ export async function deleteTeam(mapName, teamId) {
   return body;
 }
 
+// ── Regions ──────────────────────────────────────────────────────────────
+
+export async function createRegion(mapName, payload) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/regions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Create region failed (${r.status})`);
+  return body;
+}
+
+export async function patchRegion(mapName, regionId, payload) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Patch region failed (${r.status})`);
+  return body;
+}
+
+export async function deleteRegion(mapName, regionId) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}`, {
+    method: "DELETE",
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Delete region failed (${r.status})`);
+  return body;
+}
+
 // ── Spawns ───────────────────────────────────────────────────────────────
 
 export async function addSpawn(mapName, spawn) {
@@ -161,6 +194,26 @@ export async function updateSpawn(mapName, regionId, fields) {
   });
   const body = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(body.error || `Update spawn failed (${r.status})`);
+  return body;
+}
+
+export async function setObserverSpawn(mapName, payload) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/observer-spawn`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Set observer spawn failed (${r.status})`);
+  return body;
+}
+
+export async function deleteObserverSpawn(mapName) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/observer-spawn`, {
+    method: "DELETE",
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Delete observer spawn failed (${r.status})`);
   return body;
 }
 

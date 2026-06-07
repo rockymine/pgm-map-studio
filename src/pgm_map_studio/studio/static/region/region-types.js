@@ -47,11 +47,22 @@ export function deriveBoundsFromCoords(type, coords) {
 }
 
 export function typeIcon(type, size = 13) {
-  const IconFn = TYPE_ICON[type];
-  if (!IconFn) return "";
-  const svg = lucide.createSvgIcon(IconFn);
-  svg.setAttribute("width",  size);
+  const iconData = TYPE_ICON[type];
+  if (!iconData) return "";
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("width", size);
   svg.setAttribute("height", size);
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
   svg.setAttribute("stroke-width", "1.5");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  for (const [tag, attrs] of iconData) {
+    const el = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    svg.appendChild(el);
+  }
   return svg.outerHTML;
 }

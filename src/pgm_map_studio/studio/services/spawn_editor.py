@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pgm_map_studio.studio.services.region_editor import _regions_dict
+
 
 class SpawnEditorError(Exception):
     pass
@@ -29,7 +31,7 @@ def add_spawn_link(data: dict, payload: dict) -> dict:
     if not region_id:
         raise InvalidSpawnPayload("region_id is required")
 
-    regions: dict = data.get("regions", {})
+    regions = _regions_dict(data)
     if region_id not in regions:
         raise SpawnNotFound(f"region {region_id!r} not found")
 
@@ -67,4 +69,30 @@ def delete_spawn_link(data: dict, region_id: str) -> dict:
         raise SpawnNotFound(f"no spawn for region {region_id!r}")
 
     data["spawns"] = [s for s in spawns if _spawn_region_id(s) != region_id]
+    return {}
+
+
+def set_observer_spawn(data: dict, payload: dict) -> dict:
+    """Set or replace the observer spawn (the <default> in <spawns>)."""
+    region_id = (payload.get("region_id") or "").strip()
+    if not region_id:
+        raise InvalidSpawnPayload("region_id is required")
+    regions = _regions_dict(data)
+    if region_id not in regions:
+        raise SpawnNotFound(f"region {region_id!r} not found")
+
+    data["observer_spawn"] = {
+        "team": "",
+        "kit":  str(payload.get("kit", "")),
+        "yaw":  float(payload.get("yaw", 0.0)),
+        "region": region_id,
+    }
+    return {}
+
+
+def delete_observer_spawn(data: dict) -> dict:
+    """Remove the observer spawn."""
+    if not data.get("observer_spawn"):
+        raise SpawnNotFound("no observer spawn defined")
+    data["observer_spawn"] = None
     return {}

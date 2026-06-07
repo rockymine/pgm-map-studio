@@ -7,17 +7,25 @@
  */
 
 import * as api from "../api.js";
+
+function _obsRegionId(observerSpawn) {
+  if (!observerSpawn) return null;
+  const r = observerSpawn.region;
+  return typeof r === "string" ? r : (r?.id ?? null);
+}
 import {
   PGM_CHAT_COLORS, MINECRAFT_DYE_COLORS,
   chatColorHex, dyeColorHex,
 } from "../shared/game-colors.js";
 import { showToast } from "../shared/ui-helpers.js";
+import { typeIcon } from "../region/region-types.js";
 
 export class TeamsPanel {
   constructor(opts = {}) {
     this._mapName         = null;
     this._teams           = [];
     this._spawns          = [];
+    this._observerSpawn   = null;
     this._spawnRegions    = [];
     this._selectedTeamId  = null;
     this._selectedSpawnId = null;
@@ -68,8 +76,9 @@ export class TeamsPanel {
     this._spawns  = [];
     try {
       const data = await api.fetchMapData(mapName);
-      this._teams  = data.teams  ?? [];
-      this._spawns = data.spawns ?? [];
+      this._teams         = data.teams          ?? [];
+      this._spawns        = data.spawns         ?? [];
+      this._observerSpawn = data.observer_spawn ?? null;
       this._updateStatusDot();
     } catch (err) {
       console.error("TeamsPanel: failed to load map data:", err);
@@ -81,7 +90,8 @@ export class TeamsPanel {
   async reloadSpawnList(mapName) {
     try {
       const data = await api.fetchMapData(mapName);
-      this._spawns = data.spawns ?? [];
+      this._spawns        = data.spawns         ?? [];
+      this._observerSpawn = data.observer_spawn ?? null;
     } catch { /* silent */ }
     this._renderSpawnList();
     this._updateStatusDot();
@@ -128,26 +138,37 @@ export class TeamsPanel {
     this._teamsListEl.innerHTML = "";
     if (!this._teams.length) {
       this._teamsListEl.innerHTML = '<div class="list-empty">No teams defined.</div>';
-      this._renderSpawnList();
-      return;
+    } else {
+      for (const team of this._teams) {
+        const row = document.createElement("div");
+        row.className = "list-row" + (team.id === this._selectedTeamId ? " list-row--selected" : "");
+        row.dataset.id = team.id;
+        const swatch = document.createElement("span");
+        swatch.className = "list-swatch";
+        swatch.style.backgroundColor = chatColorHex(team.color);
+        const label = document.createElement("span");
+        label.className = "list-label";
+        label.textContent = team.name || team.id;
+        row.appendChild(swatch);
+        row.appendChild(label);
+        row.addEventListener("click", () => { this._selectTeam(team.id); });
+        this._teamsListEl.appendChild(row);
+      }
     }
-    for (const team of this._teams) {
-      const row = document.createElement("div");
-      row.className = "list-row" + (team.id === this._selectedTeamId ? " list-row--selected" : "");
-      row.dataset.id = team.id;
-      const swatch = document.createElement("span");
-      swatch.className = "list-swatch";
-      swatch.style.backgroundColor = chatColorHex(team.color);
-      const label = document.createElement("span");
-      label.className = "list-label";
-      label.textContent = team.name || team.id;
-      row.appendChild(swatch);
-      row.appendChild(label);
-      row.addEventListener("click", () => {
-        this._selectTeam(team.id);
-      });
-      this._teamsListEl.appendChild(row);
-    }
+
+    // Observer is a fixed PGM concept (<default> in <spawns>) — always shown, never editable
+    const obsRow = document.createElement("div");
+    obsRow.className = "list-row list-row--muted";
+    const obsSwatch = document.createElement("span");
+    obsSwatch.className = "list-swatch";
+    obsSwatch.style.backgroundColor = chatColorHex("aqua");
+    const obsLabel = document.createElement("span");
+    obsLabel.className = "list-label";
+    obsLabel.textContent = "Observer";
+    obsRow.appendChild(obsSwatch);
+    obsRow.appendChild(obsLabel);
+    this._teamsListEl.appendChild(obsRow);
+
     this._renderSpawnList();
   }
 
@@ -158,15 +179,17 @@ export class TeamsPanel {
       return;
     }
     for (const region of this._spawnRegions) {
-      const spawn = this._spawns.find(s => (typeof s.region === "string" ? s.region : s.region?.id) === region.id);
-      const team  = spawn ? this._teams.find(t => t.id === spawn.team) : null;
+      const spawn      = this._spawns.find(s => (typeof s.region === "string" ? s.region : s.region?.id) === region.id);
+      const team       = spawn ? this._teams.find(t => t.id === spawn.team) : null;
+      const isObserver = _obsRegionId(this._observerSpawn) === region.id;
       const row   = document.createElement("div");
       row.className = "list-row list-row--compact" + (region.id === this._selectedSpawnId ? " list-row--selected" : "");
       row.dataset.regionId = region.id;
 
-      const dot = document.createElement("span");
-      dot.className = "team-dot";
-      dot.style.backgroundColor = team ? chatColorHex(team.color) : "var(--border)";
+      const icon = document.createElement("span");
+      icon.className = "geo-type-icon";
+      icon.style.color = isObserver ? chatColorHex("aqua") : team ? chatColorHex(team.color) : region.color;
+      icon.innerHTML = typeIcon(region.type, 13);
 
       const label = document.createElement("span");
       label.className = "list-label list-label--mono";
@@ -176,7 +199,7 @@ export class TeamsPanel {
       tag.className = "list-tag";
       tag.textContent = team?.name ?? "—";
 
-      row.appendChild(dot);
+      row.appendChild(icon);
       row.appendChild(label);
       row.appendChild(tag);
       row.addEventListener("click", () => {
@@ -298,33 +321,179 @@ export class TeamsPanel {
       row.classList.remove("list-row--selected");
     }
 
-    const spawn = this._spawns.find(s => (typeof s.region === "string" ? s.region : s.region?.id) === node.id);
+    const spawn      = this._spawns.find(s => (typeof s.region === "string" ? s.region : s.region?.id) === node.id);
+    const isObserver = _obsRegionId(this._observerSpawn) === node.id;
 
     this._spawnAbort?.abort();
     this._spawnAbort = new AbortController();
     const sig = { signal: this._spawnAbort.signal };
 
-    // Populate team dropdown
-    this._spawnTeamSel.innerHTML = '<option value="">—</option>' +
-      this._teams.map(t => `<option value="${t.id}" ${spawn?.team === t.id ? "selected" : ""}>${t.name || t.id}</option>`).join("");
-    this._spawnYawInput.value = spawn?.yaw ?? 0;
-    this._spawnKitInput.value = spawn?.kit ?? "";
+    // ── Region detail section (built dynamically) ─────────────────────────
+    const detailEl = document.getElementById("pt-spawn-region-detail");
+    if (detailEl) {
+      while (detailEl.firstChild) detailEl.removeChild(detailEl.firstChild);
+
+      // detail-header: type icon + id label + type badge
+      const header = document.createElement("div");
+      header.className = "detail-header";
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "geo-type-icon";
+      iconSpan.style.color = isObserver ? chatColorHex("aqua") : node.color;
+      iconSpan.innerHTML = typeIcon(node.type, 14);
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "detail-label";
+      labelSpan.style.fontFamily = "ui-monospace, monospace";
+      labelSpan.textContent = node.id;
+      const typeBadge = document.createElement("span");
+      typeBadge.className = "badge badge--neutral";
+      typeBadge.textContent = node.type.charAt(0).toUpperCase() + node.type.slice(1);
+      header.append(iconSpan, labelSpan, typeBadge);
+      detailEl.appendChild(header);
+
+      // ID rename field
+      const idField = document.createElement("div");
+      idField.className = "field";
+      const idLabel = document.createElement("label");
+      idLabel.className = "field-label";
+      idLabel.textContent = "ID";
+      const idInput = document.createElement("input");
+      idInput.className = "field-input";
+      idInput.type = "text";
+      idInput.spellcheck = false;
+      idInput.value = node.id;
+      idInput.style.fontFamily = "ui-monospace, monospace";
+      idField.append(idLabel, idInput);
+      detailEl.appendChild(idField);
+
+      idInput.addEventListener("change", async () => {
+        const newId = idInput.value.trim();
+        if (!newId || newId === node.id || !this._mapName) return;
+        try {
+          await api.patchRegion(this._mapName, node.id, { id: newId });
+          this._opts.onRegionPatched?.(node.id, newId);
+        } catch (err) {
+          showToast(`Rename failed: ${err.message}`, "error");
+          idInput.value = node.id;
+        }
+      }, sig);
+
+      // Coordinate fields (type-specific) — each group is a .field so panel-section gap applies
+      if (node.type === "cylinder") {
+        const baseField = document.createElement("div");
+        baseField.className = "field";
+        baseField.innerHTML = `
+          <label class="field-label">Base</label>
+          <div class="ctrl-row">
+            <div class="coord-field"><span class="coord-prefix">X</span><input class="coord-input" data-key="base_x" type="number" step="0.5" value="${node.base_x}"></div>
+            <div class="coord-field"><span class="coord-prefix">Y</span><input class="coord-input" data-key="base_y" type="number" step="1" value="${node.base_y}"></div>
+            <div class="coord-field"><span class="coord-prefix">Z</span><input class="coord-input" data-key="base_z" type="number" step="0.5" value="${node.base_z}"></div>
+          </div>`;
+        const dimsField = document.createElement("div");
+        dimsField.className = "field";
+        dimsField.innerHTML = `
+          <label class="field-label">Dimensions</label>
+          <div class="ctrl-row">
+            <div class="coord-field"><span class="coord-prefix">R</span><input class="coord-input" data-key="radius" type="number" step="0.5" min="0.5" value="${node.radius}"></div>
+            <div class="coord-field"><span class="coord-prefix">H</span><input class="coord-input" data-key="height" type="number" step="1" min="1" value="${node.height}"></div>
+          </div>`;
+        detailEl.appendChild(baseField);
+        detailEl.appendChild(dimsField);
+
+        const _saveCoords = async () => {
+          const coords = {};
+          for (const inp of [...baseField.querySelectorAll("[data-key]"), ...dimsField.querySelectorAll("[data-key]")]) {
+            coords[inp.dataset.key] = parseFloat(inp.value);
+          }
+          try {
+            await api.patchRegion(this._mapName, node.id, { coords });
+            this._opts.onRegionPatched?.(node.id, null);
+          } catch (err) {
+            showToast(`Coord update failed: ${err.message}`, "error");
+          }
+        };
+        for (const inp of [...baseField.querySelectorAll(".coord-input"), ...dimsField.querySelectorAll(".coord-input")]) {
+          inp.addEventListener("change", _saveCoords, sig);
+        }
+
+      } else if (node.type === "point") {
+        const posField = document.createElement("div");
+        posField.className = "field";
+        posField.innerHTML = `
+          <label class="field-label">Position</label>
+          <div class="ctrl-row">
+            <div class="coord-field"><span class="coord-prefix">X</span><input class="coord-input" data-key="x" type="number" step="1" value="${node.pos_x}"></div>
+            <div class="coord-field"><span class="coord-prefix">Y</span><input class="coord-input" data-key="y" type="number" step="1" value="${node.pos_y}"></div>
+            <div class="coord-field"><span class="coord-prefix">Z</span><input class="coord-input" data-key="z" type="number" step="1" value="${node.pos_z}"></div>
+          </div>`;
+        detailEl.appendChild(posField);
+
+        const _saveCoords = async () => {
+          const coords = {};
+          for (const inp of posField.querySelectorAll("[data-key]")) {
+            coords[inp.dataset.key] = parseFloat(inp.value);
+          }
+          try {
+            await api.patchRegion(this._mapName, node.id, { coords });
+            this._opts.onRegionPatched?.(node.id, null);
+          } catch (err) {
+            showToast(`Coord update failed: ${err.message}`, "error");
+          }
+        };
+        for (const inp of posField.querySelectorAll(".coord-input")) {
+          inp.addEventListener("change", _saveCoords, sig);
+        }
+      }
+
+      // Delete region button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "action-btn action-btn--danger";
+      deleteBtn.style.cssText = "margin-bottom:var(--space-4);width:100%";
+      deleteBtn.textContent = "Delete Region";
+      deleteBtn.addEventListener("click", async () => {
+        if (!this._mapName) return;
+        try {
+          if (spawn)      await api.deleteSpawn(this._mapName, node.id);
+          if (isObserver) await api.deleteObserverSpawn(this._mapName);
+          await api.deleteRegion(this._mapName, node.id);
+          this._opts.onDeleteRegion?.(node.id);
+          showToast("Spawn region deleted", "success");
+        } catch (err) {
+          showToast(`Delete failed: ${err.message}`, "error");
+        }
+      }, { signal: sig.signal });
+      detailEl.appendChild(deleteBtn);
+    }
+
+    // ── Spawn assignment ──────────────────────────────────────────────────
+    this._spawnTeamSel.innerHTML =
+      '<option value="">—</option>' +
+      this._teams.map(t => `<option value="${t.id}">${t.name || t.id}</option>`).join("") +
+      '<option value="__observer__">Observer</option>';
+    if (isObserver) this._spawnTeamSel.value = "__observer__";
+    else if (spawn)  this._spawnTeamSel.value = spawn.team ?? "";
+    this._spawnYawInput.value = isObserver ? (this._observerSpawn.yaw ?? 0) : (spawn?.yaw ?? 0);
+    this._spawnKitInput.value = isObserver ? (this._observerSpawn.kit ?? "") : (spawn?.kit ?? "");
 
     const _saveSpawn = async () => {
       if (!this._mapName) return;
-      const payload = {
-        team: this._spawnTeamSel.value,
-        yaw:  parseFloat(this._spawnYawInput.value) || 0,
-        kit:  this._spawnKitInput.value.trim(),
-      };
+      const team = this._spawnTeamSel.value;
+      const yaw  = parseFloat(this._spawnYawInput.value) || 0;
+      const kit  = this._spawnKitInput.value.trim();
       try {
-        if (spawn) {
-          await api.updateSpawn(this._mapName, node.id, payload);
+        if (team === "__observer__") {
+          if (spawn) await api.deleteSpawn(this._mapName, node.id);
+          await api.setObserverSpawn(this._mapName, { region_id: node.id, yaw, kit });
         } else {
-          await api.addSpawn(this._mapName, { region_id: node.id, ...payload });
+          if (isObserver) await api.deleteObserverSpawn(this._mapName);
+          if (spawn) {
+            await api.updateSpawn(this._mapName, node.id, { team, yaw, kit });
+          } else {
+            await api.addSpawn(this._mapName, { region_id: node.id, team, yaw, kit });
+          }
         }
         await this.reloadSpawnList(this._mapName);
         showToast("Spawn link saved", "success");
+        this._showSpawnInspector(node);
       } catch (err) {
         showToast(`Save failed: ${err.message}`, "error");
       }
@@ -334,10 +503,12 @@ export class TeamsPanel {
       el.addEventListener("change", _saveSpawn, sig);
     }
 
+    this._spawnUnlinkBtn.hidden = !spawn && !isObserver;
     this._spawnUnlinkBtn.addEventListener("click", async () => {
-      if (!this._mapName || !spawn) return;
+      if (!this._mapName || (!spawn && !isObserver)) return;
       try {
-        await api.deleteSpawn(this._mapName, node.id);
+        if (isObserver) await api.deleteObserverSpawn(this._mapName);
+        else             await api.deleteSpawn(this._mapName, node.id);
         await this.reloadSpawnList(this._mapName);
         showToast("Spawn link removed", "success");
         this._opts.onDeselectRegion?.();
@@ -397,7 +568,9 @@ export class TeamsPanel {
       this._opts.onStatusChange("yellow");
       return;
     }
+    const obsId = _obsRegionId(this._observerSpawn);
     const allLinked = this._spawnRegions.every(r =>
+      r.id === obsId ||
       this._spawns.some(s => (typeof s.region === "string" ? s.region : s.region?.id) === r.id && s.team)
     );
     this._opts.onStatusChange(allLinked ? "green" : "yellow");

@@ -122,6 +122,7 @@
 }
 .list-row--selected .list-label { color: var(--text-bright); }
 .list-row--compact  { min-height: 28px; padding: 5px 4px; gap: 8px; }
+.list-row--muted    { pointer-events: none; }
 
 .list-swatch {
   width: 14px;
