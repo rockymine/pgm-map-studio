@@ -467,15 +467,7 @@ body {
   border-top: 1px solid var(--border);
   padding: var(--space-2) 14px 10px;
 }
-.history-panel-title {
-  font-size: var(--font-xs);
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 5px;
-  user-select: none;
-}
+#history-panel .section-title { margin-bottom: 5px; }
 .history-entry {
   font-size: var(--font-sm);
   padding: 1px 4px;
@@ -547,36 +539,7 @@ body {
 }
 .ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
 
-/* ── detail widget ── */
-.detail-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: 10px;
-}
-.detail-dot { width: 12px; height: 12px; border-radius: var(--radius-sm); flex-shrink: 0; }
-.detail-label {
-  flex: 1;
-  font-size: var(--font-md);
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.detail-bounds-input {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: ui-monospace, monospace;
-  font-size: var(--font-base);
-  font-variant-numeric: tabular-nums;
-  padding: 3px 6px;
-  text-align: right;
-  width: 68px;
-  outline: none;
-}
-.detail-bounds-input:focus { border-color: var(--accent); }
+/* ── detail widget (editor-specific — XML preview, region coordinate groups) ── */
 .detail-xml-pre {
   background: var(--bg-base);
   border: 1px solid var(--border);
@@ -591,40 +554,9 @@ body {
   white-space: pre;
 }
 
-/* ── detail group fields (coordinate widgets) ── */
+/* ── region coordinate groups (bounding-box editor in region inspector) ── */
 .detail-geo-group { margin-bottom: 12px; }
 .detail-group-row { display: flex; gap: 6px; }
-.detail-prefixed-field {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-.detail-prefixed-field:focus-within { border-color: var(--accent); }
-.detail-prefix {
-  font-size: var(--font-xs);
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 0 4px 0 8px;
-  user-select: none;
-  flex-shrink: 0;
-}
-.detail-prefixed-field .detail-bounds-input {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  flex: 1;
-  min-width: 0;
-  width: auto;
-  padding: 3px 8px 3px 2px;
-  text-align: right;
-}
-.detail-prefixed-field .detail-bounds-input:focus { border-color: transparent; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    DASHBOARD PAGE

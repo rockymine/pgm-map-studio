@@ -116,11 +116,7 @@
 
       <div id="sk-ov-canvas-wrap" class="workspace-canvas">
         <svg id="sk-ov-svg" xmlns="http://www.w3.org/2000/svg"></svg>
-        <div id="sk-ov-canvas-empty" style="
-          position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-          font-size:var(--font-base);color:var(--text-muted);pointer-events:none;
-          text-align:center;line-height:1.8
-        ">No layout yet.<br>Draw islands in the Layout step.</div>
+        <div id="sk-ov-canvas-empty" class="canvas-empty-hint">No layout yet.<br>Draw islands in the Layout step.</div>
       </div>
     </div>
 
@@ -140,30 +136,30 @@
               <tbody>
                 <tr>
                   <td class="detail-val">
-                    <div class="detail-prefixed-field">
-                      <span class="detail-prefix">X</span>
-                      <input id="sk-bbox-min-x" class="detail-bounds-input" type="number" placeholder="-256"/>
+                    <div class="coord-field">
+                      <span class="coord-prefix">X</span>
+                      <input id="sk-bbox-min-x" class="coord-input" type="number" placeholder="-256"/>
                     </div>
                   </td>
                   <td class="detail-val">
-                    <div class="detail-prefixed-field">
-                      <span class="detail-prefix">X</span>
-                      <input id="sk-bbox-max-x" class="detail-bounds-input" type="number" placeholder="256"/>
+                    <div class="coord-field">
+                      <span class="coord-prefix">X</span>
+                      <input id="sk-bbox-max-x" class="coord-input" type="number" placeholder="256"/>
                     </div>
                   </td>
                   <td id="sk-bbox-size-x" class="detail-size"></td>
                 </tr>
                 <tr>
                   <td class="detail-val">
-                    <div class="detail-prefixed-field">
-                      <span class="detail-prefix">Z</span>
-                      <input id="sk-bbox-min-z" class="detail-bounds-input" type="number" placeholder="-256"/>
+                    <div class="coord-field">
+                      <span class="coord-prefix">Z</span>
+                      <input id="sk-bbox-min-z" class="coord-input" type="number" placeholder="-256"/>
                     </div>
                   </td>
                   <td class="detail-val">
-                    <div class="detail-prefixed-field">
-                      <span class="detail-prefix">Z</span>
-                      <input id="sk-bbox-max-z" class="detail-bounds-input" type="number" placeholder="256"/>
+                    <div class="coord-field">
+                      <span class="coord-prefix">Z</span>
+                      <input id="sk-bbox-max-z" class="coord-input" type="number" placeholder="256"/>
                     </div>
                   </td>
                   <td id="sk-bbox-size-z" class="detail-size"></td>
@@ -182,14 +178,14 @@
               <h2 class="section-title">Center Point</h2>
             </div>
             <p class="section-desc">Drag the violet dot on the canvas, or enter coordinates below. This anchors the symmetry axis.</p>
-            <div class="sk-mode-group">
-              <div class="detail-prefixed-field">
-                <span class="detail-prefix">X</span>
-                <input id="sk-center-x" class="detail-bounds-input" type="number" value="0"/>
+            <div class="ctrl-row">
+              <div class="coord-field">
+                <span class="coord-prefix">X</span>
+                <input id="sk-center-x" class="coord-input" type="number" value="0"/>
               </div>
-              <div class="detail-prefixed-field">
-                <span class="detail-prefix">Z</span>
-                <input id="sk-center-z" class="detail-bounds-input" type="number" value="0"/>
+              <div class="coord-field">
+                <span class="coord-prefix">Z</span>
+                <input id="sk-center-z" class="coord-input" type="number" value="0"/>
               </div>
               <button id="sk-center-reset" class="action-btn action-btn--icon" title="Reset center to 0, 0">
                 <i data-lucide="crosshair"></i>
@@ -202,8 +198,8 @@
               <h2 class="section-title">Symmetry Mode <span class="field-required">*</span></h2>
             </div>
             <div class="sk-mode-stack">
-              <div class="sk-mode-group">
-                <span class="field-label sk-mode-group__label">Mirror</span>
+              <div class="ctrl-row">
+                <span class="field-label ctrl-row-label">Mirror</span>
                 <div class="filter-group-options filter-group-options--fill">
                   <button class="filter-chip sk-mode-chip" data-mode="mirror_x"
                     title="Reflect across Z = center — 2 teams">X-Axis</button>
@@ -211,8 +207,8 @@
                     title="Reflect across X = center — 2 teams">Z-Axis</button>
                 </div>
               </div>
-              <div class="sk-mode-group">
-                <span class="field-label sk-mode-group__label">Rotate</span>
+              <div class="ctrl-row">
+                <span class="field-label ctrl-row-label">Rotate</span>
                 <div class="filter-group-options filter-group-options--fill">
                   <button class="filter-chip sk-mode-chip filter-chip--active" data-mode="rot_180"
                     title="Half-turn rotation around center — 2 teams">180°</button>
@@ -255,11 +251,11 @@
               <h2 class="section-title">Overlays</h2>
             </div>
             <div style="display:flex;flex-direction:column;gap:var(--space-2)">
-              <label class="sk-mode-group" style="cursor:pointer">
+              <label class="ctrl-row" style="cursor:pointer">
                 <input type="checkbox" id="sk-layout-toggle-mirror" checked/>
                 <span>Mirror preview</span>
               </label>
-              <label class="sk-mode-group" style="cursor:pointer">
+              <label class="ctrl-row" style="cursor:pointer">
                 <input type="checkbox" id="sk-layout-toggle-shapes"/>
                 <span>Shapes overlay</span>
               </label>

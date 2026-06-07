@@ -316,9 +316,9 @@ export class SketchLayoutPanel {
     const wrap = document.createElement("div");
     wrap.style.cssText = "display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--font-base);font-variant-numeric:tabular-nums";
     wrap.innerHTML = `
-      <div class="sk-mode-group"><span class="detail-prefix">CX</span><span>${shape.center_x}</span></div>
-      <div class="sk-mode-group"><span class="detail-prefix">CZ</span><span>${shape.center_z}</span></div>
-      <div class="sk-mode-group"><span class="detail-prefix">R</span><span>${shape.radius}</span></div>`;
+      <div class="ctrl-row"><span class="coord-prefix">CX</span><span>${shape.center_x}</span></div>
+      <div class="ctrl-row"><span class="coord-prefix">CZ</span><span>${shape.center_z}</span></div>
+      <div class="ctrl-row"><span class="coord-prefix">R</span><span>${shape.radius}</span></div>`;
     return wrap;
   }
 
@@ -335,7 +335,7 @@ export class SketchLayoutPanel {
     const tolRow = document.createElement("div");
     tolRow.className = "simplify-row";
     const tolInput = document.createElement("input");
-    tolInput.className = "detail-bounds-input";
+    tolInput.className = "coord-input";
     tolInput.type = "number";
     tolInput.value = "50";
     tolInput.min = "1";

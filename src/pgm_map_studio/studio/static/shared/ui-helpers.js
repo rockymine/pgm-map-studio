@@ -1,13 +1,10 @@
 /**
  * ui-helpers.js — Shared UI utilities.
  *
- * Notification system (4 canonical types):
- *   showSystemError(message)     — Type 1: persistent top-bar error
- *   clearSystemError()           — dismiss Type 1
- *   showToast(message, type)     — Type 2: 4s auto-dismiss bottom-right
- *   showCanvasHint(el, message)  — Type 3: canvas overlay hint
- *   hideCanvasHint(el)           — dismiss Type 3
- *   (Type 4 = .panel-warning in HTML, shown/hidden by activity logic)
+ * Notification system (2 canonical types):
+ *   showSystemError(message)  — Type 1: persistent top-bar error
+ *   clearSystemError()        — dismiss Type 1
+ *   showToast(message, type)  — Type 2: 4s auto-dismiss bottom-right toast
  */
 
 // ── Toast singleton ─────────────────────────────────────────────────────────
@@ -65,29 +62,6 @@ export function clearSystemError() {
   _getErrorEl()?.classList.remove("visible");
 }
 
-// ── Canvas drawing hint (Type 3) ──────────────────────────────────────────
-
-/**
- * Show a hint overlay inside a canvas wrapper element.
- * @param {HTMLElement} canvasWrap - the element that contains the canvas
- * @param {string} message
- */
-export function showCanvasHint(canvasWrap, message) {
-  let hint = canvasWrap.querySelector(".canvas-hint");
-  if (!hint) {
-    hint = document.createElement("div");
-    hint.className = "canvas-hint";
-    canvasWrap.style.position = "relative";
-    canvasWrap.appendChild(hint);
-  }
-  hint.textContent = message;
-  hint.classList.add("visible");
-}
-
-export function hideCanvasHint(canvasWrap) {
-  canvasWrap?.querySelector(".canvas-hint")?.classList.remove("visible");
-}
-
 // ── Swatch helper ─────────────────────────────────────────────────────────
 
 export function updateSwatch(el, hex) {
@@ -116,21 +90,3 @@ export function httpErrorMessage(status, fallback = "Request failed") {
   return _HTTP_MESSAGES[status] ?? fallback;
 }
 
-// ── Panel warning helpers ─────────────────────────────────────────────────
-
-export function showPanelWarning(containerEl, message) {
-  let w = containerEl.querySelector(".panel-warning");
-  if (!w) {
-    w = document.createElement("div");
-    w.className = "panel-warning";
-    w.innerHTML = `<span class="panel-warning-icon">⚠</span><span class="panel-warning-text"></span>`;
-    containerEl.prepend(w);
-  }
-  w.querySelector(".panel-warning-text").textContent = message;
-  w.hidden = false;
-}
-
-export function hidePanelWarning(containerEl) {
-  const w = containerEl.querySelector(".panel-warning");
-  if (w) w.hidden = true;
-}

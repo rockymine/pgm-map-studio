@@ -97,8 +97,8 @@
   image-rendering: pixelated;
   background: var(--border);
 }
-.author-row .author-name         { flex: 2; min-width: 0; }
-.author-row .author-contribution { flex: 2; min-width: 0; }
+.author-name         { flex: 2; min-width: 0; }
+.author-contribution { flex: 2; min-width: 0; }
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -120,6 +120,7 @@
   background: var(--bg-selected);
   box-shadow: var(--shadow-ring);
 }
+.list-row--selected .list-label { color: var(--text-bright); }
 .list-row--compact  { min-height: 28px; padding: 5px 4px; gap: 8px; }
 
 .list-swatch {
@@ -195,6 +196,8 @@
 .action-btn--primary:hover { background: var(--accent-bg-hover); color: var(--text-white); }
 .action-btn--danger       { color: var(--color-error); border-color: var(--color-error); }
 .action-btn--danger:hover { background: var(--color-error-hover); }
+.action-btn--warn         { background: var(--color-warning-bg); border-color: var(--color-warning); color: var(--color-warning); }
+.action-btn--warn:hover   { background: color-mix(in srgb, var(--color-warning) 20%, var(--bg-panel)); color: var(--text-white); }
 
 .btn-remove {
   display: inline-flex;
@@ -220,25 +223,6 @@
 
 .panel-actions { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
 .panel-save-status { font-size: var(--font-base); color: var(--text-secondary); }
-
-/*
- * Panel Validation Warning (Type 4 notification)
- * Inline in right panel; persists until the validation issue is resolved.
- */
-.panel-warning {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: var(--color-warning-bg);
-  border-left: 3px solid var(--color-warning);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  padding: 8px 10px;
-  font-size: var(--font-base);
-  color: var(--color-warning);
-  line-height: 1.4;
-}
-.panel-warning-icon { flex-shrink: 0; line-height: 1; margin-top: 1px; }
-
 
 /* ══════════════════════════════════════════════════════════════════════════
    CANVAS SUBBAR
@@ -273,31 +257,6 @@
   user-select: none;
 }
 .canvas-subbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-
-/*
- * Canvas Drawing Hint (Type 3 notification)
- * Overlay inside the canvas; auto-hides when no draw tool is active.
- */
-.canvas-hint {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: var(--font-base);
-  color: var(--text-secondary);
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-  background: var(--bg-panel-glass);
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
-  backdrop-filter: blur(4px);
-  border: 1px solid var(--border);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-.canvas-hint.visible { opacity: 1; }
-
 
 /* ══════════════════════════════════════════════════════════════════════════
    TOAST (Type 2 notification — Operation feedback)
@@ -390,11 +349,11 @@
 /* Expanded chip row — chips stretch to fill available width */
 .filter-group-options--fill .filter-chip { flex: 1; justify-content: center; }
 
-/* Labeled chip row — label + chip group side-by-side; also used for input rows */
-.sk-mode-group { display: flex; align-items: center; gap: var(--space-2); }
-.sk-mode-group__label { flex-shrink: 0; min-width: calc(var(--space-5) + var(--space-6)); }
-.sk-mode-group .filter-group-options,
-.sk-mode-group .detail-prefixed-field { flex: 1; }
+/* Generic horizontal control row — label + inputs/buttons/chips side-by-side */
+.ctrl-row { display: flex; align-items: stretch; gap: var(--space-2); }
+.ctrl-row-label { flex-shrink: 0; min-width: calc(var(--space-5) + var(--space-6)); align-self: center; }
+.ctrl-row .filter-group-options,
+.ctrl-row .coord-field { flex: 1; }
 
 /* Stack of labeled chip rows */
 .sk-mode-stack { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -471,16 +430,25 @@
   display: flex; align-items: center; line-height: 0;
   opacity: 0; transition: opacity var(--transition-fast);
 }
-/* In region-row context the button must stretch the full row height */
-.region-row .vis-btn {
-  align-self: stretch;
-  margin-top: -4px;
-  margin-bottom: -4px;
-}
-.list-row:hover .vis-btn,
-.region-row:hover .vis-btn { opacity: 1; }
+.list-row:hover .vis-btn { opacity: 1; }
 .vis-btn:hover   { background: var(--bg-vis-hover); }
 .vis-btn--always { opacity: 1; }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CANVAS EMPTY HINT  (centred overlay inside .workspace-canvas when nothing is drawn)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.canvas-empty-hint {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--font-base);
+  color: var(--text-muted);
+  pointer-events: none;
+  text-align: center;
+  line-height: 1.8;
+}
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -491,6 +459,79 @@
   font-size: var(--font-base); color: var(--text-secondary);
   line-height: 1.6; margin-bottom: var(--space-2);
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INSPECTOR HEADER  (selected-shape header row — dot + label)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: 10px;
+}
+.detail-dot { width: 12px; height: 12px; border-radius: var(--radius-sm); flex-shrink: 0; }
+.detail-label {
+  flex: 1;
+  font-size: var(--font-md);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   COORDINATE INPUT WIDGET  (prefixed numeric field — X/Z/R labels)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.coord-input {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: ui-monospace, monospace;
+  font-size: var(--font-base);
+  font-variant-numeric: tabular-nums;
+  padding: 3px 6px;
+  text-align: right;
+  width: 68px;
+  outline: none;
+}
+.coord-input:focus { border-color: var(--accent); }
+
+.coord-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.coord-field:focus-within { border-color: var(--accent); }
+.coord-prefix {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 4px 0 8px;
+  user-select: none;
+  flex-shrink: 0;
+}
+.coord-field .coord-input {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  padding: 3px 8px 3px 2px;
+  text-align: right;
+}
+.coord-field .coord-input:focus { border-color: transparent; }
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -522,10 +563,10 @@
   user-select: none;
 }
 .detail-val { padding: 2px 2px; }
-.detail-val .detail-bounds-input { width: 60px; }
-/* When a detail-prefixed-field sits inside a table cell it has no flex parent,
+.detail-val .coord-input { width: 60px; }
+/* When a coord-field sits inside a table cell it has no flex parent,
    so flex:1 won't expand it — this makes it fill the cell instead. */
-.detail-val .detail-prefixed-field { width: 100%; }
+.detail-val .coord-field { width: 100%; }
 .detail-size {
   text-align: right;
   padding: 2px 4px;
@@ -564,44 +605,6 @@
 .simplify-unit { font-size: var(--font-sm); color: var(--text-muted); flex-shrink: 0; }
 
 
-/* ══════════════════════════════════════════════════════════════════════════
-   PREVIEW GRID + CARD  (layer selection, any multi-image picker)
-   ══════════════════════════════════════════════════════════════════════════ */
-
-.preview-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 12px;
-  padding: var(--space-4);
-  overflow: auto;
-}
-
-.preview-card {
-  display: flex; flex-direction: column;
-  border: 2px solid var(--border); border-radius: var(--radius-md);
-  background: var(--bg-deep); padding: 10px;
-  cursor: pointer; transition: border-color var(--transition-fast);
-  overflow: hidden;
-}
-.preview-card:hover          { border-color: var(--text-muted); }
-.preview-card--selected      { border-color: var(--color-success); }
-
-.preview-card-header {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: 8px; flex-shrink: 0;
-}
-.preview-card-title { font-size: var(--font-base); color: var(--text-primary); cursor: pointer; }
-
-.preview-img {
-  display: block; flex: 1; min-height: 0; width: 100%;
-  object-fit: contain; image-rendering: pixelated; border-radius: var(--radius-sm);
-}
-.preview-placeholder {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  font-size: var(--font-base); color: var(--text-muted); text-align: center;
-}
-
 /* ── Text-size utilities ─────────────────────────────────────────────── */
 /* Mirror the --font-* token scale for use in HTML markup. */
 .text-lg   { font-size: var(--font-lg);   }
@@ -609,5 +612,61 @@
 .text-base { font-size: var(--font-base); }
 .text-sm   { font-size: var(--font-sm);   }
 .text-xs   { font-size: var(--font-xs);   }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   STEP ITEMS  (used by .cfg-step-bar in editor.css — no standalone wrapper)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  cursor: default;
+  user-select: none;
+}
+.step-item.active { color: var(--text-bright); }
+.step-item.done   { color: var(--color-success); }
+
+.step-sep {
+  width: 20px;
+  height: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.step-item.done .step-number {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #000;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LAYER OPTION CARDS  (Configure scan-layer selection)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* 2×2 grid of layer-type selector chips */
+.layer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+.layer-grid .filter-chip { justify-content: center; }
 
 

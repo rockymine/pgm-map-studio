@@ -5,7 +5,7 @@ export class OverviewActivity {
   #panel = null;
 
   constructor({ onStatusChange } = {}) {
-    this.#el    = document.getElementById("overview-workspace");
+    this.#el    = document.getElementById("ov-workspace");
     this.#panel = new OverviewPanel(this.#el, { onStatusChange });
   }
 

@@ -40,9 +40,10 @@
     <a href="#sections">Sections &amp; panels</a>
     <a href="#badges">Badges</a>
     <a href="#filter-chips">Filter chips</a>
-    <a href="#preview">Preview cards</a>
     <a href="#console">Console</a>
     <a href="#steps">Step rows</a>
+    <a href="#step-items">Step items</a>
+    <a href="#layer-options">Layer options</a>
     <a href="#notifications">Notifications</a>
     <a href="#detail-table">Detail table</a>
     <a href="#simplify">Simplify widget</a>
@@ -155,8 +156,8 @@
       <div class="ds-swatches">
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success)"></div><div class="ds-swatch-name">--color-success</div><div class="ds-swatch-val">#22c55e · 6.4:1 — .badge--success, .step-dot--done, .map-status-dot--ready</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-success-bg)"></div><div class="ds-swatch-name">--color-success-bg</div><div class="ds-swatch-val">color-mix: green-900 27% into --bg-panel — .badge--success bg, .toast--success bg</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning)"></div><div class="ds-swatch-name">--color-warning</div><div class="ds-swatch-val">#f59e0b · 6.8:1 — .badge--warning, .panel-warning, .map-status-dot--partial</div></div>
-        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning-bg)"></div><div class="ds-swatch-name">--color-warning-bg</div><div class="ds-swatch-val">color-mix: amber-900 27% into --bg-panel — .badge--warning bg, .panel-warning bg</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning)"></div><div class="ds-swatch-name">--color-warning</div><div class="ds-swatch-val">#f59e0b · 6.8:1 — .badge--warning, .topbar-changes-badge, .map-status-dot--partial</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-warning-bg)"></div><div class="ds-swatch-name">--color-warning-bg</div><div class="ds-swatch-val">color-mix: amber-900 27% into --bg-panel — .badge--warning bg, .action-btn--warn bg</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error)"></div><div class="ds-swatch-name">--color-error</div><div class="ds-swatch-val">#f87171 · 5.3:1 — .badge--error, .field-input--error border, .btn-remove:hover, #topbar-error, .toast--error text</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-bg)"></div><div class="ds-swatch-name">--color-error-bg</div><div class="ds-swatch-val">color-mix: red-900 27% into --bg-panel — .badge--error bg, .toast--error bg</div></div>
 <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--color-error-hover)"></div><div class="ds-swatch-name">--color-error-hover</div><div class="ds-swatch-val">color-mix: --color-error 10% transparent — subtle red tint for .action-btn--danger:hover</div></div>
@@ -172,15 +173,15 @@
         <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-2)"></div><div class="ds-space-lbl">--space-2 = 8px</div><span style="font-size:11px;color:var(--text-muted)">intra-group gap, small padding</span></div>
         <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-3)"></div><div class="ds-space-lbl">--space-3 = 12px</div><span style="font-size:11px;color:var(--text-muted)">panel inner gap, field gap</span></div>
         <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-4)"></div><div class="ds-space-lbl">--space-4 = 16px</div><span style="font-size:11px;color:var(--text-muted)">section padding, inspector padding</span></div>
-        <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-5)"></div><div class="ds-space-lbl">--space-5 = 20px</div><span style="font-size:11px;color:var(--text-muted)">between sections</span></div>
-        <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-6)"></div><div class="ds-space-lbl">--space-6 = 24px</div><span style="font-size:11px;color:var(--text-muted)">page-level outer padding</span></div>
+        <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-5)"></div><div class="ds-space-lbl">--space-5 = 20px</div><span style="font-size:11px;color:var(--text-muted)">detail-view groupings, map-detail-content gap</span></div>
+        <div class="ds-space-row"><div class="ds-space-bar" style="width:var(--space-6)"></div><div class="ds-space-lbl">--space-6 = 24px</div><span style="font-size:11px;color:var(--text-muted)">between panel-sections (.workspace-scroll gap), page-level outer padding</span></div>
       </div>
       <div style="margin-top:20px;font-size:12px;color:var(--text-muted);line-height:2">
         Radii: <code style="color:var(--code-color)">--radius-sm (3px)</code> — rows, badges, small controls, inputs
         &ensp;·&ensp;
         <code style="color:var(--code-color)">--radius-md (6px)</code> — cards, panels, menus
         &ensp;·&ensp;
-        <code style="color:var(--code-color)">--radius-pill (9999px)</code> — capsule / pill overlays (.canvas-hint)<br>
+        <code style="color:var(--code-color)">--radius-pill (9999px)</code> — capsule / pill badge shapes<br>
         Transition: <code style="color:var(--code-color)">--transition-fast (0.12s ease)</code> — hover colour changes, opacity fades
       </div>
     </section>
@@ -235,7 +236,7 @@
     <section class="ds-section" id="buttons">
       <div class="ds-heading">Buttons</div>
       <div class="ds-sub">
-        Four variants cover every action in the app. Never add a new one without updating this page.
+        Five variants cover every action in the app. Never add a new one without updating this page.
         All variants use <code style="color:var(--code-color)">display: inline-flex; align-items: center; gap: --space-1</code> so icons and labels are always vertically centred.
         Draw toolbar buttons (<code style="color:var(--code-color)">.draw-tool-btn</code>) are editor-specific — see <a href="#editor-canvas" style="color:var(--accent-light)">Canvas subbar</a>.
       </div>
@@ -252,6 +253,10 @@
         <div class="ds-group">
           <button class="action-btn action-btn--danger">Danger</button>
           <div class="ds-label">--danger — irreversible only</div>
+        </div>
+        <div class="ds-group">
+          <button class="action-btn action-btn--warn"><i data-lucide="triangle-alert"></i>Re-run pending</button>
+          <div class="ds-label">--warn — pending change that will trigger side-effects on confirm</div>
         </div>
         <div class="ds-group">
           <button class="action-btn" disabled>Disabled</button>
@@ -290,7 +295,7 @@
     <!-- ── Form fields ── -->
     <section class="ds-section" id="fields">
       <div class="ds-heading">Form fields</div>
-      <div class="ds-sub">Stack fields using <code style="color:var(--code-color)">.field</code>. Side-by-side fields use <code style="color:var(--code-color)">.field-row</code>. Coordinate widgets use <code style="color:var(--code-color)">.detail-prefixed-field</code> (see <a href="#editor-inspector" style="color:var(--accent-light)">Inspector detail</a>).</div>
+      <div class="ds-sub">Stack fields using <code style="color:var(--code-color)">.field</code>. Side-by-side fields use <code style="color:var(--code-color)">.field-row</code>. Coordinate widgets use <code style="color:var(--code-color)">.coord-field</code> (see <a href="#editor-inspector" style="color:var(--accent-light)">Inspector detail</a>).</div>
 
       <div class="ds-row" style="align-items:flex-start">
 
@@ -463,6 +468,115 @@
         .panel-section + .section-header--ruled[+ .action-btn] + .panel-list / .field / .panel-actions &nbsp;·&nbsp; .panel-empty + .panel-empty-msg
       </div>
 
+      <div class="ds-subhead" style="margin-top:20px">Block and island lists — compact rows with count tag</div>
+      <div class="ds-sub">Configure step 1 (blocks) and step 2 (islands) use <code style="color:var(--code-color)">.list-row--compact</code> with a color swatch, label, right-aligned count tag, and a hover-only remove button. The excluded list swaps the remove icon for a restore icon. All standard <code style="color:var(--code-color)">.list-row</code> classes — no configure-specific variants.</div>
+      <div class="ds-row" style="align-items:flex-start">
+        <div style="width:240px">
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Included (blocks)</div>
+          <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+            <div class="panel-list">
+              <div class="list-row list-row--compact">
+                <span class="list-swatch" style="background:#5a8a5a"></span>
+                <span class="list-label">Grass Block</span>
+                <span class="list-tag">12,480</span>
+                <button class="btn-remove btn-remove--hover-only"><i data-lucide="x" style="width:12px;height:12px"></i></button>
+              </div>
+              <div class="list-row list-row--compact">
+                <span class="list-swatch" style="background:#7a6040"></span>
+                <span class="list-label">Dirt</span>
+                <span class="list-tag">4,201</span>
+                <button class="btn-remove btn-remove--hover-only"><i data-lucide="x" style="width:12px;height:12px"></i></button>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:8px;margin-bottom:4px">Excluded (blocks) — restore icon</div>
+          <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+            <div class="panel-list">
+              <div class="list-row list-row--compact">
+                <span class="list-swatch" style="background:#3b7abf"></span>
+                <span class="list-label">Water</span>
+                <button class="btn-remove btn-remove--hover-only"><i data-lucide="rotate-ccw" style="width:12px;height:12px"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="width:240px">
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Included (islands)</div>
+          <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+            <div class="panel-list">
+              <div class="list-row list-row--compact">
+                <span class="list-swatch" style="background:#6366f1"></span>
+                <span class="list-label">Island 1</span>
+                <span class="list-tag">8,320</span>
+                <button class="btn-remove btn-remove--hover-only"><i data-lucide="x" style="width:12px;height:12px"></i></button>
+              </div>
+              <div class="list-row list-row--compact">
+                <span class="list-swatch" style="background:#6366f1"></span>
+                <span class="list-label">Island 2</span>
+                <span class="list-tag">7,940</span>
+                <button class="btn-remove btn-remove--hover-only"><i data-lucide="x" style="width:12px;height:12px"></i></button>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:8px;margin-bottom:4px">Excluded (islands) — gray swatch</div>
+          <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+            <div class="panel-list">
+              <div class="list-row list-row--compact">
+                <span class="list-swatch" style="background:#6b7280"></span>
+                <span class="list-label">Island 3</span>
+                <span class="list-tag">340</span>
+                <button class="btn-remove btn-remove--hover-only"><i data-lucide="rotate-ccw" style="width:12px;height:12px"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace">
+        .panel-list → .list-row.list-row--compact → .list-swatch + .list-label + .list-tag + .btn-remove.btn-remove--hover-only
+      </div>
+
+      <div class="ds-subhead" style="margin-top:20px">Symmetry mode selector</div>
+      <div class="ds-sub">Configure step 3 symmetry options reuse <code style="color:var(--code-color)">.list-row--compact</code> with <code style="color:var(--code-color)">.list-label</code> and badge slots. No configure-specific row class needed. Selection uses <code style="color:var(--code-color)">.list-row--selected</code> which also brightens <code style="color:var(--code-color)">.list-label</code> via the global rule added to components.css.</div>
+      <div style="width:280px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+        <div class="panel-list">
+          <div class="list-row list-row--compact list-row--selected" data-type="rot_180">
+            <span class="list-label">Rotate 180°</span>
+            <span class="badge badge--success">100%</span>
+            <span class="badge badge--dim">detected</span>
+          </div>
+          <div class="list-row list-row--compact" data-type="rot_90">
+            <span class="list-label">Rotate 90°</span>
+            <span class="badge badge--neutral">48%</span>
+          </div>
+          <div class="list-row list-row--compact" data-type="none">
+            <span class="list-label">No symmetry</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace">
+        .list-row.list-row--compact[.list-row--selected] → .list-label + .badge[--success/--neutral/--dim]
+      </div>
+
+      <div class="ds-subhead" style="margin-top:20px">Section spacing rules</div>
+      <div class="ds-sub">
+        <strong>Between sections:</strong> <code style="color:var(--code-color)">.workspace-scroll</code> supplies <code style="color:var(--code-color)">gap: var(--space-6)</code> (24px) to every direct <code style="color:var(--code-color)">.panel-section</code> child.
+        Any wrapper div that groups multiple <code style="color:var(--code-color)">.panel-section</code> blocks (e.g. <code style="color:var(--code-color)">.cfg-step-panel</code>) must declare the same gap itself — otherwise the workspace-scroll gap applies only to the wrapper, not to the sections inside it:
+      </div>
+      <pre class="detail-xml-pre" style="margin-top:8px;font-size:10px;line-height:1.7;max-width:480px">.wrapper-of-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);   /* mirrors workspace-scroll default */
+}</pre>
+      <div class="ds-sub" style="margin-top:12px">
+        <strong>Within a section:</strong> <code style="color:var(--code-color)">.panel-section</code> uses <code style="color:var(--code-color)">gap: var(--space-3)</code> (12px) between its children.
+        A sub-section inside a <code style="color:var(--code-color)">panel-section</code> (e.g. the "Center Point" header + coordinate inputs in Configure step 3) must also declare <code style="color:var(--code-color)">gap: var(--space-3)</code> so its header border and content have the same spacing. Use the class <code style="color:var(--code-color)">.cfg-sub-section</code> (editor.css) for this pattern:
+      </div>
+      <pre class="detail-xml-pre" style="margin-top:8px;font-size:10px;line-height:1.7;max-width:480px">.cfg-sub-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);   /* mirrors panel-section internal gap */
+}</pre>
+
       <div class="ds-subhead" style="margin-top:20px">Author row — avatar + name + contribution + remove</div>
       <div class="ds-sub">Used inside a list section (Authors, Contributors) wherever a person entry needs an avatar, two text inputs, and a remove button. The avatar image uses <code style="color:var(--code-color)">image-rendering: pixelated</code> for Minecraft skins.</div>
       <div style="width:320px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--space-4) 14px;display:flex;flex-direction:column;gap:var(--space-3)">
@@ -549,18 +663,18 @@
       </div>
       <div class="ds-label" style="margin-top:8px">.filter-group-options → .filter-chip[.filter-chip--active] &nbsp;·&nbsp; group labels use .section-title</div>
 
-      <div class="ds-sub" style="margin-top:var(--space-4)">Labeled chip rows — used in Setup activity for symmetry mode selection. <code style="color:var(--code-color)">.filter-group-options--fill</code> stretches chips to fill the row. <code style="color:var(--code-color)">.sk-mode-group</code> aligns a label with a chip group; <code style="color:var(--code-color)">.sk-mode-stack</code> stacks multiple rows.</div>
+      <div class="ds-sub" style="margin-top:var(--space-4)">Labeled chip rows — used for symmetry mode selection and input rows. <code style="color:var(--code-color)">.filter-group-options--fill</code> stretches chips to fill the row. <code style="color:var(--code-color)">.ctrl-row</code> aligns a label with a chip group or inputs; <code style="color:var(--code-color)">.sk-mode-stack</code> stacks multiple rows.</div>
       <div class="ds-group" style="max-width:280px">
         <div class="sk-mode-stack">
-          <div class="sk-mode-group">
-            <span class="field-label sk-mode-group__label">Mirror</span>
+          <div class="ctrl-row">
+            <span class="field-label ctrl-row-label">Mirror</span>
             <div class="filter-group-options filter-group-options--fill">
               <button class="filter-chip">X-Axis</button>
               <button class="filter-chip filter-chip--active">Z-Axis</button>
             </div>
           </div>
-          <div class="sk-mode-group">
-            <span class="field-label sk-mode-group__label">Rotate</span>
+          <div class="ctrl-row">
+            <span class="field-label ctrl-row-label">Rotate</span>
             <div class="filter-group-options filter-group-options--fill">
               <button class="filter-chip filter-chip--active">180°</button>
               <button class="filter-chip" disabled>90°</button>
@@ -568,35 +682,7 @@
           </div>
         </div>
       </div>
-      <div class="ds-label" style="margin-top:8px">.sk-mode-stack → .sk-mode-group → .sk-mode-group__label + .filter-group-options.filter-group-options--fill</div>
-    </section>
-
-    <!-- ── Preview cards ── -->
-    <section class="ds-section" id="preview">
-      <div class="ds-heading">Preview grid &amp; cards</div>
-      <div class="ds-sub">Used for layer selection in Configure. 2×2 grid; each card is a selectable image preview with a radio button.</div>
-
-      <div class="ds-preview-demo">
-        <div class="preview-grid" style="grid-template-rows:120px 120px">
-          <div class="preview-card preview-card--selected" id="ds-card-a">
-            <div class="preview-card-header"><input type="radio" name="ds-layer" checked/><span class="preview-card-title">Top surface</span></div>
-            <div class="preview-placeholder">Image renders here</div>
-          </div>
-          <div class="preview-card" id="ds-card-b">
-            <div class="preview-card-header"><input type="radio" name="ds-layer"/><span class="preview-card-title">Y=0 layer</span></div>
-            <div class="preview-placeholder">Not extracted yet</div>
-          </div>
-          <div class="preview-card" id="ds-card-c">
-            <div class="preview-card-header"><input type="radio" name="ds-layer"/><span class="preview-card-title">Bedrock</span></div>
-            <div class="preview-placeholder">Not extracted yet</div>
-          </div>
-          <div class="preview-card" id="ds-card-d">
-            <div class="preview-card-header"><input type="radio" name="ds-layer"/><span class="preview-card-title">Base</span></div>
-            <div class="preview-placeholder">Not extracted yet</div>
-          </div>
-        </div>
-      </div>
-      <div class="ds-label" style="margin-top:6px">.preview-grid → .preview-card[--selected] → .preview-card-header + .preview-placeholder / .preview-img</div>
+      <div class="ds-label" style="margin-top:8px">.sk-mode-stack → .ctrl-row → .ctrl-row-label + .filter-group-options.filter-group-options--fill</div>
     </section>
 
     <!-- ── Console ── -->
@@ -637,10 +723,47 @@
       <div class="ds-label" style="margin-top:8px">.step-row → .step-dot[--done/--running/--error] + .step-label + .step-detail</div>
     </section>
 
+    <!-- ── Step items ── -->
+    <section class="ds-section" id="step-items">
+      <div class="ds-heading">Step items</div>
+      <div class="ds-sub">Sequential wizard progress indicator. Child classes defined in <code style="color:var(--code-color)">components.css</code>. The Configure activity wraps them in <code style="color:var(--code-color)">.cfg-step-bar</code> (a grid-based container in <code style="color:var(--code-color)">editor.css</code>) which fits exactly inside the 36px <code style="color:var(--code-color)">.canvas-subbar</code>. There is no standalone <code style="color:var(--code-color)">.step-bar</code> wrapper.</div>
+      <div class="ds-group" style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+        <div class="cfg-step-bar" style="border-bottom:none">
+          <div class="step-item done" data-step="1">
+            <span class="step-number">1</span><span>Scan Layer</span>
+          </div>
+          <div class="step-sep"></div>
+          <div class="step-item active" data-step="2">
+            <span class="step-number">2</span><span>Islands</span>
+          </div>
+          <div class="step-sep"></div>
+          <div class="step-item" data-step="3">
+            <span class="step-number">3</span><span>Symmetry</span>
+          </div>
+        </div>
+      </div>
+      <div class="ds-label" style="margin-top:8px">.cfg-step-bar → .step-item[.active/.done] + .step-sep + .step-number</div>
+    </section>
+
+    <!-- ── Layer options ── -->
+    <section class="ds-section" id="layer-options">
+      <div class="ds-heading">Layer options</div>
+      <div class="ds-sub">Scan-layer type selection for Configure step 1 — 2×2 grid of filter chips. Defined in <code style="color:var(--code-color)">components.css</code>.</div>
+      <div class="ds-group" style="max-width:280px">
+        <div class="layer-grid">
+          <button class="filter-chip filter-chip--active" title="Highest solid block per column">Surface</button>
+          <button class="filter-chip" title="Non-air blocks at world y=0">Y=0</button>
+          <button class="filter-chip" title="Lowest bedrock block per column">Bedrock</button>
+          <button class="filter-chip" title="Lowest non-air block per column">Base</button>
+        </div>
+      </div>
+      <div class="ds-label" style="margin-top:8px">.layer-grid → .filter-chip[.filter-chip--active]</div>
+    </section>
+
     <!-- ── Notifications ── -->
     <section class="ds-section" id="notifications">
       <div class="ds-heading">Notifications</div>
-      <div class="ds-sub">Four canonical types. Do not create a fifth notification mechanism — use one of these.</div>
+      <div class="ds-sub">Three canonical notification types. Do not add more — route all feedback through one of these.</div>
 
       <div class="ds-row" style="align-items:flex-start">
 
@@ -652,7 +775,7 @@
               <button class="topbar-error-dismiss"><i data-lucide="x"></i></button>
             </div>
           </div>
-          <div class="ds-label">#topbar-error.visible (editor.css)</div>
+          <div class="ds-label">#topbar-error.visible · showSystemError() / clearSystemError() · editor.css</div>
         </div>
 
         <div class="ds-group">
@@ -665,43 +788,31 @@
               Save failed: conflict
             </div>
             <div class="toast visible toast--info" style="position:relative;bottom:auto;right:auto;margin:12px;pointer-events:auto">
-              New disconnected mass — created a separate island
+              Pipeline complete
             </div>
           </div>
-          <div class="ds-label">.toast.visible.toast--success / --error / --info</div>
+          <div class="ds-label">.toast.visible.toast--success / --error / --info · showToast() · components.css</div>
         </div>
 
       </div>
 
-      <div class="ds-row" style="align-items:flex-start;margin-top:12px">
-
-        <div class="ds-group">
-          <div class="ds-subhead" style="margin-bottom:6px">3 — Canvas drawing hint (canvas overlay)</div>
-          <div class="ds-canvas-hint-demo" style="width:320px">
-            <span style="color:var(--text-muted);font-size:12px">canvas area</span>
-            <div class="canvas-hint visible">Click and drag to draw a region</div>
-          </div>
-          <div class="ds-label">.canvas-hint.visible (components.css)</div>
-        </div>
-
-        <div class="ds-group">
-          <div class="ds-subhead" style="margin-bottom:6px">4 — Panel validation warning (inline)</div>
-          <div class="ds-panel-demo">
-            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:var(--space-3)">
-              <div class="panel-warning">
-                <span class="panel-warning-icon"><i data-lucide="triangle-alert"></i></span>
-                <span>No wool room region assigned to this wool.</span>
-              </div>
-              <div class="field">
-                <label class="field-label">Room Region</label>
-                <select class="field-input"><option>— none —</option></select>
-              </div>
-            </div>
-          </div>
-          <div class="ds-label">.panel-warning inside .inspector-body</div>
-        </div>
-
+      <div class="ds-subhead" style="margin-top:20px">Topbar pending-change badge (Configure activity)</div>
+      <div class="ds-sub">Displayed in the topbar right slot when a scan-layer or island-exclusion change has not yet been re-run. Not a notification — it is a persistent status indicator tied to the Configure wizard. Defined in <code style="color:var(--code-color)">editor.css</code>.</div>
+      <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 14px;display:inline-flex;align-items:center;gap:var(--space-2)">
+        <span class="topbar-changes-badge">
+          <i data-lucide="triangle-alert"></i>
+          <span>Scan layer changed — re-run pending</span>
+        </span>
       </div>
+      <div class="ds-label" style="margin-top:6px">.topbar-changes-badge — flex row, warning colour, 13px icon · shown on <code style="color:var(--code-color)">#cfg-topbar-notice</code> in editor.html</div>
+
+      <div class="ds-subhead" style="margin-top:20px">3 — Canvas empty hint (centred overlay)</div>
+      <div class="ds-sub">Shown over a <code style="color:var(--code-color)">.workspace-canvas</code> when nothing has been drawn yet. Absolute-positioned, centred, non-interactive. Defined in <code style="color:var(--code-color)">components.css</code>.</div>
+      <div class="ds-canvas-demo" style="width:280px;height:120px;position:relative">
+        <div class="canvas-empty-hint">No layout yet.<br>Draw islands in the Layout step.</div>
+      </div>
+      <div class="ds-label" style="margin-top:6px">.canvas-empty-hint · position:absolute centred in .workspace-canvas · components.css</div>
+
     </section>
 
     <hr class="ds-divider"/>
@@ -1221,7 +1332,7 @@
 
       <div style="width:280px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
         <div style="border-top:none;padding:var(--space-2) 14px var(--space-3)">
-          <div class="history-panel-title">History</div>
+          <div class="section-title">History</div>
           <div class="history-entry history-entry--undo">move region blue-spawn</div>
           <div class="history-entry history-entry--undo">resize cuboid wool-room</div>
           <div class="history-entry history-entry--divider">── redo ──</div>
@@ -1229,7 +1340,7 @@
           <div class="history-entry history-entry--empty">— nothing further —</div>
         </div>
       </div>
-      <div class="ds-label" style="margin-top:8px">.history-panel-title &nbsp;·&nbsp; .history-entry[--undo / --redo / --divider / --empty]</div>
+      <div class="ds-label" style="margin-top:8px">.section-title &nbsp;·&nbsp; .history-entry[--undo / --redo / --divider / --empty]</div>
     </section>
 
     <!-- ── Context menu ── -->
@@ -1292,17 +1403,17 @@
             <div class="detail-geo-group">
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Min</div>
               <div class="detail-group-row">
-                <div class="detail-prefixed-field"><span class="detail-prefix">X</span><input class="detail-bounds-input" type="number" value="0"/></div>
-                <div class="detail-prefixed-field"><span class="detail-prefix">Y</span><input class="detail-bounds-input" type="number" value="64"/></div>
-                <div class="detail-prefixed-field"><span class="detail-prefix">Z</span><input class="detail-bounds-input" type="number" value="0"/></div>
+                <div class="coord-field"><span class="coord-prefix">X</span><input class="coord-input" type="number" value="0"/></div>
+                <div class="coord-field"><span class="coord-prefix">Y</span><input class="coord-input" type="number" value="64"/></div>
+                <div class="coord-field"><span class="coord-prefix">Z</span><input class="coord-input" type="number" value="0"/></div>
               </div>
             </div>
             <div class="detail-geo-group">
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Max</div>
               <div class="detail-group-row">
-                <div class="detail-prefixed-field"><span class="detail-prefix">X</span><input class="detail-bounds-input" type="number" value="15"/></div>
-                <div class="detail-prefixed-field"><span class="detail-prefix">Y</span><input class="detail-bounds-input" type="number" value="80"/></div>
-                <div class="detail-prefixed-field"><span class="detail-prefix">Z</span><input class="detail-bounds-input" type="number" value="15"/></div>
+                <div class="coord-field"><span class="coord-prefix">X</span><input class="coord-input" type="number" value="15"/></div>
+                <div class="coord-field"><span class="coord-prefix">Y</span><input class="coord-input" type="number" value="80"/></div>
+                <div class="coord-field"><span class="coord-prefix">Z</span><input class="coord-input" type="number" value="15"/></div>
               </div>
             </div>
 
@@ -1314,8 +1425,8 @@
 
         <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
           <div class="ds-label">.detail-header → .detail-dot + .detail-label + .badge.badge--neutral</div>
-          <div class="ds-label">.detail-geo-group → .detail-group-row → .detail-prefixed-field</div>
-          <div class="ds-label">.detail-prefix + .detail-bounds-input (coordinate pair)</div>
+          <div class="ds-label">.detail-geo-group → .detail-group-row → .coord-field</div>
+          <div class="ds-label">.coord-prefix + .coord-input (coordinate pair)</div>
           <div class="ds-label">.detail-xml-pre (monospace code/xml block)</div>
         </div>
       </div>
@@ -1331,30 +1442,30 @@
             <tbody>
               <tr>
                 <td class="detail-val">
-                  <div class="detail-prefixed-field">
-                    <span class="detail-prefix">X</span>
-                    <input class="detail-bounds-input" type="number" value="-200"/>
+                  <div class="coord-field">
+                    <span class="coord-prefix">X</span>
+                    <input class="coord-input" type="number" value="-200"/>
                   </div>
                 </td>
                 <td class="detail-val">
-                  <div class="detail-prefixed-field">
-                    <span class="detail-prefix">X</span>
-                    <input class="detail-bounds-input" type="number" value="200"/>
+                  <div class="coord-field">
+                    <span class="coord-prefix">X</span>
+                    <input class="coord-input" type="number" value="200"/>
                   </div>
                 </td>
                 <td class="detail-size">400</td>
               </tr>
               <tr>
                 <td class="detail-val">
-                  <div class="detail-prefixed-field">
-                    <span class="detail-prefix">Z</span>
-                    <input class="detail-bounds-input" type="number" value="-200"/>
+                  <div class="coord-field">
+                    <span class="coord-prefix">Z</span>
+                    <input class="coord-input" type="number" value="-200"/>
                   </div>
                 </td>
                 <td class="detail-val">
-                  <div class="detail-prefixed-field">
-                    <span class="detail-prefix">Z</span>
-                    <input class="detail-bounds-input" type="number" value="200"/>
+                  <div class="coord-field">
+                    <span class="coord-prefix">Z</span>
+                    <input class="coord-input" type="number" value="200"/>
                   </div>
                 </td>
                 <td class="detail-size">400</td>
@@ -1364,8 +1475,8 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
           <div class="ds-label">.detail-table — 3 columns: MIN · MAX · SIZE</div>
-          <div class="ds-label">.detail-val → .detail-prefixed-field (fills cell via width:100%)</div>
-          <div class="ds-label">.detail-prefix — X / Z inside the input</div>
+          <div class="ds-label">.detail-val → .coord-field (fills cell via width:100%)</div>
+          <div class="ds-label">.coord-prefix — X / Z inside the input</div>
           <div class="ds-label">.detail-size — derived, read-only</div>
         </div>
       </div>
@@ -1390,14 +1501,14 @@
                 <tbody>
                   <tr>
                     <td class="detail-axis">X</td>
-                    <td class="detail-val"><input class="detail-bounds-input" type="number" value="-171"/></td>
-                    <td class="detail-val"><input class="detail-bounds-input" type="number" value="-42"/></td>
+                    <td class="detail-val"><input class="coord-input" type="number" value="-171"/></td>
+                    <td class="detail-val"><input class="coord-input" type="number" value="-42"/></td>
                     <td class="detail-size">129</td>
                   </tr>
                   <tr>
                     <td class="detail-axis">Z</td>
-                    <td class="detail-val"><input class="detail-bounds-input" type="number" value="-219"/></td>
-                    <td class="detail-val"><input class="detail-bounds-input" type="number" value="-109"/></td>
+                    <td class="detail-val"><input class="coord-input" type="number" value="-219"/></td>
+                    <td class="detail-val"><input class="coord-input" type="number" value="-109"/></td>
                     <td class="detail-size">110</td>
                   </tr>
                 </tbody>
@@ -1424,7 +1535,7 @@
                 <div class="simplify-row">
                   <span class="simplify-label">Tolerance</span>
                   <div class="simplify-input-row">
-                    <input class="detail-bounds-input" type="number" value="50" style="width:56px"/>
+                    <input class="coord-input" type="number" value="50" style="width:56px"/>
                     <span class="simplify-unit">blocks²</span>
                   </div>
                 </div>
@@ -1436,7 +1547,7 @@
 
         <div style="display:flex;flex-direction:column;gap:7px;padding-top:4px">
           <div class="ds-label">.detail-table → th + .detail-axis + .detail-val + .detail-size</div>
-          <div class="ds-label">.detail-val .detail-bounds-input (width:60px)</div>
+          <div class="ds-label">.detail-val .coord-input (width:60px)</div>
           <div class="ds-label" style="margin-top:8px">.simplify-section → .simplify-row</div>
           <div class="ds-label">.simplify-label + .simplify-value (read-only)</div>
           <div class="ds-label">.simplify-input-row + .simplify-unit</div>
@@ -1482,21 +1593,14 @@
         </div>
 
         <div class="ds-group">
-          <div class="ds-subhead">Dashboard topbar — logo</div>
+          <div class="ds-subhead">Dashboard topbar</div>
           <div class="ds-mock" style="width:280px">
             <div class="ds-mock-topbar">
-              <span class="dashboard-logo-box" style="width:22px;height:22px;gap:1px">
-                <span class="dashboard-logo-pgm" style="font-size:7px">pgm</span>
-                <span class="dashboard-logo-sub" style="font-size:4px">STUDIO</span>
-              </span>
-              <span class="dashboard-title" style="font-size:12px">Map Studio</span>
-              <div style="margin-left:auto">
-                <button class="action-btn" style="font-size:10px;padding:2px 8px"><i data-lucide="settings"></i> Settings</button>
-              </div>
+              <span class="topbar-crumb" style="font-size:12px">Map Studio</span>
             </div>
           </div>
           <div style="margin-top:6px;font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace">
-            .dashboard-logo &nbsp;·&nbsp; .dashboard-logo-box &nbsp;·&nbsp; .dashboard-title
+            .topbar-crumb (logo lives in #activity-rail)
           </div>
         </div>
 
@@ -1515,22 +1619,30 @@
     <!-- ── Dashboard layout ── -->
     <section class="ds-section" id="layout-dashboard">
       <div class="ds-heading">Dashboard layout</div>
-      <div class="ds-sub">Two-column shell. Left column is a fixed-width map list; right column is the map detail view. Both are inside <code style="color:var(--code-color)">#dashboard-layout { display: flex; flex: 1; overflow: hidden }</code>.</div>
+      <div class="ds-sub">Three-column shell: activity rail → fixed-width list sidebar → detail panel. All inside <code style="color:var(--code-color)">#dashboard-layout { display: flex; flex: 1; overflow: hidden }</code>. The rail drives Maps, Sketches, and Settings activities; the sidebar swaps <code style="color:var(--code-color)">.dash-sidebar-pane</code> accordingly.</div>
 
       <div class="ds-row" style="align-items:flex-start;gap:24px">
 
         <!-- Visual mock -->
         <div class="ds-mock" style="width:480px;height:300px;display:flex;flex-direction:column">
           <div class="ds-mock-topbar" style="font-size:10px">
-            <span style="background:var(--bg-base);width:18px;height:18px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:8px;letter-spacing:.04em">pgm</span>
-            <span style="color:var(--text-primary);margin-left:4px">Map Studio</span>
+            <span style="color:var(--text-primary)">Map Studio</span>
             <span style="margin-left:auto;color:var(--text-muted)">#topbar</span>
           </div>
           <div style="display:flex;flex:1;overflow:hidden">
+            <!-- Activity rail -->
+            <div class="ds-mock-rail">
+              <div style="width:24px;height:24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:2px">
+                <div style="width:14px;height:14px;border-radius:3px;background:var(--bg-base)"></div>
+              </div>
+              <div class="ds-mock-rail-btn active"></div>
+              <div class="ds-mock-rail-btn"></div>
+              <div style="flex:1"></div>
+              <div class="ds-mock-rail-btn"></div>
+            </div>
             <!-- Map list panel -->
             <div style="width:140px;flex-shrink:0;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden">
               <div style="padding:5px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px">
-                <span style="font-size:9px;color:var(--text-muted);font-weight:700;letter-spacing:.05em;text-transform:uppercase">Maps</span>
                 <div style="flex:1;height:12px;background:var(--bg-base);border-radius:2px"></div>
               </div>
               <div style="flex:1;overflow:hidden;font-size:9px">
@@ -1574,32 +1686,30 @@
         <div>
           <pre class="detail-xml-pre" style="font-size:10px;line-height:1.7">body.dashboard-page
 ├─ #topbar
-│   ├─ .dashboard-logo
-│   │   ├─ .dashboard-logo-box
-│   │   └─ .dashboard-title
-│   └─ .topbar-right → .action-btn
+│   ├─ .topbar-crumb ("Map Studio")
+│   └─ .topbar-right
 └─ #dashboard-layout          flex row, flex: 1
+    ├─ #activity-rail          56px — logo + Maps + Sketches + ··· + Settings
+    │   ├─ .activity-logo → .activity-logo-box
+    │   ├─ .activity-btn#dash-act-maps[.active]
+    │   ├─ .activity-btn#dash-act-sketches
+    │   ├─ .activity-rail-spacer
+    │   └─ .activity-btn#dash-act-settings
     ├─ #map-list-panel         width: var(--sidebar-width)
-    │   ├─ .map-list-header
-    │   │   ├─ .map-list-title
-    │   │   └─ .map-filter-input
-    │   ├─ .url-import-row
-    │   └─ #map-list
-    │       └─ .list-row[--selected]
-    │           ├─ .map-status-dot[--ready/--partial]
-    │           ├─ .map-list-name
-    │           └─ .map-list-version
+    │   ├─ #tab-maps-content.dash-sidebar-pane
+    │   │   ├─ .sidebar-actions (search / import)
+    │   │   └─ .sidebar-maps → #map-list → .list-row[--selected]
+    │   ├─ #tab-sketches-content.dash-sidebar-pane [hidden]
+    │   │   └─ .sidebar-maps → #sketch-list
+    │   └─ #tab-settings-content.dash-sidebar-pane [hidden]
+    │       └─ .workspace-scroll → .panel-section (folder inputs)
     └─ #map-detail-panel       flex: 1, overflow-y auto
         ├─ .map-detail-empty   (nothing selected)
         └─ #map-detail-content
             ├─ .map-detail-header
-            │   ├─ .map-detail-main
-            │   │   ├─ .map-detail-name
-            │   │   ├─ .map-detail-meta → .map-meta-tag
-            │   │   └─ .action-btn--primary (Open in Editor)
-            │   └─ .map-detail-thumb
-            │       └─ .map-thumb-img / .map-thumb-placeholder
-            ├─ .detail-block → .detail-block-title + .step-row
+            │   ├─ .map-detail-main → .map-detail-name
+            │   └─ .map-detail-thumb → .map-thumb-img
+            ├─ .detail-block → .section-title + .step-row
             └─ .console-wrap</pre>
         </div>
       </div>
@@ -1668,7 +1778,7 @@
     │   │       └─ .activity-logo-sub
     │   └─ .activity-btn × N   data-status="green/yellow/red"
     └─ #activity-viewport      flex: 1, overflow: hidden
-        ├─ #overview-workspace.workspace   (active)
+        ├─ #ov-workspace.workspace   (active)
         ├─ #pt-workspace.workspace         (hidden)
         ├─ #obj-workspace.workspace        (hidden, future)
         └─ #regions-workspace.workspace    (hidden, future)</pre>
@@ -1724,7 +1834,7 @@
             <div style="display:flex;align-items:center;justify-content:center;flex:1;font-size:10px;color:var(--text-muted)">.workspace-canvas#ov-canvas-wrap</div>
           </div>
         </div>
-        <pre class="detail-xml-pre" style="font-size:10px;line-height:1.7">#overview-workspace.workspace
+        <pre class="detail-xml-pre" style="font-size:10px;line-height:1.7">#ov-workspace.workspace
 ├─ #ov-left.workspace-sidebar      ← width from --sidebar-width
 │   └─ #ov-left-scroll.workspace-scroll  ← gap from class default
 │       └─ .panel-section × N
@@ -2060,8 +2170,6 @@
         <tbody>
           <tr><td>1 · #topbar-error</td><td>Unrecoverable page-level error (map not found, server error)</td></tr>
           <tr><td>2 · .toast</td><td>Short-lived feedback after an operation (save succeeded, export failed)</td></tr>
-          <tr><td>3 · .canvas-hint</td><td>Context-sensitive draw hints shown while a draw tool is active</td></tr>
-          <tr><td>4 · .panel-warning</td><td>Persistent inline validation warning that requires user action to resolve</td></tr>
         </tbody>
       </table>
 
@@ -2112,14 +2220,7 @@ const observer  = new IntersectionObserver(entries => {
 }, { rootMargin: "-20% 0px -70% 0px" });
 sections.forEach(s => observer.observe(s));
 
-// Preview card radio selection
-for (const card of document.querySelectorAll(".preview-card")) {
-  card.addEventListener("click", () => {
-    document.querySelectorAll(".preview-card").forEach(c => c.classList.remove("preview-card--selected"));
-    card.classList.add("preview-card--selected");
-    card.querySelector("input[type=radio]").checked = true;
-  });
-}
+
 </script>
 </body>
 </html>
