@@ -166,11 +166,14 @@ export class ConfigureActivity {
     if (this.#step === 1) {
       await this.#confirmLayer();
     } else if (this.#step === 2) {
-      const btn = document.getElementById("cfg-next-btn");
-      if (btn) btn.disabled = true;
-      const ok = await this.#rerunSymmetry();
-      if (btn) btn.disabled = false;
-      if (!ok) return;
+      const exclusionsChanged = !this.#setsEqual(this.#excludedIds, this.#origExcludedIds);
+      if (exclusionsChanged) {
+        const btn = document.getElementById("cfg-next-btn");
+        if (btn) btn.disabled = true;
+        const ok = await this.#rerunSymmetry();
+        if (btn) btn.disabled = false;
+        if (!ok) return;
+      }
       this.#origExcludedIds = new Set(this.#excludedIds);
       this.#symChoice = null;
       await this.#loadSymmetry();
