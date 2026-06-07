@@ -117,7 +117,7 @@ Vision: `plans/editor-vision.md §Activity Structure`
 | Island review & exclusion | Show detected islands (polygon, bbox, centroid); reversible exclusion |
 | Symmetry confirmation | Show candidates with confidence scores; user confirms / overrides / rejects; activates mirroring engine and symmetry validation |
 
-Status: 🔲
+Status: ✅
 
 ---
 
@@ -128,7 +128,7 @@ Vision: `plans/editor-vision.md`
 
 Extends the Sketch Overview panel. Same fields; reads from `xml_data.json` on load and persists edits back.
 
-Status: 🚧 (M1 shell exists; needs API wiring and save persistence)
+Status: ✅
 
 ---
 
