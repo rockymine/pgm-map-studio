@@ -30,10 +30,12 @@ const state = {
 
 const $ = id => document.getElementById(id);
 
-const tabMapsBtn       = $("tab-maps-btn");
-const tabSketchesBtn   = $("tab-sketches-btn");
-const tabMapsContent   = $("tab-maps-content");
-const tabSketchContent = $("tab-sketches-content");
+const actMapsBtn        = $("dash-act-maps");
+const actSketchesBtn    = $("dash-act-sketches");
+const actSettingsBtn    = $("dash-act-settings");
+const tabMapsContent    = $("tab-maps-content");
+const tabSketchContent  = $("tab-sketches-content");
+const tabSettingsContent = $("tab-settings-content");
 const sketchListEl     = $("sketch-list");
 const newSketchBtn     = $("new-sketch-btn");
 const mapListEl        = $("map-list");
@@ -92,19 +94,22 @@ newSketchBtn.addEventListener("click", async () => {
   }
 });
 
-// ── Tab switching ─────────────────────────────────────────────────────────
+// ── Activity switching ────────────────────────────────────────────────────
 
-let _activeTab = "maps";
+let _activeActivity = "maps";
 
-function switchTab(tab) {
-  _activeTab = tab;
-  const isMaps = tab === "maps";
-  tabMapsBtn.classList.toggle("sidebar-tab--active", isMaps);
-  tabSketchesBtn.classList.toggle("sidebar-tab--active", !isMaps);
-  tabMapsContent.hidden   = !isMaps;
-  tabSketchContent.hidden = isMaps;
+function switchActivity(activity) {
+  _activeActivity = activity;
 
-  if (isMaps) {
+  actMapsBtn.classList.toggle("active",     activity === "maps");
+  actSketchesBtn.classList.toggle("active", activity === "sketches");
+  actSettingsBtn.classList.toggle("active", activity === "settings");
+
+  tabMapsContent.hidden     = activity !== "maps";
+  tabSketchContent.hidden   = activity !== "sketches";
+  tabSettingsContent.hidden = activity !== "settings";
+
+  if (activity === "maps") {
     if (state.selected && state.status) {
       sketchDetailContent.hidden = true;
       mapDetailEmpty.hidden      = true;
@@ -115,7 +120,7 @@ function switchTab(tab) {
     } else {
       showDetailEmpty();
     }
-  } else {
+  } else if (activity === "sketches") {
     if (_selectedSketchId && _selectedSketchData) {
       mapDetailContent.hidden    = true;
       mapDetailEmpty.hidden      = true;
@@ -126,11 +131,14 @@ function switchTab(tab) {
     } else {
       showDetailEmpty();
     }
+  } else {
+    showDetailEmpty();
   }
 }
 
-tabMapsBtn.addEventListener("click",     () => switchTab("maps"));
-tabSketchesBtn.addEventListener("click", () => switchTab("sketches"));
+actMapsBtn.addEventListener("click",     () => switchActivity("maps"));
+actSketchesBtn.addEventListener("click", () => switchActivity("sketches"));
+actSettingsBtn.addEventListener("click", () => switchActivity("settings"));
 
 async function init() {
   await loadConfig();
@@ -143,7 +151,7 @@ async function loadSketches() {
   try {
     const sketches = await api.fetchSketches();
     renderSketches(sketches);
-    if (_activeTab === "sketches" && !_selectedSketchId && sketches.length) {
+    if (_activeActivity === "sketches" && !_selectedSketchId && sketches.length) {
       selectSketch(sketches[0].id);
     }
   } catch {
@@ -379,7 +387,7 @@ async function loadSources() {
     state.sources = await api.fetchSources();
     renderList();
     clearSystemError();
-    if (_activeTab === "maps" && !state.selected && state.sources.length) {
+    if (_activeActivity === "maps" && !state.selected && state.sources.length) {
       selectMap(state.sources[0].slug);
     }
   } catch (err) {

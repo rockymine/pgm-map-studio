@@ -11,13 +11,7 @@
 <body class="dashboard-page">
 
 <div id="topbar">
-  <span class="dashboard-logo">
-    <span class="dashboard-logo-box">
-      <span class="dashboard-logo-pgm">pgm</span>
-      <span class="dashboard-logo-sub">STUDIO</span>
-    </span>
-    <span class="dashboard-title">Map Studio</span>
-  </span>
+  <span class="topbar-crumb">Map Studio</span>
 
   <div class="topbar-right">
     <div id="topbar-error" role="alert">
@@ -29,17 +23,31 @@
 
 <div id="dashboard-layout">
 
+  <!-- ── Activity rail ─────────────────────────────────────────────────────── -->
+  <nav id="activity-rail">
+    <div class="activity-logo">
+      <div class="activity-logo-box">
+        <span class="activity-logo-pgm">pgm</span>
+        <span class="activity-logo-sub">STUDIO</span>
+      </div>
+    </div>
+    <button class="activity-btn active" id="dash-act-maps" title="Maps">
+      <i data-lucide="map"></i>
+    </button>
+    <button class="activity-btn" id="dash-act-sketches" title="Sketches">
+      <i data-lucide="pencil-ruler"></i>
+    </button>
+    <div class="activity-rail-spacer"></div>
+    <button class="activity-btn" id="dash-act-settings" title="Settings">
+      <i data-lucide="settings-2"></i>
+    </button>
+  </nav>
+
   <!-- ── Left sidebar ───────────────────────────────────────────────────── -->
   <div id="map-list-panel">
 
-    <!-- Tab bar -->
-    <div class="sidebar-tab-bar">
-      <button class="sidebar-tab sidebar-tab--active" id="tab-maps-btn" data-tab="maps">Maps</button>
-      <button class="sidebar-tab" id="tab-sketches-btn" data-tab="sketches">Sketches</button>
-    </div>
-
-    <!-- Maps tab -->
-    <div id="tab-maps-content" class="sidebar-tab-content">
+    <!-- Maps activity -->
+    <div id="tab-maps-content" class="dash-sidebar-pane">
       <div class="sidebar-actions">
         <div class="sidebar-import-row">
           <input type="text" id="url-import-input" class="field-input" placeholder="Paste map URL…"/>
@@ -64,14 +72,14 @@
             <span id="map-count-badge" class="badge badge--dim"></span>
           </div>
           <div id="map-list" class="panel-list">
-            <div class="list-empty">Configure paths below to load maps.</div>
+            <div class="list-empty">Configure paths in Settings to load maps.</div>
           </div>
         </section>
       </div>
     </div>
 
-    <!-- Sketches tab -->
-    <div id="tab-sketches-content" class="sidebar-tab-content" hidden>
+    <!-- Sketches activity -->
+    <div id="tab-sketches-content" class="dash-sidebar-pane" hidden>
       <div class="sidebar-actions">
         <button id="new-sketch-btn" class="action-btn action-btn--primary" style="justify-content:center">
           <i data-lucide="pencil-ruler"></i>New sketch
@@ -84,22 +92,26 @@
       </div>
     </div>
 
-    <!-- Zone 3: Settings (always visible) -->
-    <div class="sidebar-settings">
-      <div class="section-header section-header--ruled">
-        <h2 class="section-title">Settings</h2>
-      </div>
-      <div class="field">
-        <label class="field-label" for="maps-folder-input">Maps folder</label>
-        <input type="text" id="maps-folder-input" class="field-input" placeholder="/path/to/maps"/>
-      </div>
-      <div class="field">
-        <label class="field-label" for="output-folder-input">Output folder</label>
-        <input type="text" id="output-folder-input" class="field-input" placeholder="/path/to/output"/>
-      </div>
-      <div class="panel-actions">
-        <button class="action-btn action-btn--primary" id="save-settings-btn">Save</button>
-        <span id="settings-msg" class="settings-msg"></span>
+    <!-- Settings activity -->
+    <div id="tab-settings-content" class="dash-sidebar-pane" hidden>
+      <div class="workspace-scroll">
+        <section class="panel-section">
+          <div class="section-header section-header--ruled">
+            <h2 class="section-title">Settings</h2>
+          </div>
+          <div class="field">
+            <label class="field-label" for="maps-folder-input">Maps folder</label>
+            <input type="text" id="maps-folder-input" class="field-input" placeholder="/path/to/maps"/>
+          </div>
+          <div class="field">
+            <label class="field-label" for="output-folder-input">Output folder</label>
+            <input type="text" id="output-folder-input" class="field-input" placeholder="/path/to/output"/>
+          </div>
+          <div class="panel-actions">
+            <button class="action-btn action-btn--primary" id="save-settings-btn">Save</button>
+            <span id="settings-msg" class="settings-msg"></span>
+          </div>
+        </section>
       </div>
     </div>
 
@@ -123,7 +135,7 @@
           <div class="map-detail-version" id="detail-version"></div>
           <div id="detail-authors" class="map-detail-authors"></div>
           <div class="detail-block">
-            <div class="detail-block-title">Pipeline</div>
+            <div class="section-title">Pipeline</div>
             <div id="detail-steps"></div>
           </div>
         </div>
@@ -160,7 +172,7 @@
           <div class="map-detail-name" id="sketch-detail-name"></div>
           <div class="map-detail-version" id="sketch-detail-version"></div>
           <div id="sketch-detail-info" class="detail-block">
-            <div class="detail-block-title">Layout</div>
+            <div class="section-title">Layout</div>
             <div id="sketch-detail-steps"></div>
           </div>
         </div>

@@ -192,6 +192,9 @@ body {
   user-select: none;
 }
 
+/* spacer pushes bottom-pinned items to the foot of the rail */
+.activity-rail-spacer { flex: 1; }
+
 /* ── ACTIVITY RAIL ── */
 #activity-rail {
   width: 56px;
@@ -566,40 +569,8 @@ body.dashboard-page { overflow: hidden; }
 
 #dashboard-layout { flex: 1; display: flex; overflow: hidden; }
 
-/* ── Topbar logo ── */
-.dashboard-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-bright); }
-.dashboard-logo-box {
-  width: 30px; height: 30px; border-radius: var(--radius-md); background: var(--bg-deep);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; flex-shrink: 0;
-}
-.dashboard-logo-pgm { font-size: 9px; font-weight: 700; color: var(--text-white); letter-spacing: 0.1em; line-height: 1; }
-.dashboard-logo-sub { font-size: 5px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.22em; line-height: 1; }
-.dashboard-title { font-size: 15px; font-weight: 600; color: var(--text-bright); letter-spacing: 0.02em; }
-
-/* ── Sidebar tabs ── */
-.sidebar-tab-bar {
-  flex-shrink: 0;
-  display: flex;
-  border-bottom: 1px solid var(--border);
-}
-
-.sidebar-tab {
-  flex: 1;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: 8px 0;
-  font-size: var(--font-base);
-  font-family: inherit;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color var(--transition-fast), border-color var(--transition-fast);
-}
-.sidebar-tab:hover { color: var(--text-primary); }
-.sidebar-tab--active { color: var(--text-primary); border-bottom-color: var(--text-primary); }
-
-.sidebar-tab-content {
+/* ── Activity content panes (maps / sketches / settings) ── */
+.dash-sidebar-pane {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -607,7 +578,7 @@ body.dashboard-page { overflow: hidden; }
   overflow: hidden;
 }
 
-/* ── Left sidebar — three-zone layout ── */
+/* ── Left sidebar ── */
 #map-list-panel {
   width: var(--sidebar-width);
   flex-shrink: 0;
@@ -668,16 +639,6 @@ body.dashboard-page { overflow: hidden; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .map-list-version { font-size: var(--font-sm); color: var(--text-muted); flex-shrink: 0; }
-
-/* Zone 3: Settings (snapped to bottom) */
-.sidebar-settings {
-  flex-shrink: 0;
-  border-top: 1px solid var(--border);
-  padding: var(--space-3) 14px var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
 
 .settings-msg { font-size: var(--font-base); }
 .settings-msg--ok    { color: var(--color-success); }
