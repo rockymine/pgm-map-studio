@@ -169,20 +169,22 @@ export class ConfigureCanvas {
       const poly     = island.polygon;
       if (!poly?.coordinates?.length) continue;
 
-      for (const ring of poly.coordinates) {
+      const d = poly.coordinates.map(ring => {
         const pts = ring.map(([x, z]) => {
           const p = this.#toSvg(x, z);
           return `${p.x},${p.y}`;
-        }).join(" ");
-        const path = svgEl("polygon");
-        path.setAttribute("points", pts);
-        path.setAttribute("fill",         color);
-        path.setAttribute("fill-opacity", excluded ? 0.1 : 0.15);
-        path.setAttribute("stroke",       color);
-        path.setAttribute("stroke-width", ISLAND_STROKE_WIDTH);
-        path.setAttribute("stroke-opacity", opacity);
-        this.#islandLayerEl.appendChild(path);
-      }
+        });
+        return `M ${pts.join(" L ")} Z`;
+      }).join(" ");
+      const path = svgEl("path");
+      path.setAttribute("d",             d);
+      path.setAttribute("fill-rule",     "evenodd");
+      path.setAttribute("fill",          color);
+      path.setAttribute("fill-opacity",  excluded ? 0.1 : 0.15);
+      path.setAttribute("stroke",        color);
+      path.setAttribute("stroke-width",  ISLAND_STROKE_WIDTH);
+      path.setAttribute("stroke-opacity", opacity);
+      this.#islandLayerEl.appendChild(path);
     }
   }
 
