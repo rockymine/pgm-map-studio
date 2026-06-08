@@ -86,7 +86,11 @@ export class SketchLayoutActivity {
   }
 
   deactivate() {
-    clearTimeout(this.#saveTimer);
+    if (this.#saveTimer !== null) {
+      clearTimeout(this.#saveTimer);
+      this.#saveTimer = null;
+      this.#save();
+    }
     this.#el.hidden = true;
   }
 
