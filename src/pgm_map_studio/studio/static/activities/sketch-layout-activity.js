@@ -32,10 +32,11 @@ export class SketchLayoutActivity {
   #islands = [];    // latest computeIslands result
   #setup   = { bbox: null, center: { cx: 0, cz: 0 }, mirror_mode: "rot_180" };
 
-  #mirrorVisible  = true;
-  #shapesVisible  = false;
-  #chunkVisible   = true;
-  #selectedId     = null;   // currently selected shape id (tracked for inspector refresh)
+  #mirrorVisible      = true;
+  #shapesVisible      = false;
+  #chunkVisible       = true;
+  #selectedId         = null;   // currently selected shape id
+  #selectedIslandId   = null;   // currently selected island id (for arrow-key movement)
 
   // save debounce
   #saveTimer = null;
@@ -73,8 +74,25 @@ export class SketchLayoutActivity {
       onShapeOverrideToggle: id  => this.#toggleOverride(id),
       onIslandMirrorsToggle: id  => this.#toggleMirrors(id),
       onIslandRename:        (id, name) => this.#renameIsland(id, name),
-      onShapeSelect:         id  => { this.#canvas.selectShape(id); this.#panel.setSelected(id); },
+      onShapeSelect:         id  => this.#onShapeSelected(id),
+      onIslandSelect:        id  => this.#onIslandSelected(id),
       onSimplify:            (id, verts) => this.#onSimplify(id, verts),
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (this.#el.hidden) return;
+      if (["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
+      if (!this.#selectedIslandId && !this.#selectedId) return;
+      const step = e.shiftKey ? 16 : 1;
+      let dx = 0, dz = 0;
+      if      (e.key === "ArrowLeft")  dx = -step;
+      else if (e.key === "ArrowRight") dx =  step;
+      else if (e.key === "ArrowUp")    dz = -step;
+      else if (e.key === "ArrowDown")  dz =  step;
+      else return;
+      e.preventDefault();
+      if (this.#selectedIslandId) this.#moveIsland(dx, dz);
+      else                        this.#moveShape(dx, dz);
     });
   }
 
@@ -251,6 +269,16 @@ export class SketchLayoutActivity {
     this.#selectedId = id;
     this.#canvas.selectShape(id);
     this.#panel.setSelected(id);
+    this.#selectedIslandId = null;
+    this.#panel.setSelectedIsland(null);
+  }
+
+  #onIslandSelected(id) {
+    this.#selectedIslandId = id;
+    this.#selectedId = null;
+    this.#canvas.selectShape(null);
+    this.#panel.setSelected(null);
+    this.#panel.setSelectedIsland(id);
   }
 
   #onShapeDeleted(id) {
@@ -303,6 +331,42 @@ export class SketchLayoutActivity {
     this.#recompute();
     if (this.#selectedId !== null) this.#panel.setSelected(this.#selectedId);
     this.#scheduleSave();
+  }
+
+  // ── Island movement ───────────────────────────────────────────────────────────
+
+  #moveIsland(dx, dz) {
+    const isl = this.#islands.find(i => i.id === this.#selectedIslandId);
+    if (!isl) return;
+    for (const shapeId of isl.shapeIds) {
+      const shape = this.#shapes.find(s => s.id === shapeId);
+      if (!shape) continue;
+      this.#translateShape(shape, dx, dz);
+      this.#canvas.updateShape(shape);
+    }
+    this.#recompute();
+    this.#scheduleSave();
+  }
+
+  #moveShape(dx, dz) {
+    const shape = this.#shapes.find(s => s.id === this.#selectedId);
+    if (!shape) return;
+    this.#translateShape(shape, dx, dz);
+    this.#canvas.updateShape(shape);
+    this.#recompute();
+    this.#scheduleSave();
+  }
+
+  #translateShape(shape, dx, dz) {
+    if (shape.type === "rectangle") {
+      shape.min_x += dx; shape.max_x += dx;
+      shape.min_z += dz; shape.max_z += dz;
+    } else if (shape.type === "circle") {
+      shape.center_x += dx;
+      shape.center_z += dz;
+    } else if (shape.type === "polygon" || shape.type === "lasso") {
+      shape.vertices = shape.vertices.map(([x, z]) => [x + dx, z + dz]);
+    }
   }
 
   // ── Island recompute ──────────────────────────────────────────────────────────

@@ -24,7 +24,8 @@ const TYPE_ICON = {
 export class SketchLayoutPanel {
   #shapes    = [];   // ordered array (same order as sidebar)
   #islands   = [];   // from latest computeIslands result
-  #selectedId = null;
+  #selectedId       = null;
+  #selectedIslandId = null;
 
   // element refs
   #treeEl;
@@ -38,6 +39,7 @@ export class SketchLayoutPanel {
   #onIslandMirrorsToggle;
   #onIslandRename;
   #onShapeSelect;
+  #onIslandSelect;
   #onSimplify;
 
   constructor(treeEl, inspectorEl, callbacks = {}) {
@@ -50,6 +52,7 @@ export class SketchLayoutPanel {
     this.#onIslandMirrorsToggle  = callbacks.onIslandMirrorsToggle;
     this.#onIslandRename         = callbacks.onIslandRename;
     this.#onShapeSelect          = callbacks.onShapeSelect;
+    this.#onIslandSelect         = callbacks.onIslandSelect;
     this.#onSimplify             = callbacks.onSimplify;
 
     this.#wireContextMenu();
@@ -72,11 +75,18 @@ export class SketchLayoutPanel {
     this.#rebuildInspector();
   }
 
+  setSelectedIsland(id) {
+    this.#selectedIslandId = id;
+    this.#highlightSelectedIsland();
+    this.#rebuildInspector();
+  }
+
   // ── Tree rendering ────────────────────────────────────────────────────────────
 
   #rebuildTree() {
     if (!this.#treeEl) return;
-    const prev = this.#selectedId;
+    const prev      = this.#selectedId;
+    const prevIsl   = this.#selectedIslandId;
     while (this.#treeEl.firstChild) this.#treeEl.removeChild(this.#treeEl.firstChild);
 
     for (const isl of this.#islands) {
@@ -98,8 +108,10 @@ export class SketchLayoutPanel {
       }
     }
 
-    this.#selectedId = prev;
+    this.#selectedId       = prev;
+    this.#selectedIslandId = prevIsl;
     this.#highlightSelected();
+    this.#highlightSelectedIsland();
     if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "14", height: "14" } });
   }
 
@@ -129,22 +141,46 @@ export class SketchLayoutPanel {
     iconEl.innerHTML = `<i data-lucide="layers"></i>`;
     row.appendChild(iconEl);
 
-    // Name (editable inline)
-    const nameInput = document.createElement("input");
-    nameInput.className = "geo-label geo-label-input";
-    nameInput.value = isl.name;
-    nameInput.title = "Double-click to rename";
-    nameInput.readOnly = true;
-    nameInput.addEventListener("dblclick", () => { nameInput.readOnly = false; nameInput.focus(); nameInput.select(); });
-    nameInput.addEventListener("blur",  () => { if (!nameInput.readOnly) { nameInput.readOnly = true; this.#onIslandRename?.(isl.id, nameInput.value.trim() || isl.name); } });
-    nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") nameInput.blur(); if (e.key === "Escape") { nameInput.value = isl.name; nameInput.blur(); } });
-    row.appendChild(nameInput);
+    // Name — span by default; swaps to input on double-click
+    const nameEl = document.createElement("span");
+    nameEl.className = "geo-label";
+    nameEl.textContent = isl.name;
+    nameEl.title = "Double-click to rename";
+    row.appendChild(nameEl);
 
     // Shape count tag
     const tag = document.createElement("span");
     tag.className = "list-tag";
     tag.textContent = `${isl.shapeIds.length} shape${isl.shapeIds.length !== 1 ? "s" : ""}`;
     row.appendChild(tag);
+
+    row.addEventListener("click", (e) => {
+      if (e.target.closest(".collapse-btn")) return;
+      this.#onIslandSelect?.(isl.id);
+    });
+
+    row.addEventListener("dblclick", (e) => {
+      if (e.target.closest(".collapse-btn")) return;
+      e.stopPropagation();
+      const input = document.createElement("input");
+      input.className = "geo-label geo-label-input";
+      input.value = isl.name;
+      nameEl.replaceWith(input);
+      input.focus();
+      input.select();
+      const finish = (save) => {
+        const next = save ? (input.value.trim() || isl.name) : isl.name;
+        nameEl.textContent = next;
+        input.replaceWith(nameEl);
+        if (save && next !== isl.name) this.#onIslandRename?.(isl.id, next);
+      };
+      input.addEventListener("blur", () => finish(true));
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter")  { ev.preventDefault(); input.blur(); }
+        if (ev.key === "Escape") { finish(false); }
+      });
+      input.addEventListener("click", (ev) => ev.stopPropagation());
+    });
 
     row.addEventListener("contextmenu", (e) => {
       e.preventDefault();
@@ -220,8 +256,15 @@ export class SketchLayoutPanel {
 
   #highlightSelected() {
     if (!this.#treeEl) return;
-    for (const row of this.#treeEl.querySelectorAll(".geo-row")) {
+    for (const row of this.#treeEl.querySelectorAll(".geo-row[data-shape-id]")) {
       row.classList.toggle("geo-row--selected", row.dataset.shapeId === this.#selectedId);
+    }
+  }
+
+  #highlightSelectedIsland() {
+    if (!this.#treeEl) return;
+    for (const row of this.#treeEl.querySelectorAll(".geo-row[data-isl-id]")) {
+      row.classList.toggle("geo-row--selected", row.dataset.islId === this.#selectedIslandId);
     }
   }
 
@@ -232,10 +275,14 @@ export class SketchLayoutPanel {
     while (this.#inspectorEl.firstChild) this.#inspectorEl.removeChild(this.#inspectorEl.firstChild);
 
     if (!this.#selectedId) {
-      const hint = document.createElement("p");
-      hint.className = "section-desc";
-      hint.textContent = "Select a shape to inspect.";
-      this.#inspectorEl.appendChild(hint);
+      if (this.#selectedIslandId) {
+        this.#buildIslandInspector();
+      } else {
+        const hint = document.createElement("p");
+        hint.className = "section-desc";
+        hint.textContent = "Select a shape to inspect.";
+        this.#inspectorEl.appendChild(hint);
+      }
       return;
     }
 
@@ -286,6 +333,107 @@ export class SketchLayoutPanel {
         this.#inspectorEl.appendChild(this.#makeSimplifySection(shape));
       }
     }
+    const moveHint = document.createElement("p");
+    moveHint.className = "section-desc";
+    moveHint.textContent = "Move: Arrow keys · Shift+Arrow for 1 chunk (16 blocks)";
+    this.#inspectorEl.appendChild(moveHint);
+
+    if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "14", height: "14" } });
+  }
+
+  #buildIslandInspector() {
+    const isl = this.#islands.find(i => i.id === this.#selectedIslandId);
+    if (!isl) return;
+
+    const section = document.createElement("section");
+    section.className = "panel-section";
+
+    // detail-header: layers icon + name label + shapes count badge
+    const header = document.createElement("div");
+    header.className = "detail-header";
+    const headerIcon = document.createElement("span");
+    headerIcon.className = "geo-type-icon";
+    headerIcon.innerHTML = `<i data-lucide="layers"></i>`;
+    const headerName = document.createElement("span");
+    headerName.className = "detail-label";
+    headerName.textContent = isl.name;
+    const countTag = document.createElement("span");
+    countTag.className = "badge badge--neutral";
+    countTag.textContent = `${isl.shapeIds.length} shape${isl.shapeIds.length !== 1 ? "s" : ""}`;
+    header.append(headerIcon, headerName, countTag);
+    section.appendChild(header);
+
+    // Name field
+    const nameField = document.createElement("div");
+    nameField.className = "field";
+    const nameLabel = document.createElement("label");
+    nameLabel.className = "field-label";
+    nameLabel.textContent = "Name";
+    const nameInput = document.createElement("input");
+    nameInput.className = "field-input";
+    nameInput.type = "text";
+    nameInput.value = isl.name;
+    nameField.append(nameLabel, nameInput);
+    section.appendChild(nameField);
+
+    const commitRename = () => {
+      const next = nameInput.value.trim() || isl.name;
+      if (next !== isl.name) {
+        headerName.textContent = next;
+        const treeSpan = this.#treeEl?.querySelector(`[data-isl-id="${isl.id}"] .geo-label`);
+        if (treeSpan) treeSpan.textContent = next;
+        this.#onIslandRename?.(isl.id, next);
+      }
+    };
+    nameInput.addEventListener("blur", commitRename);
+    nameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter")  { e.preventDefault(); nameInput.blur(); }
+      if (e.key === "Escape") { nameInput.value = isl.name; nameInput.blur(); }
+    });
+
+    // Shapes section header
+    const shapesHeader = document.createElement("div");
+    shapesHeader.className = "section-header section-header--ruled";
+    const shapesTitle = document.createElement("h2");
+    shapesTitle.className = "section-title";
+    shapesTitle.textContent = "Shapes";
+    shapesHeader.appendChild(shapesTitle);
+    section.appendChild(shapesHeader);
+
+    // Shape list
+    const list = document.createElement("div");
+    list.className = "panel-list";
+    for (const shapeId of isl.shapeIds) {
+      const shape = this.#shapes.find(s => s.id === shapeId);
+      if (!shape) continue;
+      const row = document.createElement("div");
+      row.className = "list-row list-row--compact";
+
+      const typeIcon = document.createElement("span");
+      typeIcon.className = "geo-type-icon";
+      if (shape.operation === "subtract") typeIcon.style.color = "var(--canvas-sub-fill)";
+      typeIcon.innerHTML = `<i data-lucide="${TYPE_ICON[shape.type] ?? "square"}"></i>`;
+
+      const labelEl = document.createElement("span");
+      labelEl.className = "list-label";
+      labelEl.textContent = shape.type;
+
+      const dimTag = document.createElement("span");
+      dimTag.className = "list-tag";
+      dimTag.textContent = this.#shapeDimLabel(shape);
+
+      row.append(typeIcon, labelEl, dimTag);
+      row.addEventListener("click", () => this.#onShapeSelect?.(shape.id));
+      list.appendChild(row);
+    }
+    section.appendChild(list);
+
+    const hint = document.createElement("p");
+    hint.className = "section-desc";
+    hint.textContent = "Move: Arrow keys · Shift+Arrow for 1 chunk (16 blocks)";
+    section.appendChild(hint);
+
+    this.#inspectorEl.appendChild(section);
     if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "14", height: "14" } });
   }
 
