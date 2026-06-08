@@ -163,6 +163,7 @@ export class SketchLayoutActivity {
           window.lucide?.createIcons({ attrs: { "stroke-width": "1.5", width: "14", height: "14" } });
         }
 
+        this.#canvas.clearShapes();
         for (const shape of this.#shapes) this.#canvas.addShape(shape);
       }
     } catch (err) {
