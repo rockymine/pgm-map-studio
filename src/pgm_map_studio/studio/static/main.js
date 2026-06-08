@@ -6,21 +6,23 @@
  * has not yet been configured (symmetry.status == "unconfirmed").
  */
 
-import { ConfigureActivity } from "./activities/configure-activity.js";
-import { OverviewActivity }  from "./activities/overview-activity.js";
-import { TeamsActivity }     from "./activities/teams-activity.js";
-import * as api              from "./api.js";
+import { ConfigureActivity }      from "./activities/configure-activity.js";
+import { OverviewActivity }       from "./activities/overview-activity.js";
+import { TeamsActivity }          from "./activities/teams-activity.js";
+import { BuildRegionsActivity }   from "./activities/build-regions-activity.js";
+import * as api                   from "./api.js";
 import { showSystemError, clearSystemError, showToast, getMapParam } from "./shared/ui-helpers.js";
 
 lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "16", height: "16" } });
 
 // ── DOM ───────────────────────────────────────────────────────────────────
 
-const configureBtn = document.getElementById("activity-configure");
-const overviewBtn  = document.getElementById("activity-overview");
-const teamsBtn     = document.getElementById("activity-teams");
-const objectiveBtn = document.getElementById("activity-objective");
-const regionsBtn   = document.getElementById("activity-regions");
+const configureBtn     = document.getElementById("activity-configure");
+const overviewBtn      = document.getElementById("activity-overview");
+const teamsBtn         = document.getElementById("activity-teams");
+const buildRegionsBtn  = document.getElementById("activity-build-regions");
+const objectiveBtn     = document.getElementById("activity-objective");
+const regionsBtn       = document.getElementById("activity-regions");
 const exportBtn    = document.getElementById("export-xml-btn");
 const errorDismiss = document.getElementById("error-dismiss-btn");
 
@@ -38,6 +40,9 @@ const ACTIVITIES = {
   }),
   "activity-teams": new TeamsActivity({
     onStatusChange: dot => { teamsBtn.dataset.status = dot ?? ""; },
+  }),
+  "activity-build-regions": new BuildRegionsActivity({
+    onStatusChange: dot => { buildRegionsBtn.dataset.status = dot ?? ""; },
   }),
 };
 
@@ -64,11 +69,12 @@ function switchActivity(id) {
   }
 }
 
-configureBtn.addEventListener("click", () => { if (!configureBtn.disabled) switchActivity("activity-configure"); });
-overviewBtn.addEventListener("click",  () => { if (!overviewBtn.disabled)  switchActivity("activity-overview"); });
-teamsBtn.addEventListener("click",     () => { if (!teamsBtn.disabled)     switchActivity("activity-teams"); });
-objectiveBtn.addEventListener("click", () => { if (!objectiveBtn.disabled) switchActivity("activity-objective"); });
-regionsBtn.addEventListener("click",   () => { if (!regionsBtn.disabled)   switchActivity("activity-regions"); });
+configureBtn.addEventListener("click",    () => { if (!configureBtn.disabled)    switchActivity("activity-configure"); });
+overviewBtn.addEventListener("click",     () => { if (!overviewBtn.disabled)     switchActivity("activity-overview"); });
+teamsBtn.addEventListener("click",        () => { if (!teamsBtn.disabled)        switchActivity("activity-teams"); });
+buildRegionsBtn.addEventListener("click", () => { if (!buildRegionsBtn.disabled) switchActivity("activity-build-regions"); });
+objectiveBtn.addEventListener("click",    () => { if (!objectiveBtn.disabled)    switchActivity("activity-objective"); });
+regionsBtn.addEventListener("click",      () => { if (!regionsBtn.disabled)      switchActivity("activity-regions"); });
 
 // ── Export ────────────────────────────────────────────────────────────────
 
@@ -87,12 +93,13 @@ exportBtn.addEventListener("click", async () => {
 
 async function loadMap(name) {
   currentMap = name;
-  configureBtn.disabled = true;
-  overviewBtn.disabled  = true;
-  teamsBtn.disabled     = true;
-  objectiveBtn.disabled = true;
-  regionsBtn.disabled   = true;
-  exportBtn.disabled    = true;
+  configureBtn.disabled    = true;
+  overviewBtn.disabled     = true;
+  teamsBtn.disabled        = true;
+  buildRegionsBtn.disabled = true;
+  objectiveBtn.disabled    = true;
+  regionsBtn.disabled      = true;
+  exportBtn.disabled       = true;
 
   try {
     const data = await api.fetchMapData(name);
@@ -101,10 +108,11 @@ async function loadMap(name) {
     if (nameEl) nameEl.textContent = data.name || name.replace(/_/g, " ");
     if (verEl)  verEl.textContent  = data.version ? `v${data.version}` : "";
 
-    configureBtn.disabled = false;
-    overviewBtn.disabled  = false;
-    teamsBtn.disabled     = false;
-    exportBtn.disabled    = false;
+    configureBtn.disabled    = false;
+    overviewBtn.disabled     = false;
+    teamsBtn.disabled        = false;
+    buildRegionsBtn.disabled = false;
+    exportBtn.disabled       = false;
     clearSystemError();
 
     // Open Configure if map hasn't been configured yet

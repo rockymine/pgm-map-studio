@@ -81,6 +81,17 @@ export async function saveMetadata(mapName, metadata) {
   return r.json();
 }
 
+export const patchMapMetadata = saveMetadata;
+
+export async function fetchSegments(mapName, axis = "z") {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/segments?axis=${axis}`);
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}));
+    throw new Error(body.error || `Failed to fetch segments (${r.status})`);
+  }
+  return r.json();
+}
+
 export async function fetchSymmetry(mapName) {
   const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/symmetry`);
   if (r.status === 404) return null;

@@ -47,10 +47,13 @@
     <button class="activity-btn active" id="activity-overview"  title="Overview"  disabled data-status="">
       <i data-lucide="book-open-text"></i>
     </button>
-    <button class="activity-btn" id="activity-teams"     title="Teams"     disabled data-status="">
+    <button class="activity-btn" id="activity-teams"         title="Teams"          disabled data-status="">
       <i data-lucide="users"></i>
     </button>
-    <button class="activity-btn" id="activity-objective" title="Objective" disabled data-status="">
+    <button class="activity-btn" id="activity-build-regions" title="Build Regions"  disabled data-status="">
+      <i data-lucide="pickaxe"></i>
+    </button>
+    <button class="activity-btn" id="activity-objective"     title="Objective"      disabled data-status="">
       <i data-lucide="goal"></i>
     </button>
     <button class="activity-btn" id="activity-regions"   title="Regions"   disabled data-status="">
@@ -395,6 +398,49 @@
       </div>
     </div>
 
+    <!-- Build Regions workspace -->
+    <div id="br-workspace" class="workspace" hidden>
+      <div id="br-left" class="workspace-sidebar">
+        <div id="br-left-scroll" class="workspace-scroll">
+
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Maximum Build Height</h2>
+            </div>
+            <p class="section-desc">
+              Maximum Y level above which no block placement is permitted.
+              Leave blank to enforce no vertical ceiling.
+            </p>
+            <div class="field">
+              <label class="field-label" for="br-max-height">Blocks</label>
+              <input id="br-max-height" class="field-input" type="number"
+                     min="0" max="255" step="1" placeholder="None"/>
+            </div>
+            <div class="panel-actions">
+              <button id="br-save-btn" class="action-btn action-btn--primary" disabled>Save</button>
+              <span id="br-save-status" class="panel-save-status"></span>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="br-left-handle"></div>
+
+      <div id="br-canvas-wrap" class="workspace-canvas">
+        <div id="br-canvas-subbar" class="canvas-subbar">
+          <div class="canvas-toolbar">
+            <button id="br-axis-z" class="filter-chip filter-chip--active" title="View from Z axis (shows X–Y plane)">Z view</button>
+            <button id="br-axis-x" class="filter-chip"                     title="View from X axis (shows Z–Y plane)">X view</button>
+          </div>
+          <div id="br-cursor-hint" class="canvas-cursor">Drag the height line to set max build Y</div>
+        </div>
+        <div id="br-canvas-area" class="canvas-fill">
+          <canvas id="br-sideview-canvas"></canvas>
+        </div>
+      </div>
+    </div><!-- /br-workspace -->
+
     <!-- Placeholder for future activities -->
     <div id="obj-workspace"     class="workspace workspace--placeholder" hidden>Objective editor — coming soon</div>
     <div id="regions-workspace" class="workspace workspace--placeholder" hidden>Regions editor — coming soon</div>
@@ -431,6 +477,7 @@
   resizeSidebar(document.getElementById("ov-left-handle"), document.getElementById("ov-left"), "left", 200, 480);
   resizeSidebar(document.getElementById("pt-left-handle"), document.getElementById("pt-left"), "left", 180, 420);
   resizeSidebar(document.getElementById("pt-right-handle"), document.getElementById("pt-right"), "right", 240, 480);
+  resizeSidebar(document.getElementById("br-left-handle"), document.getElementById("br-left"), "left", 200, 480);
 }());
 </script>
 </body>

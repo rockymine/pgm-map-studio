@@ -123,6 +123,17 @@ body {
 .sidebar-handle:hover::before,
 .sidebar-handle--dragging::before { background: var(--accent); }
 
+/* ── Canvas fill area (HTML canvas, fills full workspace-canvas content) ── */
+.canvas-fill {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-deep);
+}
+.canvas-fill > canvas {
+  display: block;
+}
+
 /* ── SVG areas ── */
 .svg-area {
   flex: 1;

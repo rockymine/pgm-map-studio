@@ -150,7 +150,14 @@ Vision: `plans/editor-vision.md §Build Regions before Objectives`
 
 Defines max build height, traversable build areas, boundary enforcement, lockdowns, and physics. Inline block-editing filter setup.
 
-Status: 🔲
+| Sub-step | Status |
+|---|---|
+| 1 — Max Build Height + side view canvas | ✅ |
+| 2 — Build Area Declaration | 🔲 |
+| 3 — Boundary Enforcement | 🔲 |
+| 4 — Lockdowns and Physics | 🔲 |
+
+Status: 🚧
 
 ---
 

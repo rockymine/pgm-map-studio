@@ -20,7 +20,7 @@ import pandas as pd
 
 from pgm_map_studio.minecraft.region_reader import RegionReader
 from pgm_map_studio.minecraft.layers import (
-    Y0Extractor, SurfaceExtractor, BedrockExtractor, BaseExtractor,
+    Y0Extractor, SurfaceExtractor, BedrockExtractor, BaseExtractor, SegmentsExtractor,
 )
 from pgm_map_studio.minecraft.features import (
     WoolExtractor, ResourceExtractor, ChestExtractor, SpawnerExtractor,
@@ -107,10 +107,11 @@ def _run_layer(
 def _run_features(reader: RegionReader, output_dir: Path, force: bool) -> None:
     """Run feature extractors, writing parquet files if needed."""
     steps = [
-        ('wools.parquet',     lambda: WoolExtractor(reader).extract()),
-        ('resources.parquet', lambda: ResourceExtractor(reader).extract()),
-        ('chests.parquet',    lambda: ChestExtractor(reader).extract()),
-        ('spawners.parquet',  lambda: SpawnerExtractor(reader).extract()),
+        ('wools.parquet',          lambda: WoolExtractor(reader).extract()),
+        ('resources.parquet',      lambda: ResourceExtractor(reader).extract()),
+        ('chests.parquet',         lambda: ChestExtractor(reader).extract()),
+        ('spawners.parquet',       lambda: SpawnerExtractor(reader).extract()),
+        ('layer_segments.parquet', lambda: SegmentsExtractor(reader).extract()),
     ]
     for filename, extractor_fn in steps:
         path = output_dir / filename

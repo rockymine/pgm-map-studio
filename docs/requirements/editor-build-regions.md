@@ -6,15 +6,20 @@
 
 ---
 
-## Sub-step 1: Max Build Height
+## Sub-step 1: Max Build Height ✅
 
 **User requirements**
-- Optionally set the maximum Y level above which no block placement is permitted.
-- If unset, no vertical ceiling is enforced.
+- Set the maximum Y level above which no block placement is permitted via a numeric input.
+- The input may be left blank; when blank, no ceiling is stored or exported (PGM defaults to Y=255).
+- The height line is visible as a draggable horizontal handle on the side view canvas; clicking or dragging anywhere on the canvas moves the line and updates the input live.
 
 **System requirements**
-- Store the max build height as a Y value.
+- Store the max build height as a Y integer in `xml_data.json` (`max_build_height` field).
 - On export, encode as a placement denial rule on the above-threshold region.
+- `SegmentsExtractor` runs during the Layout pipeline step and writes `layer_segments.parquet` (schema: `world_x, world_z, world_y_start, world_y_end` — one row per contiguous solid segment per column).
+- `GET /api/map/<name>/segments?axis=x|z` — returns a depth map for the side view canvas. For each (primary, y) cell the nearest block in the perpendicular direction is found; depth is normalised 0–255 (0 = nearest) and returned as a flat int array. The file is extracted on-demand if `layer_segments.parquet` is missing.
+- Side view canvas (`SideviewCanvas`) renders depth-tinted blocks using ImageData (nearest=light stone, farthest=dark); supports Z view (X–Y plane) and X view (Z–Y plane) via `filter-chip` toggle buttons.
+- No "Clear" button for the height input — clearing is done by emptying the text field (null is meaningfully different from "unset/255" and should not be triggered accidentally).
 
 ---
 
