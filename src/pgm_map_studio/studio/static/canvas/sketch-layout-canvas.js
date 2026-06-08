@@ -249,6 +249,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     const bx = Math.floor(svgPt.x), bz = Math.floor(svgPt.y);
     this.#draw?.onMouseMove(bx, bz);
     if (this.#cursorEl) this.#cursorEl.textContent = `X ${bx}  Z ${bz}`;
+    this.#edit?.onPointerMove(svgPt.x, svgPt.y, this._activeTool);
   }
 
   _onToolMouseup(e, svgPt) {
@@ -270,8 +271,7 @@ export class SketchLayoutCanvas extends CanvasBase {
   _onResizeMove(e) {
     if (!this.#edit) return false;
     const svgPt = this._clientToSvg(e.clientX, e.clientY);
-    const bx = Math.floor(svgPt.x), bz = Math.floor(svgPt.y);
-    return this.#edit.onResizeMove(bx, bz);
+    return this.#edit.onResizeMove(svgPt.x, svgPt.y);
   }
 
   _onResizeUp(e) {

@@ -11,8 +11,18 @@
 
 import { svgEl, handleRectAttrs } from "./transform.js";
 
-const HANDLE_HALF = 5;
-const VERTEX_HALF = 4;
+const HANDLE_HALF    = 5;
+const VERTEX_HALF    = 4;
+const GHOST_R        = 4;
+const EDGE_THRESHOLD = 10;  // screen px — hover distance to show midpoint ghost
+
+function distToSegment(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(px - ax, py - ay);
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
 
 const HANDLE_DEFS = [
   { key: "nw", pos: b => [b.l,  b.t],  cursor: "nw-resize", xf: "min_x", zf: "min_z" },
@@ -34,6 +44,8 @@ export class SketchEditController {
   #selectedId      = null;
   #rectResizeState = null;   // { shapeId, xf, zf }
   #vertexDragState = null;   // { shapeId, vertexIdx }
+  #ghostEl         = null;   // reusable midpoint ghost <circle>, null when not in DOM
+  #hoveredEdgeIdx  = -1;     // edge index currently ghosted (-1 = none)
 
   constructor(handlesLayer, getViewport, getShape, { onShapeUpdated } = {}) {
     this.#handlesLayer = handlesLayer;
@@ -51,6 +63,8 @@ export class SketchEditController {
   refresh() {
     if (!this.#handlesLayer) return;
     while (this.#handlesLayer.firstChild) this.#handlesLayer.removeChild(this.#handlesLayer.firstChild);
+    this.#ghostEl = null;
+    this.#hoveredEdgeIdx = -1;
     if (!this.#selectedId) return;
     const shape = this.#getShape(this.#selectedId);
     if (!shape) return;
@@ -65,12 +79,12 @@ export class SketchEditController {
    * Handle document mousemove during a resize or vertex drag.
    * Returns true if the event was consumed.
    */
-  onResizeMove(bx, bz) {
+  onResizeMove(wx, wz) {
     if (this.#vertexDragState) {
       const { shapeId, vertexIdx } = this.#vertexDragState;
       const shape = this.#getShape(shapeId);
       if (shape?.type === "polygon" || shape?.type === "lasso") {
-        shape.vertices[vertexIdx] = [bx, bz];
+        shape.vertices[vertexIdx] = [wx, wz];
         this.#callbacks.onShapeUpdated?.(shape);
       }
       return true;
@@ -79,6 +93,7 @@ export class SketchEditController {
       const { shapeId, xf, zf } = this.#rectResizeState;
       const shape = this.#getShape(shapeId);
       if (shape?.type === "rectangle") {
+        const bx = Math.floor(wx), bz = Math.floor(wz);
         if (xf) shape[xf] = xf === "max_x" ? bx + 1 : bx;
         if (zf) shape[zf] = zf === "max_z" ? bz + 1 : bz;
         if (shape.min_x >= shape.max_x) {
@@ -94,6 +109,50 @@ export class SketchEditController {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Called on every canvas mousemove (only in select/move mode).
+   * Shows a ghost midpoint handle when the cursor is within EDGE_THRESHOLD px of a polygon edge.
+   */
+  onPointerMove(wx, wz, activeTool) {
+    const isEditMode = !activeTool || activeTool === "select";
+    if (!isEditMode || this.#vertexDragState || this.#rectResizeState || !this.#selectedId) {
+      this.#clearGhost();
+      return;
+    }
+    const shape = this.#getShape(this.#selectedId);
+    if (!shape || (shape.type !== "polygon" && shape.type !== "lasso") || !shape.vertices?.length) {
+      this.#clearGhost();
+      return;
+    }
+
+    const sp    = this.#toScreen(wx, wz);
+    const verts = shape.vertices;
+    const n     = verts.length;
+
+    let bestDist = EDGE_THRESHOLD;
+    let bestIdx  = -1;
+    let bestMx   = 0, bestMy = 0;
+
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      const a = this.#toScreen(verts[i][0], verts[i][1]);
+      const b = this.#toScreen(verts[j][0], verts[j][1]);
+      const dist = distToSegment(sp.x, sp.y, a.x, a.y, b.x, b.y);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx  = i;
+        bestMx   = (a.x + b.x) / 2;
+        bestMy   = (a.y + b.y) / 2;
+      }
+    }
+
+    if (bestIdx >= 0) {
+      this.#showGhost(bestMx, bestMy, bestIdx);
+    } else {
+      this.#clearGhost();
+    }
   }
 
   /**
@@ -122,6 +181,53 @@ export class SketchEditController {
   #toScreen(wx, wz) {
     const { scale, panX, panY } = this.#getViewport();
     return { x: wx * scale + panX, y: wz * scale + panY };
+  }
+
+  #clearGhost() {
+    if (this.#ghostEl) this.#ghostEl.style.display = "none";
+    this.#hoveredEdgeIdx = -1;
+  }
+
+  #showGhost(sx, sy, edgeIdx) {
+    this.#hoveredEdgeIdx = edgeIdx;
+    if (!this.#ghostEl) {
+      const el = svgEl("circle", {
+        r: String(GHOST_R),
+        fill: "var(--bg-deep)",
+        stroke: "var(--accent-light)",
+        "stroke-width": "1.5",
+        style: "cursor:copy",
+      });
+      el.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        this.#insertEdgeVertex(this.#selectedId, this.#hoveredEdgeIdx);
+      });
+      el.addEventListener("click", (e) => e.stopPropagation());
+      this.#handlesLayer.appendChild(el);
+      this.#ghostEl = el;
+    }
+    this.#ghostEl.setAttribute("cx", String(sx));
+    this.#ghostEl.setAttribute("cy", String(sy));
+    this.#ghostEl.style.display = "";
+  }
+
+  #insertEdgeVertex(shapeId, edgeIdx) {
+    if (!shapeId || edgeIdx < 0) return;
+    const shape = this.#getShape(shapeId);
+    if (!shape?.vertices) return;
+    const verts = shape.vertices;
+    const n     = verts.length;
+    const i     = edgeIdx;
+    const j     = (i + 1) % n;
+    const mx    = (verts[i][0] + verts[j][0]) / 2;
+    const mz    = (verts[i][1] + verts[j][1]) / 2;
+    verts.splice(j, 0, [mx, mz]);
+    this.#callbacks.onShapeUpdated?.(shape);
+    this.#vertexDragState = { shapeId, vertexIdx: j };
+    this.#ghostEl  = null;
+    this.#hoveredEdgeIdx = -1;
+    this.refresh();
   }
 
   #renderRectHandles(shape) {
