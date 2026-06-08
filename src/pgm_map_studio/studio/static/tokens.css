@@ -71,6 +71,9 @@
   /* Symmetry axis indicator — center crosshair and axis line in Setup */
   --canvas-axis: #a78bfa;   /* violet-400 */
 
+  /* Minecraft chunk grid (16-block boundaries, lighter purple) */
+  --canvas-chunk: color-mix(in oklab, var(--canvas-axis) 38%, transparent);
+
   /* Canvas SVG area background */
   --canvas-bg: var(--bg-deep);   /* alias — always equals --bg-deep */
 

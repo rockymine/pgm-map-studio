@@ -136,6 +136,7 @@
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-result-fill)"></div><div class="ds-swatch-name">--canvas-result-fill</div><div class="ds-swatch-val">Sketch computed island polygon fill</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-mirror-fill);border:1px solid var(--canvas-mirror-stroke)"></div><div class="ds-swatch-name">--canvas-mirror-fill/stroke</div><div class="ds-swatch-val">Mirror preview overlay (lower opacity)</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-axis)"></div><div class="ds-swatch-name">--canvas-axis</div><div class="ds-swatch-val">Symmetry axis line and center crosshair</div></div>
+        <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-chunk)"></div><div class="ds-swatch-name">--canvas-chunk</div><div class="ds-swatch-val">Minecraft chunk grid lines (16-block boundaries), derived from --canvas-axis at 38% opacity</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-bg)"></div><div class="ds-swatch-name">--canvas-bg</div><div class="ds-swatch-val">alias of --bg-deep — SVG canvas area fill</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-region)"></div><div class="ds-swatch-name">--canvas-region</div><div class="ds-swatch-val">Region shape fill + stroke — all types. Runtime supplies category colour; this is the fallback.</div></div>
         <div class="ds-swatch"><div class="ds-swatch-block" style="background:var(--canvas-handle-fill)"></div><div class="ds-swatch-name">--canvas-handle-fill</div><div class="ds-swatch-val">Resize handle interior (slate-950)</div></div>
@@ -1045,6 +1046,11 @@
               <!-- Mirror overlay: same shape flipped horizontally, visually distinct -->
               <path d="M200,20 L80,20 L80,60 L140,60 L140,120 L200,120 Z"
                 style="fill:var(--canvas-mirror-fill);stroke:var(--canvas-mirror-stroke);stroke-width:1.5;fill-rule:evenodd"/>
+              <!-- Chunk grid lines -->
+              <line x1="60" y1="10" x2="60" y2="140" style="stroke:var(--canvas-chunk);stroke-width:1;stroke-dasharray:3,3"/>
+              <line x1="160" y1="10" x2="160" y2="140" style="stroke:var(--canvas-chunk);stroke-width:1;stroke-dasharray:3,3"/>
+              <line x1="0" y1="65" x2="220" y2="65" style="stroke:var(--canvas-chunk);stroke-width:1;stroke-dasharray:3,3"/>
+              <line x1="0" y1="115" x2="220" y2="115" style="stroke:var(--canvas-chunk);stroke-width:1;stroke-dasharray:3,3"/>
               <!-- Axis line -->
               <line x1="110" y1="10" x2="110" y2="140"
                 style="stroke:var(--canvas-axis);stroke-width:1;stroke-dasharray:4,3;opacity:0.6"/>
@@ -1054,7 +1060,8 @@
           </div>
           <div style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,monospace;margin-top:5px;line-height:1.8">
             fill var(--canvas-mirror-fill) · stroke var(--canvas-mirror-stroke)<br>
-            axis line: var(--canvas-axis) · dashed · not stored as shapes
+            axis line: var(--canvas-axis) · dashed · not stored as shapes<br>
+            chunk grid: var(--canvas-chunk) · dashed 3 3 · 16-block intervals from world origin
           </div>
         </div>
 

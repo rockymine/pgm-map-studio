@@ -34,6 +34,7 @@ export class SketchLayoutActivity {
 
   #mirrorVisible  = true;
   #shapesVisible  = false;
+  #chunkVisible   = true;
   #selectedId     = null;   // currently selected shape id (tracked for inspector refresh)
 
   // save debounce
@@ -217,6 +218,11 @@ export class SketchLayoutActivity {
     el.querySelector("#sk-layout-toggle-mirror")?.addEventListener("change", (e) => {
       this.#mirrorVisible = e.target.checked;
       this.#canvas.setMirrorVisible(this.#mirrorVisible);
+    });
+
+    el.querySelector("#sk-layout-toggle-chunks")?.addEventListener("change", (e) => {
+      this.#chunkVisible = e.target.checked;
+      this.#canvas.setChunkVisible(this.#chunkVisible);
     });
   }
 

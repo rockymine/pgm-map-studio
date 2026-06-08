@@ -34,9 +34,10 @@ export class SketchSetupCanvas {
   #panY  = 0;
 
   #viewportG = null;
-  #bboxLayer = null;
-  #axisLayer = null;
-  #crosshair = null;
+  #bboxLayer  = null;
+  #chunkLayer = null;
+  #axisLayer  = null;
+  #crosshair  = null;
 
   #dragging     = false;
   #onCenterMove = null;
@@ -56,6 +57,7 @@ export class SketchSetupCanvas {
     this.#bbox = bbox;
     this.#fit();
     this.#renderBbox();
+    this.#renderChunkGrid();
     this.#renderAxis();
     this.#updateCrosshair();
   }
@@ -126,10 +128,12 @@ export class SketchSetupCanvas {
     this.#svg.setAttribute("height",  h);
     this.#svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
 
-    this.#viewportG = makeEl("g", { id: "sk-setup-viewport" });
-    this.#bboxLayer = makeEl("g", { id: "sk-setup-bbox" });
-    this.#axisLayer = makeEl("g", { id: "sk-setup-axis" });
+    this.#viewportG  = makeEl("g", { id: "sk-setup-viewport" });
+    this.#bboxLayer  = makeEl("g", { id: "sk-setup-bbox" });
+    this.#chunkLayer = makeEl("g", { id: "sk-setup-chunks" });
+    this.#axisLayer  = makeEl("g", { id: "sk-setup-axis" });
     this.#viewportG.appendChild(this.#bboxLayer);
+    this.#viewportG.appendChild(this.#chunkLayer);
     this.#viewportG.appendChild(this.#axisLayer);
     this.#svg.appendChild(this.#viewportG);
 
@@ -196,6 +200,28 @@ export class SketchSetupCanvas {
       stroke: "var(--border)", "stroke-width": "1",
       "vector-effect": "non-scaling-stroke",
     }));
+  }
+
+  #renderChunkGrid() {
+    while (this.#chunkLayer.firstChild) this.#chunkLayer.removeChild(this.#chunkLayer.firstChild);
+    if (!this.#bbox) return;
+    const { min_x, max_x, min_z, max_z } = this.#bbox;
+    const attrs = {
+      stroke: "var(--canvas-chunk)", "stroke-width": "1",
+      "stroke-dasharray": "3 3", opacity: "1",
+      "vector-effect": "non-scaling-stroke",
+    };
+    const line = (x1, y1, x2, y2) =>
+      this.#chunkLayer.appendChild(makeEl("line", { x1, y1, x2, y2, ...attrs }));
+
+    const startX = Math.ceil(min_x / 16) * 16;
+    for (let x = startX; x <= max_x; x += 16) {
+      line(x, min_z, x, max_z);
+    }
+    const startZ = Math.ceil(min_z / 16) * 16;
+    for (let z = startZ; z <= max_z; z += 16) {
+      line(min_x, z, max_x, z);
+    }
   }
 
   #renderAxis() {

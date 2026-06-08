@@ -76,6 +76,7 @@ export class SketchLayoutCanvas extends CanvasBase {
 
   // SVG layers
   #bboxLayer    = null;
+  #chunkLayer   = null;
   #axisLayer    = null;
   #mirrorLayer  = null;
   #islandLayer  = null;
@@ -103,6 +104,7 @@ export class SketchLayoutCanvas extends CanvasBase {
   setBbox(bbox) {
     this.#bbox = bbox;
     this._renderBbox();
+    this._renderChunkGrid();
     this._renderAxis();
   }
 
@@ -226,6 +228,10 @@ export class SketchLayoutCanvas extends CanvasBase {
     if (this.#mirrorLayer) this.#mirrorLayer.style.display = v ? "" : "none";
   }
 
+  setChunkVisible(v) {
+    if (this.#chunkLayer) this.#chunkLayer.style.display = v ? "" : "none";
+  }
+
   // ── CanvasBase hooks ──────────────────────────────────────────────────────────
 
   _onViewportChanged() {
@@ -287,6 +293,7 @@ export class SketchLayoutCanvas extends CanvasBase {
 
     this._viewportG   = svgEl("g", { id: "sk-layout-viewport" });
     this.#bboxLayer   = svgEl("g", { id: "sk-layout-bbox",   "pointer-events": "none" });
+    this.#chunkLayer  = svgEl("g", { id: "sk-layout-chunks", "pointer-events": "none" });
     this.#axisLayer   = svgEl("g", { id: "sk-layout-axis",   "pointer-events": "none" });
     this.#mirrorLayer = svgEl("g", { id: "sk-layout-mirror", "pointer-events": "none" });
     this.#islandLayer = svgEl("g", { id: "sk-layout-islands","pointer-events": "none" });
@@ -294,6 +301,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     this.#drawLayer   = svgEl("g", { id: "sk-layout-draw",   "pointer-events": "none" });
 
     this._viewportG.appendChild(this.#bboxLayer);
+    this._viewportG.appendChild(this.#chunkLayer);
     this._viewportG.appendChild(this.#axisLayer);
     this._viewportG.appendChild(this.#mirrorLayer);
     this._viewportG.appendChild(this.#islandLayer);
@@ -367,6 +375,29 @@ export class SketchLayoutCanvas extends CanvasBase {
       stroke: "var(--border)", "stroke-width": "1",
       "vector-effect": "non-scaling-stroke",
     }));
+  }
+
+  _renderChunkGrid() {
+    if (!this.#chunkLayer) return;
+    while (this.#chunkLayer.firstChild) this.#chunkLayer.removeChild(this.#chunkLayer.firstChild);
+    if (!this.#bbox) return;
+    const { min_x, max_x, min_z, max_z } = this.#bbox;
+    const attrs = {
+      stroke: "var(--canvas-chunk)", "stroke-width": "1",
+      "stroke-dasharray": "3 3", opacity: "1",
+      "vector-effect": "non-scaling-stroke",
+    };
+    const addLine = (x1, y1, x2, y2) =>
+      this.#chunkLayer.appendChild(svgEl("line", { x1, y1, x2, y2, ...attrs }));
+
+    const startX = Math.ceil(min_x / 16) * 16;
+    for (let x = startX; x <= max_x; x += 16) {
+      addLine(x, min_z, x, max_z);
+    }
+    const startZ = Math.ceil(min_z / 16) * 16;
+    for (let z = startZ; z <= max_z; z += 16) {
+      addLine(min_x, z, max_x, z);
+    }
   }
 
   _renderAxis() {
