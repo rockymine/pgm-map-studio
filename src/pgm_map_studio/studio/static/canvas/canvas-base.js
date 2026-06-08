@@ -119,6 +119,7 @@ export class CanvasBase {
         return;
       }
       if (e.button !== 0) return;
+      if (this._activeTool === "move" || this._activeTool === null) e.preventDefault();
       const svgPt = this._clientToSvg(e.clientX, e.clientY);
       this.#isDragging = true;
       this.#didDrag    = false;
