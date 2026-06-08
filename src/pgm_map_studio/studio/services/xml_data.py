@@ -9,7 +9,10 @@ from .config import get_output_root
 
 
 def load_xml_data(name: str) -> tuple[dict, Path]:
-    path = get_output_root() / name / "xml_data.json"
+    root = get_output_root().resolve()
+    path = (root / name).resolve() / "xml_data.json"
+    if not str(path).startswith(str(root) + "/"):
+        abort(400)
     if not path.exists():
         abort(404)
     return json.loads(path.read_text(encoding="utf-8")), path

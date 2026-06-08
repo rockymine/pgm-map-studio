@@ -22,7 +22,11 @@ _DEFAULTS: dict = {
 
 
 def _path(sketch_id: str) -> Path:
-    return SKETCHES_DIR / sketch_id / "sketch.json"
+    root = SKETCHES_DIR.resolve()
+    resolved = (root / sketch_id).resolve()
+    if not str(resolved).startswith(str(root) + "/"):
+        raise KeyError(sketch_id)
+    return resolved / "sketch.json"
 
 
 def create_sketch() -> str:
