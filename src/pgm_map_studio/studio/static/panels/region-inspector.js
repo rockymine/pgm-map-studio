@@ -13,10 +13,12 @@ function fmt(v) {
 export class RegionInspector {
   #el;
   #onSelect;
+  #onDelete;
 
-  constructor(el, { onSelect } = {}) {
+  constructor(el, { onSelect, onDelete } = {}) {
     this.#el = el;
     this.#onSelect = onSelect ?? null;
+    this.#onDelete = onDelete ?? null;
     this.clear();
   }
 
@@ -91,6 +93,16 @@ export class RegionInspector {
       this.#el.appendChild(_coordField("Max", _coordRow([
         ["X", node.bounds.max_x], ["Z", node.bounds.max_z],
       ])));
+    }
+
+    // ── delete action ──────────────────────────────────────────────────────
+    if (this.#onDelete && node.id) {
+      const del = document.createElement("button");
+      del.className = "action-btn action-btn--danger";
+      del.style.width = "100%";
+      del.textContent = "Delete Region";
+      del.addEventListener("click", () => this.#onDelete(node));
+      this.#el.appendChild(del);
     }
 
     // ── children list ──────────────────────────────────────────────────────

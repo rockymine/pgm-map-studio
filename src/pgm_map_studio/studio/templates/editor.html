@@ -403,31 +403,57 @@
       <div id="br-left" class="workspace-sidebar">
         <div id="br-left-scroll" class="workspace-scroll">
 
-          <section class="panel-section">
-            <div class="section-header section-header--ruled">
-              <h2 class="section-title">Maximum Build Height</h2>
-            </div>
-            <p class="section-desc">
-              Maximum Y level above which no block placement is permitted.
-              Leave blank to enforce no vertical ceiling.
-            </p>
-            <div class="field">
-              <label class="field-label" for="br-max-height">Blocks</label>
-              <input id="br-max-height" class="field-input" type="number"
-                     min="0" max="255" step="1" placeholder="None"/>
-            </div>
-            <div class="panel-actions">
-              <button id="br-save-btn" class="action-btn action-btn--primary" disabled>Save</button>
-              <span id="br-save-status" class="panel-save-status"></span>
-            </div>
-          </section>
+          <!-- Step 1: Max Build Height -->
+          <div class="br-step-panel" data-step="1">
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Maximum Build Height</h2>
+                <span class="badge badge--dim">Step 1</span>
+              </div>
+              <p class="section-desc">
+                Maximum Y level above which no block placement is permitted.
+                Leave blank to enforce no vertical ceiling.
+              </p>
+              <div class="field">
+                <label class="field-label" for="br-max-height">Blocks</label>
+                <input id="br-max-height" class="field-input" type="number"
+                       min="0" max="255" step="1" placeholder="None"/>
+              </div>
+              <div class="panel-actions">
+                <button id="br-save-btn" class="action-btn action-btn--primary" disabled>Save</button>
+                <span id="br-save-status" class="panel-save-status"></span>
+              </div>
+            </section>
+          </div>
 
+          <!-- Step 2: Build Region declaration -->
+          <div class="br-step-panel" data-step="2" hidden>
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Build Region</h2>
+                <span class="badge badge--dim">Step 2</span>
+              </div>
+            </section>
+            <div id="br-region-list"></div>
+          </div>
+
+        </div>
+
+        <!-- Sidebar nav footer (shared across steps) -->
+        <div class="cfg-sidebar-nav">
+          <button id="br-prev-btn" class="action-btn" hidden>
+            <i data-lucide="arrow-left"></i> Back
+          </button>
+          <button id="br-next-btn" class="action-btn action-btn--primary" style="margin-left:auto">
+            Next <i data-lucide="arrow-right"></i>
+          </button>
         </div>
       </div>
 
       <div class="sidebar-handle" id="br-left-handle"></div>
 
-      <div id="br-canvas-wrap" class="workspace-canvas">
+      <!-- Step 1 canvas: side view -->
+      <div id="br-canvas-step1" class="workspace-canvas">
         <div id="br-canvas-subbar" class="canvas-subbar">
           <div class="canvas-toolbar">
             <button id="br-axis-z" class="filter-chip filter-chip--active" title="View from Z axis (shows X–Y plane)">Z view</button>
@@ -439,6 +465,44 @@
           <canvas id="br-sideview-canvas"></canvas>
         </div>
       </div>
+
+      <!-- Step 2 canvas: top-down EditorCanvas with full toolbar -->
+      <div id="br-canvas-step2" class="workspace-canvas" hidden>
+        <div class="canvas-subbar">
+          <div class="canvas-toolbar">
+            <button id="br-tool-move"      class="draw-tool-btn" title="Move (M)"><i data-lucide="hand"></i></button>
+            <button id="br-tool-select"    class="draw-tool-btn" title="Select (S)"><i data-lucide="mouse-pointer-2"></i></button>
+            <button id="br-tool-rectangle" class="draw-tool-btn" title="Rectangle (R)"><i data-lucide="rectangle-horizontal"></i></button>
+            <button id="br-tool-cuboid"    class="draw-tool-btn" title="Cuboid (C)"><i data-lucide="box"></i></button>
+            <button id="br-tool-cylinder"  class="draw-tool-btn" title="Cylinder (Y)"><i data-lucide="cylinder"></i></button>
+            <button id="br-tool-circle"    class="draw-tool-btn" title="Circle (O)"><i data-lucide="circle"></i></button>
+            <button id="br-tool-point"     class="draw-tool-btn" title="Point (P)"><i data-lucide="dot"></i></button>
+          </div>
+          <label class="filter-chip" id="br2-blocks-label" title="Show top-surface block colours">
+            <input type="checkbox" id="br2-toggle-blocks" style="display:none">
+            Blocks
+          </label>
+          <div id="br-cursor-coords" class="canvas-cursor"></div>
+          <div class="canvas-subbar-right">
+            <span id="br-zoom-level" class="canvas-zoom">—</span>
+          </div>
+        </div>
+        <div id="br-svg-area" class="svg-area">
+          <svg id="br-map-svg" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                  fill="var(--text-muted)" font-size="14">Loading map…</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Right inspector (step 2 only) -->
+      <div class="sidebar-handle" id="br-right-handle" hidden></div>
+      <div id="br-right" class="workspace-inspector" hidden>
+        <div class="workspace-scroll">
+          <div id="br-region-detail" class="panel-section"></div>
+        </div>
+      </div>
+
     </div><!-- /br-workspace -->
 
     <!-- Placeholder for future activities -->
@@ -527,7 +591,8 @@
   resizeSidebar(document.getElementById("ov-left-handle"), document.getElementById("ov-left"), "left", 200, 480);
   resizeSidebar(document.getElementById("pt-left-handle"), document.getElementById("pt-left"), "left", 180, 420);
   resizeSidebar(document.getElementById("pt-right-handle"), document.getElementById("pt-right"), "right", 240, 480);
-  resizeSidebar(document.getElementById("br-left-handle"), document.getElementById("br-left"), "left", 200, 480);
+  resizeSidebar(document.getElementById("br-left-handle"),  document.getElementById("br-left"),  "left",  200, 480);
+  resizeSidebar(document.getElementById("br-right-handle"), document.getElementById("br-right"), "right", 240, 480);
   resizeSidebar(document.getElementById("rg-left-handle"),  document.getElementById("rg-left"),  "left",  180, 480);
   resizeSidebar(document.getElementById("rg-right-handle"), document.getElementById("rg-right"), "right", 240, 480);
 }());
