@@ -22,10 +22,11 @@
  * node shape: { id, type, label, color, bounds?: {min_x,min_z,max_x,max_z}, children?, polygon_2d? }
  */
 
-import { buildTransform, buildInverseTransform, svgEl, polyToPath, handleRectAttrs } from "./transform.js";
+import { buildTransform, buildInverseTransform, svgEl, polyToPath, handleRectAttrs, anchorBlockEl } from "./transform.js";
 import { CanvasBase, ZOOM_MIN, ZOOM_MAX } from "./canvas-base.js";
+import { MapDrawController } from "./map-draw-controller.js";
 import { chatColorHex, dyeColorHex } from "../shared/game-colors.js";
-import { drawnBoundsFromBlocks, blockToExtentBounds } from "../shared/converters.js";
+import { blockToExtentBounds } from "../shared/converters.js";
 import { renderShape } from "../shared/shape-render.js";
 
 const HANDLE_SIZE = 7;
@@ -75,8 +76,8 @@ export class MapCanvas extends CanvasBase {
   #drawLayerEl    = null;
   #addedNodes     = [];
 
-  // draw tool
-  #drawState  = null;
+  // draw controller (instantiated in constructor)
+  #drawCtrl = null;
 
   // resize
   #resizeState = null;
@@ -96,6 +97,11 @@ export class MapCanvas extends CanvasBase {
   constructor(svgEl_, wrapEl, callbacks = {}) {
     super(svgEl_, wrapEl);
     this.#callbacks = callbacks;
+    this.#drawCtrl  = new MapDrawController(
+      () => this.#drawLayerEl,
+      () => this.#toSvg,
+      { onRegionDraw: (r) => this.#callbacks.onRegionDraw?.(r) },
+    );
   }
 
   // ── CanvasBase hook overrides ──────────────────────────────────────────────
@@ -113,13 +119,10 @@ export class MapCanvas extends CanvasBase {
     const world = this.#toWorld(svgPt.x, svgPt.y);
     const bx = Math.floor(world.x), bz = Math.floor(world.z);
     if (this._activeTool === "move" || !this._activeTool) return;
-    if (this._activeTool === "rectangle" || this._activeTool === "cuboid") {
-      this.#startDraw(bx, bz);
-    } else if (this._activeTool === "cylinder" || this._activeTool === "circle") {
-      if (!this.#drawState) this.#startRadialDraw(bx, bz);
-      else                  this.#completeRadialDraw(bx, bz);
-    } else if (this._activeTool === "point" || this._activeTool === "block") {
-      this.#callbacks.onRegionDraw?.({ ...blockToExtentBounds(bx, bz), type: this._activeTool });
+    if (!this.#drawCtrl.onMouseDown(bx, bz)) {
+      if (this._activeTool === "point" || this._activeTool === "block") {
+        this.#callbacks.onRegionDraw?.({ ...blockToExtentBounds(bx, bz), type: this._activeTool });
+      }
     }
   }
 
@@ -128,19 +131,11 @@ export class MapCanvas extends CanvasBase {
     const world = this.#toWorld(svgPt.x, svgPt.y);
     const bx = Math.floor(world.x), bz = Math.floor(world.z);
     this.#callbacks.onCoords?.(bx, bz);
-    if (this.#drawState) {
-      if (this._activeTool === "rectangle" || this._activeTool === "cuboid") {
-        this.#updateDrawPreview(bx, bz);
-      } else if (this._activeTool === "cylinder" || this._activeTool === "circle") {
-        this.#updateRadialPreview(bx, bz);
-      }
-    }
+    this.#drawCtrl.onMouseMove(bx, bz);
   }
 
   _onToolMouseup(e, svgPt) {
-    if ((this._activeTool === "rectangle" || this._activeTool === "cuboid") && this.#drawState) {
-      this.#completeDraw();
-    }
+    this.#drawCtrl.onMouseUp();
   }
 
   _onCanvasClick(e, svgPt) {
@@ -309,7 +304,8 @@ export class MapCanvas extends CanvasBase {
   }
 
   setActiveTool(tool) {
-    this.#cancelDraw();
+    this.#drawCtrl.cancel();
+    this.#drawCtrl.setTool(tool);
     this._activeTool = tool;
     this.#refreshCursor();
   }
@@ -384,7 +380,7 @@ export class MapCanvas extends CanvasBase {
   // ── rendering ──────────────────────────────────────────────────────────────
 
   #repaint() {
-    this.#cancelDraw();
+    this.#drawCtrl.cancel();
     const w = this._wrap.clientWidth  - 24;
     const h = this._wrap.clientHeight - 24;
     this._svg.setAttribute("width",   w);
@@ -637,23 +633,13 @@ export class MapCanvas extends CanvasBase {
     const isCircular = ["cylinder", "circle", "sphere"].includes(node.type);
     if (isCircular) {
       const cx = (min_x + max_x) / 2, cz = (min_z + max_z) / 2;
-      this.#anchorLayer.appendChild(this.#anchorBlock(Math.floor(cx), Math.floor(cz), color));
+      this.#anchorLayer.appendChild(anchorBlockEl(this.#toSvg, Math.floor(cx), Math.floor(cz), color));
     } else {
       const bMinX = Math.floor(min_x), bMinZ = Math.floor(min_z);
       const bMaxX = Math.ceil(max_x) - 1, bMaxZ = Math.ceil(max_z) - 1;
-      this.#anchorLayer.appendChild(this.#anchorBlock(bMinX, bMinZ, color));
-      if (bMaxX !== bMinX || bMaxZ !== bMinZ) this.#anchorLayer.appendChild(this.#anchorBlock(bMaxX, bMaxZ, color));
+      this.#anchorLayer.appendChild(anchorBlockEl(this.#toSvg, bMinX, bMinZ, color));
+      if (bMaxX !== bMinX || bMaxZ !== bMinZ) this.#anchorLayer.appendChild(anchorBlockEl(this.#toSvg, bMaxX, bMaxZ, color));
     }
-  }
-
-  #anchorBlock(bx, bz, color) {
-    const p1 = this.#toSvg(bx, bz), p2 = this.#toSvg(bx+1, bz+1);
-    return svgEl("rect", {
-      x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y),
-      width: Math.abs(p2.x - p1.x), height: Math.abs(p2.y - p1.y),
-      fill: color, "fill-opacity": "0.5", stroke: color, "stroke-width": "2",
-      "vector-effect": "non-scaling-stroke", "pointer-events": "none",
-    });
   }
 
   // ── region rendering ──────────────────────────────────────────────────────
@@ -789,105 +775,6 @@ export class MapCanvas extends CanvasBase {
     const g = svgEl("g", { id: "layer-draw" });
     this.#drawLayerEl = g;
     return g;
-  }
-
-  #moveAnchorBlock(el, bx, bz) {
-    const p1 = this.#toSvg(bx, bz), p2 = this.#toSvg(bx+1, bz+1);
-    el.setAttribute("x",      Math.min(p1.x, p2.x));
-    el.setAttribute("y",      Math.min(p1.y, p2.y));
-    el.setAttribute("width",  Math.abs(p2.x - p1.x));
-    el.setAttribute("height", Math.abs(p2.y - p1.y));
-  }
-
-  #startDraw(bx, bz) {
-    if (!this.#drawLayerEl || !this.#toSvg) return;
-    const previewRect = svgEl("rect", {
-      x: 0, y: 0, width: 0, height: 0,
-      fill: "var(--canvas-region)", "fill-opacity": "0.12",
-      stroke: "var(--canvas-region)", "stroke-width": "1.5", "stroke-dasharray": "4,2",
-      "vector-effect": "non-scaling-stroke", "pointer-events": "none",
-    });
-    const anchor1 = this.#anchorBlock(bx, bz, color);
-    const anchor2 = this.#anchorBlock(bx, bz, color);
-    this.#drawLayerEl.appendChild(previewRect);
-    this.#drawLayerEl.appendChild(anchor1);
-    this.#drawLayerEl.appendChild(anchor2);
-    this.#drawState = { toolType: this._activeTool, startBx: bx, startBz: bz,
-                        currentBx: bx, currentBz: bz, previewRect, anchor1, anchor2 };
-    this.#updateDrawPreview(bx, bz);
-  }
-
-  #updateDrawPreview(bx, bz) {
-    if (!this.#drawState || !this.#toSvg) return;
-    this.#drawState.currentBx = bx;
-    this.#drawState.currentBz = bz;
-    const { startBx, startBz, previewRect, anchor1, anchor2 } = this.#drawState;
-    const { min_x, min_z, max_x, max_z } = drawnBoundsFromBlocks(startBx, startBz, bx, bz);
-    const p1 = this.#toSvg(min_x, min_z), p2 = this.#toSvg(max_x, max_z);
-    previewRect.setAttribute("x",      Math.min(p1.x, p2.x));
-    previewRect.setAttribute("y",      Math.min(p1.y, p2.y));
-    previewRect.setAttribute("width",  Math.abs(p2.x - p1.x));
-    previewRect.setAttribute("height", Math.abs(p2.y - p1.y));
-    this.#moveAnchorBlock(anchor1, min_x,     min_z);
-    this.#moveAnchorBlock(anchor2, max_x - 1, max_z - 1);
-  }
-
-  #completeDraw() {
-    if (!this.#drawState) return;
-    const { toolType, startBx, startBz, currentBx, currentBz } = this.#drawState;
-    const bounds = drawnBoundsFromBlocks(startBx, startBz, currentBx, currentBz);
-    this.#cancelDraw();
-    this.#callbacks.onRegionDraw?.({ type: toolType, ...bounds });
-  }
-
-  #cancelDraw() {
-    if (!this.#drawState) return;
-    if (this.#drawLayerEl) while (this.#drawLayerEl.firstChild) this.#drawLayerEl.removeChild(this.#drawLayerEl.firstChild);
-    this.#drawState = null;
-  }
-
-  #startRadialDraw(bx, bz) {
-    if (!this.#drawLayerEl || !this.#toSvg) return;
-    const centerX = bx + 0.5, centerZ = bz + 0.5;
-    const pt = this.#toSvg(centerX, centerZ);
-    const dot = svgEl("circle", { cx: pt.x, cy: pt.y, r: 5, fill: "var(--canvas-axis)", stroke: "#fff", "stroke-width": "1.5", "pointer-events": "none" });
-    const line = svgEl("line", { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y, stroke: "var(--canvas-axis)", "stroke-width": "1.5", "stroke-dasharray": "4 2", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
-    const previewCircle = svgEl("ellipse", { cx: pt.x, cy: pt.y, rx: 0, ry: 0, fill: "none", stroke: "var(--canvas-axis)", "stroke-width": "1.5", "stroke-dasharray": "6 3", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
-    const label = svgEl("text", { x: pt.x, y: pt.y, fill: "var(--canvas-axis)", "font-size": "11", "text-anchor": "start", "pointer-events": "none" });
-    this.#drawLayerEl.append(previewCircle, line, dot, label);
-    this.#drawState = { toolType: this._activeTool, centerX, centerZ, dot, line, previewCircle, label, currentRadius: 1 };
-  }
-
-  #updateRadialPreview(bx, bz) {
-    if (!this.#drawState || !this.#toSvg) return;
-    const { centerX, centerZ, line, previewCircle, label } = this.#drawState;
-    const cursorX = bx + 0.5, cursorZ = bz + 0.5;
-    const dx = cursorX - centerX, dz = cursorZ - centerZ;
-    const radius = Math.max(1, Math.round(Math.sqrt(dx*dx + dz*dz)));
-    this.#drawState.currentRadius = radius;
-    const cPt = this.#toSvg(centerX, centerZ);
-    const rxPt = this.#toSvg(centerX + radius, centerZ);
-    const rzPt = this.#toSvg(centerX, centerZ + radius);
-    const endPt = this.#toSvg(cursorX, cursorZ);
-    line.setAttribute("x2", endPt.x); line.setAttribute("y2", endPt.y);
-    previewCircle.setAttribute("rx", Math.abs(rxPt.x - cPt.x));
-    previewCircle.setAttribute("ry", Math.abs(rzPt.y - cPt.y));
-    label.setAttribute("x", endPt.x + 6); label.setAttribute("y", endPt.y - 4);
-    label.textContent = `r=${radius}`;
-  }
-
-  #completeRadialDraw(bx, bz) {
-    if (!this.#drawState) return;
-    const { toolType, centerX, centerZ } = this.#drawState;
-    this.#updateRadialPreview(bx, bz);
-    const r = this.#drawState.currentRadius;
-    this.#cancelDraw();
-    if (!this.#callbacks.onRegionDraw) return;
-    if (toolType === "circle") {
-      this.#callbacks.onRegionDraw({ type: "circle", center_x: centerX, center_z: centerZ, radius: r });
-    } else {
-      this.#callbacks.onRegionDraw({ type: "cylinder", base_x: centerX - 0.5, base_z: centerZ - 0.5, radius: r });
-    }
   }
 
   // ── flatten helpers ────────────────────────────────────────────────────────

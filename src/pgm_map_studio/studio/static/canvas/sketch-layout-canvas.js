@@ -17,16 +17,15 @@
  */
 
 import { CanvasBase } from "./canvas-base.js";
-import { svgEl, ringToPath, polyToPath, handleRectAttrs } from "./transform.js";
-import { drawnBoundsFromBlocks } from "../shared/converters.js";
+import { svgEl, ringToPath, polyToPath } from "./transform.js";
 import { renderShape } from "../shared/shape-render.js";
 import { pointInRing } from "../sketch/geometry.js";
+import { SketchDrawController } from "./sketch-draw-controller.js";
+import { SketchEditController } from "./sketch-edit-controller.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const HANDLE_HALF  = 5;  // half-size of resize handles in screen px
-const VERTEX_HALF  = 4;  // half-size of polygon vertex handles in screen px
-const FIT_MARGIN   = 0.85;
+const FIT_MARGIN = 0.85;
 
 // Shape colours — all defined as tokens in tokens.css
 const ADD_FILL    = "var(--canvas-add-fill)";
@@ -43,18 +42,6 @@ const DEFAULT_ISLAND_STROKE = "var(--canvas-result-stroke)";
 // MapCanvas uses buildInverseTransform() for the same _clientToSvg() output — do not
 // collapse that distinction.
 const identityTransform = (x, z) => ({ x, y: z });
-
-// 8-handle definitions for rectangle resize (clockwise from NW)
-const HANDLE_DEFS = [
-  { key: "nw", pos: b => [b.l, b.t],  cursor: "nw-resize", xf: "min_x", zf: "min_z" },
-  { key: "n",  pos: b => [b.mx, b.t], cursor: "n-resize",  xf: null,    zf: "min_z" },
-  { key: "ne", pos: b => [b.r, b.t],  cursor: "ne-resize", xf: "max_x", zf: "min_z" },
-  { key: "w",  pos: b => [b.l, b.my], cursor: "w-resize",  xf: "min_x", zf: null    },
-  { key: "e",  pos: b => [b.r, b.my], cursor: "e-resize",  xf: "max_x", zf: null    },
-  { key: "sw", pos: b => [b.l, b.b],  cursor: "sw-resize", xf: "min_x", zf: "max_z" },
-  { key: "s",  pos: b => [b.mx, b.b], cursor: "s-resize",  xf: null,    zf: "max_z" },
-  { key: "se", pos: b => [b.r, b.b],  cursor: "se-resize", xf: "max_x", zf: "max_z" },
-];
 
 // ── SketchLayoutCanvas ────────────────────────────────────────────────────────
 
@@ -80,14 +67,9 @@ export class SketchLayoutCanvas extends CanvasBase {
   #shapesVisible = false;
   #mirrorVisible = true;
 
-  // draw state
-  #activeOperation = "add";
-  #drawState       = null;
-  #drawHandleData  = [];    // [{wx, wz, isFirst}] — world coords for screen-space handles
-
-  // resize / vertex drag state
-  #rectResizeState = null;   // { shapeId, xf, zf }
-  #vertexDragState = null;   // { shapeId, vertexIdx }
+  // controllers (instantiated in _build)
+  #draw = null;
+  #edit = null;
 
   // callbacks
   #callbacks = {};
@@ -154,7 +136,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     this._svg.setAttribute("width",  w);
     this._svg.setAttribute("height", h);
     this._svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-    this._refreshHandles();
+    this.#edit?.refresh();
     this._refreshCenter();
   }
 
@@ -168,13 +150,13 @@ export class SketchLayoutCanvas extends CanvasBase {
   // ── Shape management ─────────────────────────────────────────────────────────
 
   setActiveTool(tool) {
-    this.#cancelDraw();
+    this.#draw?.cancel();
     this._activeTool = tool;
     const isDrawTool = tool !== null && tool !== "move" && tool !== "select";
     this._svg.style.cursor = isDrawTool ? "crosshair" : (tool === "select" ? "default" : "");
   }
 
-  setOperation(op) { this.#activeOperation = op; }
+  setOperation(op) { this.#draw?.setOperation(op); }
 
   addShape(shape) {
     this.#shapes.set(shape.id, shape);
@@ -194,7 +176,7 @@ export class SketchLayoutCanvas extends CanvasBase {
       this.#shapeElMap.set(shape.id, g);
       this.#shapesLayer.appendChild(g);
     }
-    if (this.#selectedId === shape.id) this._refreshHandles();
+    if (this.#selectedId === shape.id) this.#edit?.refresh();
   }
 
   removeShape(id) {
@@ -202,7 +184,11 @@ export class SketchLayoutCanvas extends CanvasBase {
     const el = this.#shapeElMap.get(id);
     if (el?.parentNode) el.parentNode.removeChild(el);
     this.#shapeElMap.delete(id);
-    if (this.#selectedId === id) { this.#selectedId = null; this._refreshHandles(); }
+    if (this.#selectedId === id) {
+      this.#selectedId = null;
+      this.#edit?.setSelected(null);
+      this.#edit?.refresh();
+    }
   }
 
   clearShapes() {
@@ -214,7 +200,8 @@ export class SketchLayoutCanvas extends CanvasBase {
     for (const [sid, g] of this.#shapeElMap) {
       g.classList.toggle("sk-shape--selected", sid === id);
     }
-    this._refreshHandles();
+    this.#edit?.setSelected(id);
+    this.#edit?.refresh();
   }
 
   // ── Island + mirror polygons ──────────────────────────────────────────────────
@@ -242,63 +229,24 @@ export class SketchLayoutCanvas extends CanvasBase {
   // ── CanvasBase hooks ──────────────────────────────────────────────────────────
 
   _onViewportChanged() {
-    this._refreshHandles();
+    this.#edit?.refresh();
     this._refreshCenter();
-    this._refreshDrawHandles();
+    this.#draw?.refreshDrawHandles();
   }
 
   _onToolMousedown(e, svgPt) {
     const bx = Math.floor(svgPt.x), bz = Math.floor(svgPt.y);
-    const tool = this._activeTool;
-
-    if (tool === "rectangle") {
-      this.#startRect(bx, bz);
-      return;
-    }
-    if (tool === "lasso") {
-      this.#startLasso(bx, bz);
-      return;
-    }
-    if (tool === "circle") {
-      if (!this.#drawState) this.#startCircle(bx, bz);
-      else                  this.#completeCircle(bx, bz);
-      return;
-    }
-    if (tool === "polygon") {
-      if (!this.#drawState) {
-        this.#startPolygon(bx, bz);
-      } else {
-        const [fx, fz] = this.#drawState.vertices[0];
-        if (Math.abs(bx - fx) <= 2 && Math.abs(bz - fz) <= 2
-            && this.#drawState.vertices.length >= 3) {
-          this.#closePolygon();
-        } else {
-          this.#addPolygonVertex(bx, bz);
-        }
-      }
-    }
+    this.#draw?.onMouseDown(bx, bz, this._activeTool);
   }
 
   _onPointerMove(e, svgPt) {
     const bx = Math.floor(svgPt.x), bz = Math.floor(svgPt.y);
-    if (this.#drawState?.type === "rectangle") this.#updateRectPreview(bx, bz);
-    if (this.#drawState?.type === "circle")    this.#updateCirclePreview(bx, bz);
-    if (this.#drawState?.type === "polygon")   this.#updatePolygonPreview(bx, bz);
-    if (this.#drawState?.type === "lasso")     this.#addLassoPoint(bx, bz);
-    if (this.#cursorEl) {
-      this.#cursorEl.textContent = `X ${bx}  Z ${bz}`;
-    }
+    this.#draw?.onMouseMove(bx, bz);
+    if (this.#cursorEl) this.#cursorEl.textContent = `X ${bx}  Z ${bz}`;
   }
 
   _onToolMouseup(e, svgPt) {
-    const bx = Math.floor(svgPt.x), bz = Math.floor(svgPt.y);
-    if (this.#drawState?.type === "lasso") {
-      this.#completeLasso();
-      return;
-    }
-    if (this._activeTool === "rectangle" && this.#drawState) {
-      this.#completeRect();
-    }
+    this.#draw?.onMouseUp();
   }
 
   _onCanvasClick(e, svgPt) {
@@ -314,60 +262,15 @@ export class SketchLayoutCanvas extends CanvasBase {
   }
 
   _onResizeMove(e) {
-    if (!this.#rectResizeState && !this.#vertexDragState) return false;
+    if (!this.#edit) return false;
     const svgPt = this._clientToSvg(e.clientX, e.clientY);
     const bx = Math.floor(svgPt.x), bz = Math.floor(svgPt.y);
-
-    if (this.#vertexDragState) {
-      const { shapeId, vertexIdx } = this.#vertexDragState;
-      const shape = this.#shapes.get(shapeId);
-      if (shape?.type === "polygon" || shape?.type === "lasso") {
-        shape.vertices[vertexIdx] = [bx, bz];
-        this.updateShape(shape);
-        this.#callbacks.onShapeUpdated?.(shape);
-      }
-      return true;
-    }
-
-    if (this.#rectResizeState) {
-      const { shapeId, xf, zf } = this.#rectResizeState;
-      const shape = this.#shapes.get(shapeId);
-      if (shape?.type === "rectangle") {
-        if (xf) shape[xf] = xf === "max_x" ? bx + 1 : bx;
-        if (zf) shape[zf] = zf === "max_z" ? bz + 1 : bz;
-        if (shape.min_x >= shape.max_x) {
-          if (xf === "min_x") shape.min_x = shape.max_x - 1;
-          else                shape.max_x = shape.min_x + 1;
-        }
-        if (shape.min_z >= shape.max_z) {
-          if (zf === "min_z") shape.min_z = shape.max_z - 1;
-          else                shape.max_z = shape.min_z + 1;
-        }
-        this.updateShape(shape);
-        this.#callbacks.onShapeUpdated?.(shape);
-      }
-      return true;
-    }
-
-    return false;
+    return this.#edit.onResizeMove(bx, bz);
   }
 
   _onResizeUp(e) {
     if (e.button !== 0) return false;
-    if (this.#rectResizeState) {
-      this.#rectResizeState = null;
-      this._refreshHandles();
-      return true;
-    }
-    if (this.#vertexDragState) {
-      const { shapeId } = this.#vertexDragState;
-      this.#vertexDragState = null;
-      this._refreshHandles();
-      const shape = this.#shapes.get(shapeId);
-      if (shape) this.#callbacks.onShapeUpdated?.(shape);
-      return true;
-    }
-    return false;
+    return this.#edit?.onResizeUp() ?? false;
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────────
@@ -410,31 +313,44 @@ export class SketchLayoutCanvas extends CanvasBase {
 
     this._applyViewportTransform();
 
+    const getViewport = () => ({ scale: this._scale, panX: this._panX, panY: this._panY });
+
+    this.#draw = new SketchDrawController(
+      this.#drawLayer,
+      this.#drawHandlesLayer,
+      getViewport,
+      {
+        onShapeCreated: (partial) => this.#callbacks.onShapeCreated?.(partial),
+      },
+    );
+
+    this.#edit = new SketchEditController(
+      this.#handlesLayer,
+      getViewport,
+      (id) => this.#shapes.get(id),
+      {
+        onShapeUpdated: (shape) => {
+          this.updateShape(shape);
+          this.#callbacks.onShapeUpdated?.(shape);
+        },
+      },
+    );
+
     // Keyboard: Escape cancels draw; Delete/Backspace deletes selected shape.
     document.addEventListener("keydown", (e) => {
       if (this._wrap.closest("[hidden]")) return;
       if (["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
-      if (e.key === "Escape") this.#cancelDraw();
+      if (e.key === "Escape") this.#draw.cancel();
       if ((e.key === "Delete" || e.key === "Backspace") && this.#selectedId) {
         this.#callbacks.onShapeDeleted?.(this.#selectedId);
       }
     });
 
-    // Double-click closes polygon.
+    // Double-click closes polygon (duplicate vertex removed inside controller).
     this._svg.addEventListener("dblclick", (e) => {
-      if (this._activeTool !== "polygon" || !this.#drawState) return;
+      if (this._activeTool !== "polygon") return;
       e.stopPropagation();
-      const ds = this.#drawState;
-      // Second click of dblclick may have added a duplicate vertex — remove it.
-      if (ds.vertices.length > 1) {
-        const last = ds.vertices[ds.vertices.length - 1];
-        const prev = ds.vertices[ds.vertices.length - 2];
-        if (last[0] === prev[0] && last[1] === prev[1]) {
-          ds.vertices.pop();
-          const line = ds.lines.pop(); line?.parentNode?.removeChild(line);
-        }
-      }
-      this.#closePolygon();
+      this.#draw.onDblClick();
     });
   }
 
@@ -551,86 +467,11 @@ export class SketchLayoutCanvas extends CanvasBase {
     return g;
   }
 
-  // ── Handles ───────────────────────────────────────────────────────────────────
-
-  _refreshHandles() {
-    if (!this.#handlesLayer) return;
-    while (this.#handlesLayer.firstChild) this.#handlesLayer.removeChild(this.#handlesLayer.firstChild);
-    if (!this.#selectedId) return;
-    const shape = this.#shapes.get(this.#selectedId);
-    if (!shape) return;
-    if (shape.type === "rectangle") {
-      this.#renderRectHandles(shape);
-    } else if (shape.type === "polygon" || shape.type === "lasso") {
-      this.#renderVertexHandles(shape);
-    }
-  }
+  // ── Center marker ─────────────────────────────────────────────────────────────
 
   #toScreen(wx, wz) {
     return { x: wx * this._scale + this._panX, y: wz * this._scale + this._panY };
   }
-
-  #renderRectHandles(shape) {
-    const tl = this.#toScreen(shape.min_x, shape.min_z);
-    const br = this.#toScreen(shape.max_x, shape.max_z);
-    const b  = {
-      l: Math.min(tl.x, br.x), r: Math.max(tl.x, br.x),
-      t: Math.min(tl.y, br.y), b: Math.max(tl.y, br.y),
-    };
-    b.mx = (b.l + b.r) / 2;
-    b.my = (b.t + b.b) / 2;
-
-    for (const hd of HANDLE_DEFS) {
-      const [hx, hy] = hd.pos(b);
-      const h = svgEl("rect", {
-        ...handleRectAttrs(hx, hy, HANDLE_HALF),
-        fill: "var(--bg-deep)", stroke: "var(--text-muted)", "stroke-width": "1",
-        style: `cursor:${hd.cursor}`,
-      });
-      h.addEventListener("mousedown", (e) => {
-        if (e.button !== 0) return;
-        e.stopPropagation();
-        this.#rectResizeState = { shapeId: shape.id, xf: hd.xf, zf: hd.zf };
-      });
-      this.#handlesLayer.appendChild(h);
-    }
-  }
-
-  #renderVertexHandles(shape) {
-    if (!shape.vertices?.length) return;
-    shape.vertices.forEach(([wx, wz], idx) => {
-      const sp = this.#toScreen(wx, wz);
-      const h = svgEl("rect", {
-        ...handleRectAttrs(sp.x, sp.y, VERTEX_HALF),
-        fill: "var(--bg-deep)", stroke: "var(--text-muted)", "stroke-width": "1",
-        style: "cursor:move",
-      });
-      h.addEventListener("mousedown", (e) => {
-        if (e.button !== 0) return;
-        e.stopPropagation();
-        this.#vertexDragState = { shapeId: shape.id, vertexIdx: idx };
-      });
-      this.#handlesLayer.appendChild(h);
-    });
-  }
-
-  // ── Draw handles (screen-space anchors during active draw) ───────────────────
-
-  _refreshDrawHandles() {
-    if (!this.#drawHandlesLayer) return;
-    while (this.#drawHandlesLayer.firstChild) this.#drawHandlesLayer.removeChild(this.#drawHandlesLayer.firstChild);
-    for (const { wx, wz, isFirst } of this.#drawHandleData) {
-      const sp = this.#toScreen(wx, wz);
-      this.#drawHandlesLayer.appendChild(svgEl("rect", {
-        ...handleRectAttrs(sp.x, sp.y, HANDLE_HALF),
-        fill:   isFirst ? "var(--accent-light)" : "var(--canvas-handle-fill)",
-        stroke: isFirst ? "var(--accent)"       : "var(--canvas-handle-stroke)",
-        "stroke-width": "1.5",
-      }));
-    }
-  }
-
-  // ── Center marker ─────────────────────────────────────────────────────────────
 
   _refreshCenter() {
     if (!this.#centerLayer) return;
@@ -641,198 +482,6 @@ export class SketchLayoutCanvas extends CanvasBase {
     this.#centerLayer.appendChild(svgEl("line", { x1: sp.x - arm, y1: sp.y, x2: sp.x + arm, y2: sp.y, stroke: col, "stroke-width": "1" }));
     this.#centerLayer.appendChild(svgEl("line", { x1: sp.x, y1: sp.y - arm, x2: sp.x, y2: sp.y + arm, stroke: col, "stroke-width": "1" }));
     this.#centerLayer.appendChild(svgEl("circle", { cx: sp.x, cy: sp.y, r: 4, fill: "none", stroke: col, "stroke-width": "1.5" }));
-  }
-
-  // ── Draw tools ────────────────────────────────────────────────────────────────
-
-  #opFill()   { return this.#activeOperation === "subtract" ? SUB_FILL   : ADD_FILL; }
-  #opStroke() { return this.#activeOperation === "subtract" ? SUB_STROKE : ADD_STROKE; }
-
-  // Rectangle
-  #startRect(bx, bz) {
-    const preview = svgEl("rect", {
-      fill: this.#opFill(), stroke: this.#opStroke(),
-      "stroke-width": "1", "fill-opacity": "0.20", "stroke-dasharray": "5 3",
-      "vector-effect": "non-scaling-stroke",
-      x: bx, y: bz, width: 1, height: 1,
-    });
-    this.#drawLayer.appendChild(preview);
-    this.#drawState = { type: "rectangle", startBx: bx, startBz: bz, currentBx: bx, currentBz: bz, preview };
-    this.#drawHandleData = [{ wx: bx, wz: bz, isFirst: true }];
-    this._refreshDrawHandles();
-  }
-
-  #updateRectPreview(bx, bz) {
-    const { startBx, startBz, preview } = this.#drawState;
-    this.#drawState.currentBx = bx;
-    this.#drawState.currentBz = bz;
-    const { min_x: minX, max_x: maxX, min_z: minZ, max_z: maxZ } = drawnBoundsFromBlocks(startBx, startBz, bx, bz);
-    preview.setAttribute("x",      minX);
-    preview.setAttribute("y",      minZ);
-    preview.setAttribute("width",  maxX - minX);
-    preview.setAttribute("height", maxZ - minZ);
-    // Update 4-corner handles
-    this.#drawHandleData = [
-      { wx: minX, wz: minZ, isFirst: false },
-      { wx: maxX, wz: minZ, isFirst: false },
-      { wx: maxX, wz: maxZ, isFirst: false },
-      { wx: minX, wz: maxZ, isFirst: false },
-    ];
-    this._refreshDrawHandles();
-  }
-
-  #completeRect() {
-    const { startBx, startBz, currentBx, currentBz, preview } = this.#drawState;
-    preview?.parentNode?.removeChild(preview);
-    this.#drawState = null;
-    this.#drawHandleData = [];
-    this._refreshDrawHandles();
-    const { min_x: minX, max_x: maxX, min_z: minZ, max_z: maxZ } = drawnBoundsFromBlocks(startBx, startBz, currentBx, currentBz);
-    if (maxX - minX <= 1 && maxZ - minZ <= 1) return;  // reject single-click misfire (no drag)
-    this.#callbacks.onShapeCreated?.({
-      type: "rectangle", operation: this.#activeOperation, override: false,
-      min_x: minX, max_x: maxX, min_z: minZ, max_z: maxZ,
-    });
-  }
-
-  // Circle (two-click: center, then radius)
-  #startCircle(bx, bz) {
-    const dot = svgEl("rect", {
-      x: bx - 0.5, y: bz - 0.5, width: 1, height: 1,
-      fill: "var(--text-muted)", "pointer-events": "none",
-    });
-    const preview = svgEl("ellipse", {
-      fill: this.#opFill(), stroke: this.#opStroke(),
-      "stroke-width": "1", "fill-opacity": "0.20", "stroke-dasharray": "5 3",
-      "vector-effect": "non-scaling-stroke",
-      cx: bx, cy: bz, rx: 1, ry: 1,
-    });
-    this.#drawLayer.appendChild(preview);
-    this.#drawLayer.appendChild(dot);
-    this.#drawState = { type: "circle", centerX: bx, centerZ: bz, currentRadius: 1, preview, dot };
-  }
-
-  #updateCirclePreview(bx, bz) {
-    const { centerX, centerZ, preview } = this.#drawState;
-    const r = Math.max(1, Math.round(Math.hypot(bx - centerX, bz - centerZ)));
-    this.#drawState.currentRadius = r;
-    preview.setAttribute("cx", centerX);
-    preview.setAttribute("cy", centerZ);
-    preview.setAttribute("rx", r);
-    preview.setAttribute("ry", r);
-  }
-
-  #completeCircle(bx, bz) {
-    const { centerX, centerZ, preview, dot } = this.#drawState;
-    preview?.parentNode?.removeChild(preview);
-    dot?.parentNode?.removeChild(dot);
-    this.#drawState = null;
-    const radius = Math.max(1, Math.round(Math.hypot(bx - centerX, bz - centerZ)));
-    this.#callbacks.onShapeCreated?.({
-      type: "circle", operation: this.#activeOperation, override: false,
-      center_x: centerX, center_z: centerZ, radius,
-    });
-  }
-
-  // Polygon (click vertices, close on first-vertex click or dblclick)
-  #startPolygon(bx, bz) {
-    this.#drawHandleData = [{ wx: bx, wz: bz, isFirst: true }];
-    this._refreshDrawHandles();
-    const previewLine = svgEl("line", {
-      x1: bx, y1: bz, x2: bx, y2: bz,
-      stroke: "var(--text-muted)", "stroke-width": "1", "stroke-dasharray": "4 3",
-      "pointer-events": "none", "vector-effect": "non-scaling-stroke",
-    });
-    this.#drawLayer.appendChild(previewLine);
-    this.#drawState = { type: "polygon", vertices: [[bx, bz]], lines: [], previewLine };
-  }
-
-  #addPolygonVertex(bx, bz) {
-    this.#drawHandleData.push({ wx: bx, wz: bz, isFirst: false });
-    this._refreshDrawHandles();
-    const ds   = this.#drawState;
-    const prev = ds.vertices[ds.vertices.length - 1];
-    const seg  = svgEl("line", {
-      x1: prev[0], y1: prev[1], x2: bx, y2: bz,
-      stroke: "var(--text-muted)", "stroke-width": "1",
-      "pointer-events": "none", "vector-effect": "non-scaling-stroke",
-    });
-    this.#drawLayer.insertBefore(seg, ds.previewLine);
-    ds.lines.push(seg);
-    ds.vertices.push([bx, bz]);
-    ds.previewLine.setAttribute("x1", bx);
-    ds.previewLine.setAttribute("y1", bz);
-    ds.previewLine.setAttribute("x2", bx);
-    ds.previewLine.setAttribute("y2", bz);
-  }
-
-  #updatePolygonPreview(bx, bz) {
-    if (!this.#drawState?.previewLine) return;
-    this.#drawState.previewLine.setAttribute("x2", bx);
-    this.#drawState.previewLine.setAttribute("y2", bz);
-  }
-
-  #closePolygon() {
-    this.#drawHandleData = [];
-    this._refreshDrawHandles();
-    const saved = this.#drawState;
-    this.#drawState = null;
-    for (const el of [...(saved.lines ?? []), saved.previewLine]) {
-      el?.parentNode?.removeChild(el);
-    }
-    if (saved.vertices.length < 3) return;
-    this.#callbacks.onShapeCreated?.({
-      type: "polygon", operation: this.#activeOperation, override: false,
-      vertices: saved.vertices,
-    });
-  }
-
-  // Lasso (hold drag to trace freeform; release to close)
-  #startLasso(bx, bz) {
-    const previewPath = svgEl("path", {
-      fill: this.#opFill(), stroke: this.#opStroke(),
-      "stroke-width": "1", "fill-opacity": "0.20", "stroke-dasharray": "5 3",
-      "fill-rule": "evenodd", "vector-effect": "non-scaling-stroke",
-    });
-    this.#drawLayer.appendChild(previewPath);
-    this.#drawState = { type: "lasso", vertices: [[bx, bz]], previewPath };
-  }
-
-  #addLassoPoint(bx, bz) {
-    const { vertices } = this.#drawState;
-    const last = vertices[vertices.length - 1];
-    if (bx === last[0] && bz === last[1]) return;
-    vertices.push([bx, bz]);
-    this.#updateLassoPreview();
-  }
-
-  #updateLassoPreview() {
-    const { vertices, previewPath } = this.#drawState;
-    if (vertices.length < 2) return;
-    previewPath.setAttribute("d", ringToPath(vertices, identityTransform));
-  }
-
-  #completeLasso() {
-    const { vertices, previewPath } = this.#drawState;
-    previewPath?.parentNode?.removeChild(previewPath);
-    this.#drawState = null;
-    if (vertices.length < 3) return;
-    this.#callbacks.onShapeCreated?.({
-      type: "lasso", operation: this.#activeOperation, override: false,
-      vertices,
-    });
-  }
-
-  #cancelDraw() {
-    if (!this.#drawState) return;
-    const ds = this.#drawState;
-    this.#drawState = null;
-    this.#drawHandleData = [];
-    this._refreshDrawHandles();
-    for (const el of [ds.preview, ds.previewPath, ds.previewLine, ds.dot,
-                      ...(ds.lines ?? [])]) {
-      el?.parentNode?.removeChild(el);
-    }
   }
 
   // ── Hit testing ───────────────────────────────────────────────────────────────

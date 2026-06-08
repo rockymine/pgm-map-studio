@@ -78,6 +78,26 @@ export function boundsToRingPath(bounds, toSvg) {
   );
 }
 
+/** Create an SVG rect element representing a 1×1 block anchor at (bx, bz). */
+export function anchorBlockEl(toSvg, bx, bz, color) {
+  const p1 = toSvg(bx, bz), p2 = toSvg(bx + 1, bz + 1);
+  return svgEl("rect", {
+    x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y),
+    width: Math.abs(p2.x - p1.x), height: Math.abs(p2.y - p1.y),
+    fill: color, "fill-opacity": "0.5", stroke: color, "stroke-width": "2",
+    "vector-effect": "non-scaling-stroke", "pointer-events": "none",
+  });
+}
+
+/** Reposition an existing anchor block element to (bx, bz). */
+export function moveAnchorBlockEl(toSvg, el, bx, bz) {
+  const p1 = toSvg(bx, bz), p2 = toSvg(bx + 1, bz + 1);
+  el.setAttribute("x",      Math.min(p1.x, p2.x));
+  el.setAttribute("y",      Math.min(p1.y, p2.y));
+  el.setAttribute("width",  Math.abs(p2.x - p1.x));
+  el.setAttribute("height", Math.abs(p2.y - p1.y));
+}
+
 /**
  * Sutherland-Hodgman half-plane clip.
  * Clips polygon `poly` ([[x,z],...]) against the half-plane defined by
