@@ -1,5 +1,5 @@
 import * as api from "../api.js";
-import { OverviewCanvas } from "../canvas/overview-canvas.js";
+import { OverviewRenderer } from "../canvas/overview-renderer.js";
 import { showToast } from "../shared/ui-helpers.js";
 
 const _AVATAR_EMPTY = "data:image/gif;base64,R0lGODlhEAAQAAAAACwAAAAAEAAQAAABEIQBADs=";
@@ -29,7 +29,7 @@ export class OverviewPanel {
     this._saveBtn        = el.querySelector("#ov-save-btn");
     this._statusEl       = el.querySelector("#ov-save-status");
 
-    this._canvas = new OverviewCanvas(
+    this._canvas = new OverviewRenderer(
       el.querySelector("#ov-map-svg"),
       el.querySelector("#ov-canvas-wrap"),
     );

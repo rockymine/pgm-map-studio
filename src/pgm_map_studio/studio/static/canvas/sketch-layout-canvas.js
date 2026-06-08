@@ -39,7 +39,7 @@ const DEFAULT_ISLAND_STROKE = "var(--canvas-result-stroke)";
 
 // In SketchLayoutCanvas, world coords ARE SVG base coords (no buildTransform needed).
 // This identity passes world (x, z) straight through to the SVG coordinate system.
-// MapCanvas uses buildInverseTransform() for the same _clientToSvg() output — do not
+// EditorCanvas uses buildInverseTransform() for the same _clientToSvg() output — do not
 // collapse that distinction.
 const identityTransform = (x, z) => ({ x, y: z });
 

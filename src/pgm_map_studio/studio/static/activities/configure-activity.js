@@ -10,7 +10,7 @@
  * On "Done", calls onComplete() so the editor can switch to Overview.
  */
 
-import { ConfigureCanvas } from "../canvas/configure-canvas.js";
+import { ConfigureRenderer } from "../canvas/configure-renderer.js";
 import { showToast, showSystemError } from "../shared/ui-helpers.js";
 
 const _SYMMETRY_LABELS = {
@@ -41,7 +41,7 @@ export class ConfigureActivity {
   constructor({ onStatusChange, onComplete } = {}) {
     this.#el        = document.getElementById("cfg-workspace");
     this.#callbacks = { onStatusChange, onComplete };
-    this.#canvas    = new ConfigureCanvas(
+    this.#canvas    = new ConfigureRenderer(
       document.getElementById("cfg-canvas"),
       document.getElementById("cfg-canvas-wrap"),
     );

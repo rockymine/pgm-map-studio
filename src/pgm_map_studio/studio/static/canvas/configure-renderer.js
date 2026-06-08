@@ -1,5 +1,5 @@
 /**
- * ConfigureCanvas — lightweight canvas for the Configure wizard.
+ * ConfigureRenderer — lightweight SVG renderer for the Configure wizard.
  *
  * Three display modes controlled by the host:
  *   "layer"    — block pixels only (step 1)
@@ -20,7 +20,7 @@ const ISLAND_STROKE_WIDTH   = 1.5;
 const SYMMETRY_COLOR        = "#a855f7";   // purple
 const CENTER_RADIUS         = 5;
 
-export class ConfigureCanvas {
+export class ConfigureRenderer {
   #svg;
   #wrap;
   #bbox      = null;

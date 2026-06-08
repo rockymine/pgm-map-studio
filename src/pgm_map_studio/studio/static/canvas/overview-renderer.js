@@ -4,7 +4,7 @@ import { blockDataToDataUrl } from "../shared/block-render.js";
 const SYMMETRY_COLOR   = "#a855f7";
 const SYMMETRY_SKIPPED = 0.25;
 
-export class OverviewCanvas {
+export class OverviewRenderer {
   #svg;
   #wrap;
   #bbox           = null;

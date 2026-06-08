@@ -1,5 +1,5 @@
 /**
- * MapCanvas — SVG rendering engine for the editor activities.
+ * EditorCanvas — SVG rendering engine for the editor activities.
  * Extends CanvasBase for shared pan/zoom/transform machinery.
  *
  * Public surface:
@@ -24,7 +24,7 @@
 
 import { buildTransform, buildInverseTransform, svgEl, polyToPath, handleRectAttrs, anchorBlockEl } from "./transform.js";
 import { CanvasBase, ZOOM_MIN, ZOOM_MAX } from "./canvas-base.js";
-import { MapDrawController } from "./map-draw-controller.js";
+import { EditorDrawController } from "./editor-draw-controller.js";
 import { chatColorHex, dyeColorHex } from "../shared/game-colors.js";
 import { blockToExtentBounds } from "../shared/converters.js";
 import { renderShape } from "../shared/shape-render.js";
@@ -52,7 +52,7 @@ function geojsonToSimplified(polygon) {
   };
 }
 
-export class MapCanvas extends CanvasBase {
+export class EditorCanvas extends CanvasBase {
   #ctx    = null;
   #groups = [];
   #toSvg  = null;
@@ -97,7 +97,7 @@ export class MapCanvas extends CanvasBase {
   constructor(svgEl_, wrapEl, callbacks = {}) {
     super(svgEl_, wrapEl);
     this.#callbacks = callbacks;
-    this.#drawCtrl  = new MapDrawController(
+    this.#drawCtrl  = new EditorDrawController(
       () => this.#drawLayerEl,
       () => this.#toSvg,
       { onRegionDraw: (r) => this.#callbacks.onRegionDraw?.(r) },

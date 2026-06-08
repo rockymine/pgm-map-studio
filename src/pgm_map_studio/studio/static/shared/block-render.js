@@ -1,6 +1,6 @@
 /**
  * Convert a block layer payload into a PNG data URL.
- * Used by overview-canvas (SVG image element) and configure page (img element).
+ * Used by overview-renderer (SVG image element) and configure page (img element).
  */
 export function blockDataToDataUrl({ xs, zs, colors, min_x, min_z, max_x, max_z }) {
   const imgW = max_x - min_x + 1;

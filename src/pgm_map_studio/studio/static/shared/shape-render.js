@@ -1,6 +1,6 @@
 /**
  * Shared SVG shape renderer.
- * Used by both MapCanvas (editor region outlines) and SketchLayoutCanvas
+ * Used by both EditorCanvas (editor region outlines) and SketchLayoutCanvas
  * (sketch shapes) to avoid duplicating type-dispatch logic.
  * See docs/cross-cutting.md §7.
  */

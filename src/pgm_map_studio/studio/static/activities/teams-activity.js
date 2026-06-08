@@ -3,7 +3,7 @@
  * Shows spawn regions on the map canvas and wires up the TeamsPanel.
  */
 
-import { MapCanvas }      from "../canvas/map-canvas.js";
+import { EditorCanvas }   from "../canvas/editor-canvas.js";
 import { TeamsPanel }     from "../panels/teams-panel.js";
 import { RegionRegistry } from "../region/region-registry.js";
 import { ToolManager }    from "../shared/tool-manager.js";
@@ -74,7 +74,7 @@ export class TeamsActivity {
     const svgEl  = document.getElementById("pt-map-svg");
     const wrapEl = document.getElementById("pt-svg-area");
 
-    this.#canvas = new MapCanvas(svgEl, wrapEl, {
+    this.#canvas = new EditorCanvas(svgEl, wrapEl, {
       onCoords: (x, z) => {
         this.#coordsEl.textContent = x !== null ? `X ${x}  Z ${z}` : "";
       },

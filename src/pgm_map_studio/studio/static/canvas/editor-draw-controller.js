@@ -1,6 +1,6 @@
 /**
- * MapDrawController — rectangle/cuboid drag and cylinder/circle two-click draw
- * for MapCanvas. Extracted from map-canvas.js.
+ * EditorDrawController — rectangle/cuboid drag and cylinder/circle two-click draw
+ * for EditorCanvas. Extracted from editor-canvas.js.
  *
  * Constructor args:
  *   getDrawLayer  () => SVGGElement | null   — getter, layer is rebuilt on repaint
@@ -11,7 +11,7 @@
 import { svgEl, anchorBlockEl, moveAnchorBlockEl } from "./transform.js";
 import { drawnBoundsFromBlocks } from "../shared/converters.js";
 
-export class MapDrawController {
+export class EditorDrawController {
   #getDrawLayer;
   #getToSvg;
   #callbacks;
