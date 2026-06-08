@@ -271,7 +271,7 @@ export class SketchLayoutCanvas extends CanvasBase {
   _onResizeMove(e) {
     if (!this.#edit) return false;
     const svgPt = this._clientToSvg(e.clientX, e.clientY);
-    return this.#edit.onResizeMove(svgPt.x, svgPt.y);
+    return this.#edit.onResizeMove(svgPt.x, svgPt.y, e.altKey);
   }
 
   _onResizeUp(e) {
@@ -482,7 +482,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     } else if (shape.type === "polygon" || shape.type === "lasso") {
       if (shape.vertices?.length >= 3) {
         g.appendChild(svgEl("path", {
-          d: ringToPath(shape.vertices, identityTransform),
+          d: ringToPath(shape.vertices, identityTransform, shape.controls || {}),
           "fill-rule": "evenodd", ...common,
         }));
       }

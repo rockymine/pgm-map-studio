@@ -11,10 +11,12 @@
 
 import { svgEl, handleRectAttrs } from "./transform.js";
 
-const HANDLE_HALF    = 5;
-const VERTEX_HALF    = 4;
-const GHOST_R        = 4;
-const EDGE_THRESHOLD = 10;  // screen px — hover distance to show midpoint ghost
+const HANDLE_HALF        = 5;
+const VERTEX_HALF        = 4;
+const GHOST_R            = 4;
+const EDGE_THRESHOLD     = 10;  // screen px — hover distance to show midpoint ghost
+const BEZIER_R           = 3;   // radius of bezier tangent handle circles (px)
+const BEZIER_COLLAPSE_PX = 5;   // screen px — collapse bezier handle when this close to vertex
 
 function distToSegment(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay;
@@ -41,11 +43,12 @@ export class SketchEditController {
   #getShape;
   #callbacks;
 
-  #selectedId      = null;
-  #rectResizeState = null;   // { shapeId, xf, zf }
-  #vertexDragState = null;   // { shapeId, vertexIdx }
-  #ghostEl         = null;   // reusable midpoint ghost <circle>, null when not in DOM
-  #hoveredEdgeIdx  = -1;     // edge index currently ghosted (-1 = none)
+  #selectedId       = null;
+  #rectResizeState  = null;   // { shapeId, xf, zf }
+  #vertexDragState  = null;   // { shapeId, vertexIdx }
+  #bezierDragState  = null;   // { shapeId, vertexIdx, handle: "in"|"out" }
+  #ghostEl          = null;   // reusable midpoint ghost <circle>, null when not in DOM
+  #hoveredEdgeIdx   = -1;     // edge index currently ghosted (-1 = none)
 
   constructor(handlesLayer, getViewport, getShape, { onShapeUpdated } = {}) {
     this.#handlesLayer = handlesLayer;
@@ -79,12 +82,45 @@ export class SketchEditController {
    * Handle document mousemove during a resize or vertex drag.
    * Returns true if the event was consumed.
    */
-  onResizeMove(wx, wz) {
+  onResizeMove(wx, wz, altKey = false) {
+    if (this.#bezierDragState) {
+      const { shapeId, vertexIdx, handle } = this.#bezierDragState;
+      const shape = this.#getShape(shapeId);
+      if (shape?.type === "polygon" || shape?.type === "lasso") {
+        const [vx, vz] = shape.vertices[vertexIdx];
+        const { scale } = this.#getViewport();
+        const screenDist = Math.hypot(wx - vx, wz - vz) * scale;
+        if (!shape.controls) shape.controls = {};
+        const key = String(vertexIdx);
+        if (screenDist < BEZIER_COLLAPSE_PX) {
+          delete shape.controls[key];
+          if (!Object.keys(shape.controls).length) delete shape.controls;
+        } else {
+          if (!shape.controls[key]) shape.controls[key] = {};
+          shape.controls[key][handle] = [wx, wz];
+          if (!altKey) {
+            // Smooth mode: mirror the opposite handle through the vertex.
+            const other = handle === "out" ? "in" : "out";
+            shape.controls[key][other] = [2 * vx - wx, 2 * vz - wz];
+          }
+        }
+        this.#callbacks.onShapeUpdated?.(shape);
+      }
+      return true;
+    }
     if (this.#vertexDragState) {
       const { shapeId, vertexIdx } = this.#vertexDragState;
       const shape = this.#getShape(shapeId);
       if (shape?.type === "polygon" || shape?.type === "lasso") {
+        const [oldX, oldZ] = shape.vertices[vertexIdx];
+        const dx = wx - oldX, dz = wz - oldZ;
         shape.vertices[vertexIdx] = [wx, wz];
+        // Translate this vertex's control handles along with it.
+        const ctrl = shape.controls?.[String(vertexIdx)];
+        if (ctrl) {
+          if (ctrl.in)  ctrl.in  = [ctrl.in[0]  + dx, ctrl.in[1]  + dz];
+          if (ctrl.out) ctrl.out = [ctrl.out[0] + dx, ctrl.out[1] + dz];
+        }
         this.#callbacks.onShapeUpdated?.(shape);
       }
       return true;
@@ -117,7 +153,7 @@ export class SketchEditController {
    */
   onPointerMove(wx, wz, activeTool) {
     const isEditMode = !activeTool || activeTool === "select";
-    if (!isEditMode || this.#vertexDragState || this.#rectResizeState || !this.#selectedId) {
+    if (!isEditMode || this.#vertexDragState || this.#bezierDragState || this.#rectResizeState || !this.#selectedId) {
       this.#clearGhost();
       return;
     }
@@ -160,6 +196,14 @@ export class SketchEditController {
    * Returns true if the event was consumed.
    */
   onResizeUp() {
+    if (this.#bezierDragState) {
+      const { shapeId } = this.#bezierDragState;
+      this.#bezierDragState = null;
+      this.refresh();
+      const shape = this.#getShape(shapeId);
+      if (shape) this.#callbacks.onShapeUpdated?.(shape);
+      return true;
+    }
     if (this.#rectResizeState) {
       this.#rectResizeState = null;
       this.refresh();
@@ -223,6 +267,15 @@ export class SketchEditController {
     const mx    = (verts[i][0] + verts[j][0]) / 2;
     const mz    = (verts[i][1] + verts[j][1]) / 2;
     verts.splice(j, 0, [mx, mz]);
+    // Shift bezier control keys: any index >= j is now one higher.
+    if (shape.controls && Object.keys(shape.controls).length) {
+      const shifted = {};
+      for (const [k, v] of Object.entries(shape.controls)) {
+        const ki = parseInt(k);
+        shifted[String(ki >= j ? ki + 1 : ki)] = v;
+      }
+      shape.controls = shifted;
+    }
     this.#callbacks.onShapeUpdated?.(shape);
     this.#vertexDragState = { shapeId, vertexIdx: j };
     this.#ghostEl  = null;
@@ -258,6 +311,40 @@ export class SketchEditController {
 
   #renderVertexHandles(shape) {
     if (!shape.vertices?.length) return;
+    const controls = shape.controls || {};
+
+    // Draw bezier tangent lines + circles beneath vertex handles.
+    for (const [key, ctrl] of Object.entries(controls)) {
+      const idx = parseInt(key);
+      if (idx >= shape.vertices.length) continue;
+      const vp = this.#toScreen(shape.vertices[idx][0], shape.vertices[idx][1]);
+
+      for (const side of ["in", "out"]) {
+        if (!ctrl[side]) continue;
+        const cp = this.#toScreen(ctrl[side][0], ctrl[side][1]);
+
+        this.#handlesLayer.appendChild(svgEl("line", {
+          x1: vp.x, y1: vp.y, x2: cp.x, y2: cp.y,
+          stroke: "var(--accent-light)", "stroke-width": "1", opacity: "0.7",
+          "pointer-events": "none",
+        }));
+
+        const circle = svgEl("circle", {
+          cx: cp.x, cy: cp.y, r: BEZIER_R,
+          fill: "var(--accent-light)", stroke: "var(--bg-deep)", "stroke-width": "1",
+          style: "cursor:move",
+        });
+        circle.addEventListener("mousedown", (e) => {
+          if (e.button !== 0) return;
+          e.stopPropagation();
+          this.#bezierDragState = { shapeId: shape.id, vertexIdx: idx, handle: side };
+        });
+        circle.addEventListener("click", (e) => e.stopPropagation());
+        this.#handlesLayer.appendChild(circle);
+      }
+    }
+
+    // Draw vertex handles on top.
     shape.vertices.forEach(([wx, wz], idx) => {
       const sp = this.#toScreen(wx, wz);
       const h = svgEl("rect", {
@@ -268,8 +355,15 @@ export class SketchEditController {
       h.addEventListener("mousedown", (e) => {
         if (e.button !== 0) return;
         e.stopPropagation();
-        this.#vertexDragState = { shapeId: shape.id, vertexIdx: idx };
+        if (e.ctrlKey) {
+          // Ctrl+drag: extrude Bézier handles from this vertex.
+          if (!shape.controls) shape.controls = {};
+          this.#bezierDragState = { shapeId: shape.id, vertexIdx: idx, handle: "out" };
+        } else {
+          this.#vertexDragState = { shapeId: shape.id, vertexIdx: idx };
+        }
       });
+      h.addEventListener("click", (e) => e.stopPropagation());
       this.#handlesLayer.appendChild(h);
     });
   }

@@ -49,12 +49,48 @@ export function handleRectAttrs(cx, cy, half) {
   return { x: cx - half, y: cy - half, width: half * 2, height: half * 2 };
 }
 
-/** Convert a polygon ring [[x,z],...] to an SVG path segment. */
-export function ringToPath(ring, toSvg) {
-  return ring.map(([x, z], i) => {
-    const p = toSvg(x, z);
-    return (i === 0 ? "M" : "L") + `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-  }).join(" ") + " Z";
+/**
+ * Convert a polygon ring [[x,z],...] to an SVG path string.
+ * Pass controls (shape.controls or {}) to emit cubic Bézier C commands for
+ * curved edges; omit or pass {} for all-straight output (backward compatible).
+ *
+ * controls format: { "vertexIdx": { in?: [x,z], out?: [x,z] } }
+ *   out = control point on the outgoing edge from that vertex
+ *   in  = control point on the incoming edge to that vertex
+ */
+export function ringToPath(ring, toSvg, controls = {}) {
+  const n = ring.length;
+  if (n === 0) return "";
+  const fmt = ({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`;
+  const pt  = (wx, wz) => toSvg(wx, wz);
+
+  let d = `M${fmt(pt(ring[0][0], ring[0][1]))}`;
+
+  for (let i = 1; i < n; i++) {
+    const [x, z] = ring[i];
+    const p     = pt(x, z);
+    const cpOut = controls[String(i - 1)]?.out;
+    const cpIn  = controls[String(i)]?.in;
+    if (cpOut || cpIn) {
+      const c1 = cpOut ? pt(cpOut[0], cpOut[1]) : pt(ring[i - 1][0], ring[i - 1][1]);
+      const c2 = cpIn  ? pt(cpIn[0],  cpIn[1])  : p;
+      d += ` C${fmt(c1)} ${fmt(c2)} ${fmt(p)}`;
+    } else {
+      d += ` L${fmt(p)}`;
+    }
+  }
+
+  // Closing edge: ring[n-1] → ring[0]
+  const cpOut = controls[String(n - 1)]?.out;
+  const cpIn  = controls["0"]?.in;
+  if (cpOut || cpIn) {
+    const first = pt(ring[0][0], ring[0][1]);
+    const c1 = cpOut ? pt(cpOut[0], cpOut[1]) : pt(ring[n - 1][0], ring[n - 1][1]);
+    const c2 = cpIn  ? pt(cpIn[0],  cpIn[1])  : first;
+    d += ` C${fmt(c1)} ${fmt(c2)} ${fmt(first)}`;
+  }
+
+  return d + " Z";
 }
 
 /** Convert a GeoJSON-like polygon (exterior + optional holes) to a path. */

@@ -18,6 +18,9 @@ import { applySymmetry } from "../shared/converters.js";
 // Number of vertices used to approximate a circle polygon.
 const CIRCLE_POINTS = 64;
 
+// Points sampled per curved edge (excluding the endpoint) when discretizing Bézier rings.
+const BEZIER_SAMPLES = 16;
+
 // ── Shape → ring conversion ───────────────────────────────────────────────────
 
 /**
@@ -39,7 +42,27 @@ export function shapeToRing(shape) {
     case "polygon":
     case "lasso": {
       if (!shape.vertices || shape.vertices.length < 3) return [];
-      const ring = shape.vertices.map(([x, z]) => [x, z]);
+      const verts    = shape.vertices;
+      const controls = shape.controls || {};
+      if (!Object.keys(controls).length) {
+        const ring = verts.map(([x, z]) => [x, z]);
+        ring.push(ring[0]);
+        return ring;
+      }
+      // Discretize Bézier edges into polyline points.
+      const n = verts.length;
+      const ring = [];
+      for (let i = 0; i < n; i++) {
+        const j     = (i + 1) % n;
+        const p0    = verts[i], p3 = verts[j];
+        const cpOut = controls[String(i)]?.out;
+        const cpIn  = controls[String(j)]?.in;
+        if (cpOut || cpIn) {
+          ring.push(...sampleBezierEdge(p0, cpOut ?? p0, cpIn ?? p3, p3));
+        } else {
+          ring.push([p0[0], p0[1]]);
+        }
+      }
       ring.push(ring[0]);
       return ring;
     }
@@ -62,6 +85,22 @@ export function circleToRing(cx, cz, radius, nPoints = CIRCLE_POINTS) {
     ]);
   }
   pts.push(pts[0]);
+  return pts;
+}
+
+/**
+ * Sample BEZIER_SAMPLES points along a cubic Bézier edge p0→p3 (endpoint excluded).
+ * c1 = out-control of p0, c2 = in-control of p3.
+ */
+function sampleBezierEdge(p0, c1, c2, p3) {
+  const pts = [];
+  for (let k = 0; k < BEZIER_SAMPLES; k++) {
+    const t = k / BEZIER_SAMPLES, u = 1 - t;
+    pts.push([
+      u*u*u*p0[0] + 3*u*u*t*c1[0] + 3*u*t*t*c2[0] + t*t*t*p3[0],
+      u*u*u*p0[1] + 3*u*u*t*c1[1] + 3*u*t*t*c2[1] + t*t*t*p3[1],
+    ]);
+  }
   return pts;
 }
 

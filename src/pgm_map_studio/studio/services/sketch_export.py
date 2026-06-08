@@ -37,6 +37,45 @@ _SYNTHETIC_BLOCK_ID = 1
 # 16 × 4 = 64 total points — matches JS CIRCLE_POINTS = 64.
 _CIRCLE_RESOLUTION = 16
 
+# Points per curved edge when discretizing Bézier polygons — matches JS BEZIER_SAMPLES.
+_BEZIER_SAMPLES = 16
+
+
+# ── Bézier discretization ────────────────────────────────────────────────────
+
+def _sample_bezier_edge(p0, c1, c2, p3):
+    """Sample _BEZIER_SAMPLES points along a cubic Bézier edge (endpoint excluded)."""
+    pts = []
+    for k in range(_BEZIER_SAMPLES):
+        t = k / _BEZIER_SAMPLES
+        u = 1.0 - t
+        pts.append((
+            u**3*p0[0] + 3*u**2*t*c1[0] + 3*u*t**2*c2[0] + t**3*p3[0],
+            u**3*p0[1] + 3*u**2*t*c1[1] + 3*u*t**2*c2[1] + t**3*p3[1],
+        ))
+    return pts
+
+
+def _discretize_bezier_polygon(vertices: list, controls: dict) -> list[tuple[float, float]]:
+    """Convert a polygon with Bézier controls to a dense straight-segment ring."""
+    n = len(vertices)
+    ring = []
+    for i in range(n):
+        j = (i + 1) % n
+        p0 = vertices[i]
+        p3 = vertices[j]
+        ci = controls.get(str(i)) or {}
+        cj = controls.get(str(j)) or {}
+        cp_out = ci.get("out")
+        cp_in  = cj.get("in")
+        if cp_out is not None or cp_in is not None:
+            c1 = cp_out if cp_out is not None else p0
+            c2 = cp_in  if cp_in  is not None else p3
+            ring.extend(_sample_bezier_edge(p0, c1, c2, p3))
+        else:
+            ring.append((p0[0], p0[1]))
+    return ring
+
 
 # ── Shape → Shapely ───────────────────────────────────────────────────────────
 
@@ -54,6 +93,10 @@ def _shape_to_shapely(shape: dict):
             verts = shape.get("vertices", [])
             if len(verts) < 3:
                 return None
+            controls = shape.get("controls") or {}
+            if controls:
+                pts = _discretize_bezier_polygon(verts, controls)
+                return Polygon(pts) if len(pts) >= 3 else None
             return Polygon([(v[0], v[1]) for v in verts])
     except Exception as exc:
         logger.debug("sketch_export: _shape_to_shapely error: %s", exc)
