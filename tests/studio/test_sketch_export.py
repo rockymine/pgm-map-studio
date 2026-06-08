@@ -11,7 +11,6 @@ from shapely.geometry import box
 
 from pgm_map_studio.studio.services import sketch_data
 from pgm_map_studio.studio.services.sketch_export import (
-    _assign_shape_ids,
     _compute_island_polys,
     _make_slug,
     _match_metadata,
@@ -146,19 +145,18 @@ _RECT_B = {"id": "s2", "type": "rectangle",
 
 
 def test_compute_island_polys_two_disconnected_rects():
-    polys = _compute_island_polys([_RECT_A, _RECT_B])
+    polys, _, _, _ = _compute_island_polys([_RECT_A, _RECT_B])
     assert len(polys) == 2
 
 
 def test_compute_island_polys_subtract_splits():
-    # One big rect, minus a vertical strip through the middle → 2 islands
     big = {"id": "s1", "type": "rectangle",
            "min_x": 0, "max_x": 100, "min_z": 0, "max_z": 50,
            "operation": "add", "override": False}
     cut = {"id": "s2", "type": "rectangle",
            "min_x": 45, "max_x": 55, "min_z": 0, "max_z": 50,
            "operation": "subtract", "override": False}
-    polys = _compute_island_polys([big, cut])
+    polys, _, _, _ = _compute_island_polys([big, cut])
     assert len(polys) == 2
 
 
@@ -169,13 +167,14 @@ def test_compute_island_polys_override_add_immune():
     over = {"id": "s2", "type": "rectangle",
             "min_x": 10, "max_x": 90, "min_z": 10, "max_z": 90,
             "operation": "add", "override": True}
-    polys = _compute_island_polys([sub, over])
+    polys, _, _, _ = _compute_island_polys([sub, over])
     assert len(polys) == 1
     assert abs(polys[0].area - 80 * 80) < 1
 
 
 def test_compute_island_polys_empty():
-    assert _compute_island_polys([]) == []
+    polys, _, _, _ = _compute_island_polys([])
+    assert polys == []
 
 
 # ── _rasterise_full_layout ────────────────────────────────────────────────────

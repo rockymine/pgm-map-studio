@@ -1,0 +1,35 @@
+{
+  "name": "Outer rect / polygon-subtract hole / circle override-add inside hole",
+  "description": "Real-world shape combination: outer rectangle, diamond-shaped subtract, circle override-add inside the diamond hole. The circle island must contain only the circle shape.",
+  "layout": {
+    "shapes": [
+      {
+        "id": "rect", "type": "rectangle", "operation": "add", "override": false,
+        "min_x": -246, "max_x": -28, "min_z": -247, "max_z": -25
+      },
+      {
+        "id": "diamond", "type": "polygon", "operation": "subtract", "override": false,
+        "vertices": [[-221, -164], [-145, -229], [-46, -147], [-139, -51]]
+      },
+      {
+        "id": "circ", "type": "circle", "operation": "add", "override": true,
+        "center_x": -157, "center_z": -175, "radius": 26
+      }
+    ]
+  },
+  "expected": {
+    "island_count": 2,
+    "islands": [
+      {
+        "sample_point": [-240, -240],
+        "must_contain":     ["rect", "diamond"],
+        "must_not_contain": ["circ"]
+      },
+      {
+        "sample_point": [-157, -175],
+        "must_contain":     ["circ"],
+        "must_not_contain": ["rect", "diamond"]
+      }
+    ]
+  }
+}

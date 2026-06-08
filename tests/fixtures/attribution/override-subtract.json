@@ -1,0 +1,27 @@
+{
+  "name": "Override subtract attribution via after_override_add geometry (donut island)",
+  "description": "An override subtract removes area entirely within an override-add island that sits inside a hole. The removed area is absent from both final island polygons, so final-island intersection would fail to attribute it. Attribution must route through after_override_add. The override subtract must appear in the inner donut island contributors but NOT in the outer ring island.",
+  "layout": {
+    "shapes": [
+      {"id": "base",   "type": "rectangle", "operation": "add",      "override": false, "min_x": 0,  "max_x": 100, "min_z": 0,  "max_z": 100},
+      {"id": "hole",   "type": "rectangle", "operation": "subtract",  "override": false, "min_x": 20, "max_x": 80,  "min_z": 20, "max_z": 80},
+      {"id": "fill",   "type": "rectangle", "operation": "add",      "override": true,  "min_x": 30, "max_x": 70,  "min_z": 30, "max_z": 70},
+      {"id": "ov_cut", "type": "rectangle", "operation": "subtract",  "override": true,  "min_x": 40, "max_x": 60,  "min_z": 40, "max_z": 60}
+    ]
+  },
+  "expected": {
+    "island_count": 2,
+    "islands": [
+      {
+        "sample_point": [10, 10],
+        "must_contain":     ["base", "hole"],
+        "must_not_contain": ["fill", "ov_cut"]
+      },
+      {
+        "sample_point": [35, 50],
+        "must_contain":     ["fill", "ov_cut"],
+        "must_not_contain": ["base", "hole"]
+      }
+    ]
+  }
+}

@@ -7,6 +7,12 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { readFileSync, readdirSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const FIXTURE_DIR = join(__dirname, "../fixtures/attribution");
 import {
   shapeToRing,
   circleToRing,
@@ -611,4 +617,38 @@ describe("computeMirrorPreview", () => {
     expect(hb.min_x).toBeCloseTo(-18);
     expect(hb.max_x).toBeCloseTo(-12);
   });
+});
+
+// ── Shared attribution fixtures ───────────────────────────────────────────────
+// These JSON files are the canonical source of truth for attribution behaviour.
+// The same fixtures are consumed by tests/studio/test_attribution_fixtures.py
+// so JS and Python are always tested against identical inputs and expectations.
+
+describe("assignShapesToIslands — shared fixtures", () => {
+  const fixtureFiles = readdirSync(FIXTURE_DIR).filter(f => f.endsWith(".json")).sort();
+
+  for (const filename of fixtureFiles) {
+    const fixture = JSON.parse(readFileSync(join(FIXTURE_DIR, filename), "utf8"));
+
+    it(fixture.name, () => {
+      const shapes = fixture.layout.shapes;
+      const { islands, addUnion, afterSub, overrideAddUnion } = computeIslands(shapes);
+      assignShapesToIslands(shapes, islands, addUnion, overrideAddUnion, afterSub);
+
+      expect(islands).toHaveLength(fixture.expected.island_count);
+
+      for (const assertion of fixture.expected.islands) {
+        const [sx, sz] = assertion.sample_point;
+        const island = islands.find(isl => pointInIsland(sx, sz, isl));
+        expect(island, `no island contains sample point (${sx}, ${sz})`).toBeDefined();
+
+        for (const sid of (assertion.must_contain ?? [])) {
+          expect(island.shapeIds, `island at (${sx},${sz}) missing '${sid}'`).toContain(sid);
+        }
+        for (const sid of (assertion.must_not_contain ?? [])) {
+          expect(island.shapeIds, `island at (${sx},${sz}) wrongly contains '${sid}'`).not.toContain(sid);
+        }
+      }
+    });
+  }
 });

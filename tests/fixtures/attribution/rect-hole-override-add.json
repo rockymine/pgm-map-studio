@@ -1,0 +1,26 @@
+{
+  "name": "Outer rect / hole subtract / override-add inside hole",
+  "description": "Normal-add and normal-subtract must not bleed into the override-add island that lives inside the hole. The override-add must not appear in the outer island.",
+  "layout": {
+    "shapes": [
+      {"id": "p1", "type": "rectangle", "operation": "add",      "override": false, "min_x": 0,  "max_x": 100, "min_z": 0,  "max_z": 100},
+      {"id": "p2", "type": "rectangle", "operation": "subtract", "override": false, "min_x": 30, "max_x": 70,  "min_z": 30, "max_z": 70},
+      {"id": "p3", "type": "rectangle", "operation": "add",      "override": true,  "min_x": 40, "max_x": 60,  "min_z": 40, "max_z": 60}
+    ]
+  },
+  "expected": {
+    "island_count": 2,
+    "islands": [
+      {
+        "sample_point": [10, 10],
+        "must_contain":     ["p1", "p2"],
+        "must_not_contain": ["p3"]
+      },
+      {
+        "sample_point": [50, 50],
+        "must_contain":     ["p3"],
+        "must_not_contain": ["p1", "p2"]
+      }
+    ]
+  }
+}

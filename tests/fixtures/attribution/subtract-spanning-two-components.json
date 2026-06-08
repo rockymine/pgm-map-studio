@@ -1,0 +1,36 @@
+{
+  "name": "Normal subtract spanning two disconnected add components",
+  "description": "A subtract that spans the full width of two separate add shapes should appear in the contributors of all four resulting islands (two per source component).",
+  "layout": {
+    "shapes": [
+      {"id": "left",  "type": "rectangle", "operation": "add",      "override": false, "min_x": 0,  "max_x": 40,  "min_z": 0,  "max_z": 100},
+      {"id": "right", "type": "rectangle", "operation": "add",      "override": false, "min_x": 60, "max_x": 100, "min_z": 0,  "max_z": 100},
+      {"id": "cut",   "type": "rectangle", "operation": "subtract",  "override": false, "min_x": 0,  "max_x": 100, "min_z": 40, "max_z": 60}
+    ]
+  },
+  "expected": {
+    "island_count": 4,
+    "islands": [
+      {
+        "sample_point": [20, 20],
+        "must_contain":     ["left", "cut"],
+        "must_not_contain": ["right"]
+      },
+      {
+        "sample_point": [20, 80],
+        "must_contain":     ["left", "cut"],
+        "must_not_contain": ["right"]
+      },
+      {
+        "sample_point": [80, 20],
+        "must_contain":     ["right", "cut"],
+        "must_not_contain": ["left"]
+      },
+      {
+        "sample_point": [80, 80],
+        "must_contain":     ["right", "cut"],
+        "must_not_contain": ["left"]
+      }
+    ]
+  }
+}

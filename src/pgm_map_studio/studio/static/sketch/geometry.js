@@ -286,12 +286,14 @@ export function assignShapesToIslands(shapes, islands, addUnion, overrideAddUnio
 }
 
 function _mapIslandsToUnion(islands, union) {
+  // Uses positive-area intersection rather than centroid containment so that
+  // donut-shaped islands are mapped correctly — their exterior centroid falls
+  // inside the hole and would otherwise match the wrong union component.
   return islands.map(isl => {
     if (!union.length) return -1;
-    const [cx, cz] = ringCentroid(isl.exterior);
+    const islandPoly = [[isl.exterior, ...isl.holes]];
     for (let j = 0; j < union.length; j++) {
-      const comp = union[j];
-      if (pointInIsland(cx, cz, { exterior: comp[0], holes: comp.slice(1) })) return j;
+      if (_intersects(islandPoly, [union[j]])) return j;
     }
     return -1;
   });
