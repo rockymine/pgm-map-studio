@@ -392,6 +392,25 @@ body {
 
 /* Region list uses tighter padding since .geo-row has its own horizontal padding */
 
+/* Visibility-toggle icon button — appears on row hover */
+.vis-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 3px;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  margin: -4px 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  line-height: 0;
+}
+.geo-row:hover .vis-btn    { opacity: 1; }
+.vis-btn--hidden           { opacity: 1; }
+
 /* ── Region tree row details (used by map-canvas + region sidebar) ── */
 .geo-row {
   display: flex;

@@ -10,6 +10,7 @@ import { ConfigureActivity }      from "./activities/configure-activity.js";
 import { OverviewActivity }       from "./activities/overview-activity.js";
 import { TeamsActivity }          from "./activities/teams-activity.js";
 import { BuildRegionsActivity }   from "./activities/build-regions-activity.js";
+import { RegionsActivity }        from "./activities/regions-activity.js";
 import * as api                   from "./api.js";
 import { showSystemError, clearSystemError, showToast, getMapParam } from "./shared/ui-helpers.js";
 
@@ -44,9 +45,10 @@ const ACTIVITIES = {
   "activity-build-regions": new BuildRegionsActivity({
     onStatusChange: dot => { buildRegionsBtn.dataset.status = dot ?? ""; },
   }),
+  "activity-regions": new RegionsActivity(),
 };
 
-const STUB_IDS = ["activity-objective", "activity-regions"];
+const STUB_IDS = ["activity-objective"];
 
 let currentId  = "activity-overview";
 let currentMap = null;
@@ -112,6 +114,7 @@ async function loadMap(name) {
     overviewBtn.disabled     = false;
     teamsBtn.disabled        = false;
     buildRegionsBtn.disabled = false;
+    regionsBtn.disabled      = false;
     exportBtn.disabled       = false;
     clearSystemError();
 

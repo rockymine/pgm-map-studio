@@ -442,8 +442,58 @@
     </div><!-- /br-workspace -->
 
     <!-- Placeholder for future activities -->
-    <div id="obj-workspace"     class="workspace workspace--placeholder" hidden>Objective editor — coming soon</div>
-    <div id="regions-workspace" class="workspace workspace--placeholder" hidden>Regions editor — coming soon</div>
+    <div id="obj-workspace" class="workspace workspace--placeholder" hidden>Objective editor — coming soon</div>
+
+    <!-- Regions workspace (2.7) -->
+    <div id="rg-workspace" class="workspace" hidden>
+
+      <div id="rg-left" class="workspace-sidebar">
+        <div id="rg-left-scroll" class="workspace-scroll" style="padding:0">
+          <div class="section-header section-header--ruled" style="padding:14px 14px 10px">
+            <h2 class="section-title">Regions</h2>
+          </div>
+          <div id="rg-region-list"></div>
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="rg-left-handle"></div>
+
+      <div id="rg-canvas-wrap" class="workspace-canvas">
+        <div id="rg-canvas-subbar" class="canvas-subbar">
+          <div class="canvas-toolbar" id="rg-draw-toolbar">
+            <button id="rg-tool-move"   class="draw-tool-btn" title="Move (M)">
+              <i data-lucide="hand"></i>
+            </button>
+            <button id="rg-tool-select" class="draw-tool-btn" title="Select (S)">
+              <i data-lucide="mouse-pointer-2"></i>
+            </button>
+          </div>
+          <label class="filter-chip" id="rg-blocks-label" title="Show top-surface block colours">
+            <input type="checkbox" id="rg-toggle-blocks" style="display:none">
+            Blocks
+          </label>
+          <div id="rg-cursor-coords" class="canvas-cursor"></div>
+          <div class="canvas-subbar-right">
+            <span id="rg-zoom-level" class="canvas-zoom">—</span>
+          </div>
+        </div>
+        <div id="rg-svg-area" class="svg-area">
+          <svg id="rg-map-svg" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                  fill="var(--text-muted)" font-size="14">Loading map…</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="rg-right-handle"></div>
+
+      <div id="rg-right" class="workspace-inspector">
+        <div id="rg-right-scroll" class="workspace-scroll">
+          <div id="rg-region-detail" class="panel-section"></div>
+        </div>
+      </div>
+
+    </div><!-- /rg-workspace -->
 
   </div>
 </div>
@@ -478,6 +528,8 @@
   resizeSidebar(document.getElementById("pt-left-handle"), document.getElementById("pt-left"), "left", 180, 420);
   resizeSidebar(document.getElementById("pt-right-handle"), document.getElementById("pt-right"), "right", 240, 480);
   resizeSidebar(document.getElementById("br-left-handle"), document.getElementById("br-left"), "left", 200, 480);
+  resizeSidebar(document.getElementById("rg-left-handle"),  document.getElementById("rg-left"),  "left",  180, 480);
+  resizeSidebar(document.getElementById("rg-right-handle"), document.getElementById("rg-right"), "right", 240, 480);
 }());
 </script>
 </body>

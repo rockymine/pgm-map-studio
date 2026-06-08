@@ -112,6 +112,12 @@ export async function fetchRegions(mapName) {
   return r.json();
 }
 
+export async function fetchRegionsTree(mapName) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/regions/tree`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to load region tree (${r.status})`);
+  return r.json();
+}
+
 export async function fetchTopSurface(mapName) {
   const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/layers/top-surface`);
   if (!r.ok) throw new Error(`Failed to load surface layer (${r.status})`);

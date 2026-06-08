@@ -6,6 +6,7 @@ from pathlib import Path
 from flask import Blueprint, abort, jsonify, request
 
 from pgm_map_studio.studio.services.config import get_output_root
+from pgm_map_studio.studio.services.region_encoder import encode_region_tree
 from pgm_map_studio.studio.services.xml_data import load_xml_data, save_xml_data
 
 bp = Blueprint("map_api", __name__, url_prefix="/api/map")
@@ -82,27 +83,32 @@ def patch_map_config(name: str):
 def get_regions(name: str):
     data, _ = load_xml_data(name)
     regions = data.get("regions", {})
-
-    islands_path = get_output_root() / name / "islands.json"
-    bounding_box = None
-    if islands_path.exists():
-        islands = json.loads(islands_path.read_text(encoding="utf-8"))
-        if islands:
-            xs = [i["bounds"][0] for i in islands] + [i["bounds"][2] for i in islands]
-            zs = [i["bounds"][1] for i in islands] + [i["bounds"][3] for i in islands]
-            bounding_box = {"min_x": min(xs), "min_z": min(zs), "max_x": max(xs), "max_z": max(zs)}
-
     categories = _compute_categories(regions, data)
     return jsonify({
-        "regions":     regions,
-        "categories":  categories,
-        "bounding_box": bounding_box,
+        "regions":      regions,
+        "categories":   categories,
+        "bounding_box": _islands_bounding_box(get_output_root() / name / "islands.json"),
     })
+
+
+@bp.route("/<name>/regions/tree")
+def get_regions_tree(name: str):
+    data, _ = load_xml_data(name)
+    regions      = data.get("regions", {})
+    bounding_box = _islands_bounding_box(get_output_root() / name / "islands.json")
+    categories   = _compute_categories(regions, data)
+    groups       = encode_region_tree(regions, categories, bounding_box)
+    return jsonify({"groups": groups, "bounding_box": bounding_box})
 
 
 @bp.route("/<name>/layers/top-surface")
 def layer_top_surface(name: str):
-    parquet_path = get_output_root() / name / "layer.parquet"
+    output = get_output_root() / name
+    # layer_surface.parquet is written on-demand by Configure when the user
+    # previews the surface layer; fall back to the canonical layer.parquet.
+    parquet_path = output / "layer_surface.parquet"
+    if not parquet_path.exists():
+        parquet_path = output / "layer.parquet"
     if not parquet_path.exists():
         abort(404)
     try:
@@ -126,6 +132,17 @@ def layer_top_surface(name: str):
         })
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
+
+
+def _islands_bounding_box(islands_path: Path) -> dict | None:
+    if not islands_path.exists():
+        return None
+    islands = json.loads(islands_path.read_text(encoding="utf-8"))
+    if not islands:
+        return None
+    xs = [i["bounds"][0] for i in islands] + [i["bounds"][2] for i in islands]
+    zs = [i["bounds"][1] for i in islands] + [i["bounds"][3] for i in islands]
+    return {"min_x": min(xs), "min_z": min(zs), "max_x": max(xs), "max_z": max(zs)}
 
 
 def _compute_categories(regions: dict, data: dict) -> dict:

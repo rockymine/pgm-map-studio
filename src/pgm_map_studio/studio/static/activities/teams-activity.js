@@ -11,9 +11,7 @@ import * as api           from "../api.js";
 import { chatColorHex }   from "../shared/game-colors.js";
 import { showToast }      from "../shared/ui-helpers.js";
 
-// Use CSS token values so they match the design system
-const SPAWN_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--cat-spawn").trim() || "#3b82f6";
-const POINT_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--accent-light").trim() || "#60a5fa";
+const REGION_COLOR = "var(--canvas-region)";
 
 export class TeamsActivity {
   #el         = null;
@@ -210,7 +208,7 @@ function _buildSpawnGroups(regions, categories) {
       id,
       type:   region.type,
       label:  id,
-      color:  region.type === "point" ? POINT_COLOR : SPAWN_COLOR,
+      color:  REGION_COLOR,
       bounds: b ? {
         min_x: b.min.x, min_z: b.min.z,
         max_x: b.max.x, max_z: b.max.z,
@@ -231,5 +229,5 @@ function _buildSpawnGroups(regions, categories) {
     spawnNodes.push(node);
   }
   if (!spawnNodes.length) return [];
-  return [{ name: "spawns", label: "Spawn Regions", color: SPAWN_COLOR, regions: spawnNodes }];
+  return [{ name: "spawns", label: "Spawn Regions", color: REGION_COLOR, regions: spawnNodes }];
 }
