@@ -1,156 +1,138 @@
-import { CanvasBase } from "./canvas-base.js";
+/**
+ * SketchSetupCanvas — fixed-fit display of the map bounding box, axis lines,
+ * and a draggable center-point handle. No pan, zoom, or move tool.
+ *
+ * The viewport is recomputed automatically whenever setBbox() or resize() is
+ * called so the bbox always fills FIT_MARGIN of the available div space.
+ *
+ * Public API:
+ *   setBbox(bbox)         set/change the bounding box (triggers auto-fit)
+ *   setCenter(cx, cz)     programmatic center update (no fit)
+ *   setMode(mode)         mirror mode for axis lines
+ *   resize()              call when the wrapper div changes size
+ */
+
 import { svgEl as makeEl } from "./transform.js";
 
-const CROSSHAIR_R  = 6;    // screen-px radius of center dot
-const CROSSHAIR_ARM = 16;  // screen-px arm length
-const HIT_RADIUS   = 20;   // screen-px — drag handle hit area around center
-const FIT_MARGIN   = 0.82; // fraction of canvas used when fitting bbox
+const CROSSHAIR_R   = 6;    // screen-px radius of center dot
+const CROSSHAIR_ARM = 16;   // screen-px arm length
+const HIT_RADIUS    = 20;   // screen-px drag-target radius around center
+const FIT_MARGIN    = 0.82; // fraction of div used by the bbox
 
-export class SketchSetupCanvas extends CanvasBase {
-  #bbox        = null;  // { min_x, max_x, min_z, max_z }
-  #cx          = 0;
-  #cz          = 0;
-  #mode        = "rot_180";
+export class SketchSetupCanvas {
+  #svg;
+  #wrap;
 
-  #bboxLayer   = null;
-  #axisLayer   = null;
-  #crosshair   = null;  // screen-space <g>, repositioned on viewport change
+  #bbox = null;
+  #cx   = 0;
+  #cz   = 0;
+  #mode = "rot_180";
 
-  #draggingCenter = false;
-  #onCenterMove   = null;  // callback(cx, cz)
-  #cursorEl       = null;  // .canvas-cursor span for coordinate readout
+  // auto-fit transform — recomputed from bbox + div size, never user-set
+  #scale = 1;
+  #panX  = 0;
+  #panY  = 0;
+
+  #viewportG = null;
+  #bboxLayer = null;
+  #axisLayer = null;
+  #crosshair = null;
+
+  #dragging     = false;
+  #onCenterMove = null;
+  #cursorEl     = null;
 
   constructor(svgEl, wrapEl, { onCenterMove, cursorEl } = {}) {
-    super(svgEl, wrapEl);
+    this.#svg         = svgEl;
+    this.#wrap        = wrapEl;
     this.#onCenterMove = onCenterMove ?? null;
-    this.#cursorEl     = cursorEl ?? null;
-    this._activeTool = "move";
-    this._build();
+    this.#cursorEl    = cursorEl ?? null;
+    this.#build();
   }
 
-  // ── public API ────────────────────────────────────────────────────────────
+  // ── public API ─────────────────────────────────────────────────────────────
 
   setBbox(bbox) {
     this.#bbox = bbox;
-    this._renderBbox();
-    this._renderAxis();
-    this._updateCrosshair();
+    this.#fit();
+    this.#renderBbox();
+    this.#renderAxis();
+    this.#updateCrosshair();
   }
 
   setCenter(cx, cz) {
     this.#cx = cx;
     this.#cz = cz;
-    this._renderAxis();
-    this._updateCrosshair();
+    this.#renderAxis();
+    this.#updateCrosshair();
   }
 
   setMode(mode) {
     this.#mode = mode;
-    this._renderAxis();
-  }
-
-  fitToBbox() {
-    if (!this.#bbox) return;
-    const { min_x, max_x, min_z, max_z } = this.#bbox;
-    const w = this._wrap.clientWidth  || 400;
-    const h = this._wrap.clientHeight || 400;
-    const bboxW = max_x - min_x;
-    const bboxH = max_z - min_z;
-    if (!bboxW || !bboxH) return;
-    const scale = Math.min(w / bboxW, h / bboxH) * FIT_MARGIN;
-    this._scale = scale;
-    this._panX  = w / 2 - ((min_x + max_x) / 2) * scale;
-    this._panY  = h / 2 - ((min_z + max_z) / 2) * scale;
-    this._applyViewportTransform();
+    this.#renderAxis();
   }
 
   resize() {
-    const { w, h } = this.#svgSize();
-    this._svg.setAttribute("width",  w);
-    this._svg.setAttribute("height", h);
-    this._svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-    this._updateCrosshair();
+    const { w, h } = this.#size();
+    this.#svg.setAttribute("width",   w);
+    this.#svg.setAttribute("height",  h);
+    this.#svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    this.#fit();
+    this.#renderAxis();
+    this.#updateCrosshair();
   }
 
-  #svgSize() {
-    const subbar = this._wrap.querySelector(".canvas-subbar");
-    const w = this._wrap.clientWidth  || 400;
-    const h = (this._wrap.clientHeight || 400) - (subbar?.offsetHeight ?? 0);
+  // ── private ────────────────────────────────────────────────────────────────
+
+  #size() {
+    const subbar = this.#wrap.querySelector(".canvas-subbar");
+    const w = this.#wrap.clientWidth  || 400;
+    const h = (this.#wrap.clientHeight || 400) - (subbar?.offsetHeight ?? 0);
     return { w, h };
   }
 
-  // ── CanvasBase hooks ──────────────────────────────────────────────────────
-
-  _onViewportChanged() {
-    this._updateCrosshair();
-  }
-
-  _onToolMousedown(e, svgPt) {
+  #fit() {
     if (!this.#bbox) return;
-    const rect  = this._svg.getBoundingClientRect();
-    const sx    = this.#cx * this._scale + this._panX;
-    const sy    = this.#cz * this._scale + this._panY;
-    const dx    = (e.clientX - rect.left) - sx;
-    const dy    = (e.clientY - rect.top)  - sy;
-    if (Math.sqrt(dx * dx + dy * dy) <= HIT_RADIUS) {
-      this.#draggingCenter = true;
-      this._activeTool = "center-drag";
-      this._svg.style.cursor = "grabbing";
-    }
+    const { min_x, max_x, min_z, max_z } = this.#bbox;
+    const { w, h } = this.#size();
+    const bw = max_x - min_x, bh = max_z - min_z;
+    if (!bw || !bh) return;
+    this.#scale = Math.min(w / bw, h / bh) * FIT_MARGIN;
+    this.#panX  = w / 2 - ((min_x + max_x) / 2) * this.#scale;
+    this.#panY  = h / 2 - ((min_z + max_z) / 2) * this.#scale;
+    this.#viewportG.setAttribute("transform",
+      `matrix(${this.#scale},0,0,${this.#scale},${this.#panX},${this.#panY})`);
   }
 
-  _onPointerMove(e, svgPt) {
-    if (this.#draggingCenter) {
-      const cx = Math.round(svgPt.x);
-      const cz = Math.round(svgPt.y);
-      this.#cx = cx;
-      this.#cz = cz;
-      this._renderAxis();
-      this._updateCrosshair();
-      this.#onCenterMove?.(cx, cz);
-    } else if (this.#bbox) {
-      // Show grab cursor when hovering near the center dot
-      const rect = this._svg.getBoundingClientRect();
-      const sx = this.#cx * this._scale + this._panX;
-      const sy = this.#cz * this._scale + this._panY;
-      const dx = (e.clientX - rect.left) - sx;
-      const dy = (e.clientY - rect.top)  - sy;
-      this._svg.style.cursor = Math.sqrt(dx * dx + dy * dy) <= HIT_RADIUS ? "grab" : "";
-    }
-    if (this.#cursorEl) {
-      this.#cursorEl.textContent = `X ${Math.round(svgPt.x)}  Z ${Math.round(svgPt.y)}`;
-    }
+  #toWorld(sx, sy) {
+    return { x: (sx - this.#panX) / this.#scale, z: (sy - this.#panY) / this.#scale };
   }
 
-  _onMouseleave() {
-    if (this.#cursorEl) this.#cursorEl.textContent = "";
+  #toScreen(wx, wz) {
+    return { x: wx * this.#scale + this.#panX, y: wz * this.#scale + this.#panY };
   }
 
-  _onToolMouseup() {
-    if (this.#draggingCenter) {
-      this.#draggingCenter = false;
-      this._activeTool = "move";
-      this._svg.style.cursor = "";
-    }
+  #hitsCrosshair(clientX, clientY) {
+    const rect = this.#svg.getBoundingClientRect();
+    const sp   = this.#toScreen(this.#cx, this.#cz);
+    const dx   = (clientX - rect.left) - sp.x;
+    const dy   = (clientY - rect.top)  - sp.y;
+    return Math.sqrt(dx * dx + dy * dy) <= HIT_RADIUS;
   }
 
-  // ── private rendering ─────────────────────────────────────────────────────
+  #build() {
+    const { w, h } = this.#size();
+    this.#svg.setAttribute("width",   w);
+    this.#svg.setAttribute("height",  h);
+    this.#svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
 
-  _build() {
-    const { w, h } = this.#svgSize();
-    this._svg.setAttribute("width",  w);
-    this._svg.setAttribute("height", h);
-    this._svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-
-    this._viewportG = makeEl("g", { id: "sk-setup-viewport" });
+    this.#viewportG = makeEl("g", { id: "sk-setup-viewport" });
     this.#bboxLayer = makeEl("g", { id: "sk-setup-bbox" });
     this.#axisLayer = makeEl("g", { id: "sk-setup-axis" });
-    this._viewportG.appendChild(this.#bboxLayer);
-    this._viewportG.appendChild(this.#axisLayer);
-    this._svg.appendChild(this._viewportG);
+    this.#viewportG.appendChild(this.#bboxLayer);
+    this.#viewportG.appendChild(this.#axisLayer);
+    this.#svg.appendChild(this.#viewportG);
 
-    // Crosshair — screen-space group, repositioned in _updateCrosshair.
-    // Must be built with makeEl (not innerHTML) to get the SVG namespace.
     this.#crosshair = makeEl("g", { id: "sk-setup-crosshair", style: "pointer-events:none" });
     this.#crosshair.appendChild(makeEl("line", {
       x1: -CROSSHAIR_ARM, y1: 0, x2: CROSSHAIR_ARM, y2: 0,
@@ -164,17 +146,50 @@ export class SketchSetupCanvas extends CanvasBase {
       cx: 0, cy: 0, r: CROSSHAIR_R,
       fill: "var(--canvas-axis)", stroke: "var(--bg-deep)", "stroke-width": "1.5",
     }));
-    this._svg.appendChild(this.#crosshair);
+    this.#svg.appendChild(this.#crosshair);
     this.#crosshair.setAttribute("display", "none");
 
-    this._applyViewportTransform();
+    this.#svg.addEventListener("mousedown", (e) => {
+      if (e.button !== 0 || !this.#bbox) return;
+      if (this.#hitsCrosshair(e.clientX, e.clientY)) {
+        this.#dragging = true;
+        this.#svg.style.cursor = "grabbing";
+        e.preventDefault();
+      }
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (this.#dragging) {
+        const rect = this.#svg.getBoundingClientRect();
+        const w    = this.#toWorld(e.clientX - rect.left, e.clientY - rect.top);
+        const cx   = Math.round(w.x);
+        const cz   = Math.round(w.z);
+        this.#cx   = cx;
+        this.#cz   = cz;
+        this.#renderAxis();
+        this.#updateCrosshair();
+        this.#onCenterMove?.(cx, cz);
+        if (this.#cursorEl) this.#cursorEl.textContent = `X ${cx}  Z ${cz}`;
+      } else if (this.#bbox) {
+        this.#svg.style.cursor = this.#hitsCrosshair(e.clientX, e.clientY) ? "grab" : "";
+      }
+    });
+
+    document.addEventListener("mouseup", (e) => {
+      if (e.button !== 0 || !this.#dragging) return;
+      this.#dragging = false;
+      this.#svg.style.cursor = "";
+    });
+
+    this.#svg.addEventListener("mouseleave", () => {
+      if (!this.#dragging && this.#cursorEl) this.#cursorEl.textContent = "";
+    });
   }
 
-  _renderBbox() {
+  #renderBbox() {
     while (this.#bboxLayer.firstChild) this.#bboxLayer.removeChild(this.#bboxLayer.firstChild);
     if (!this.#bbox) return;
     const { min_x, max_x, min_z, max_z } = this.#bbox;
-    // Faint fill for the map area
     this.#bboxLayer.appendChild(makeEl("rect", {
       x: min_x, y: min_z, width: max_x - min_x, height: max_z - min_z,
       fill: "var(--bg-selected)", "fill-opacity": "0.18",
@@ -183,7 +198,7 @@ export class SketchSetupCanvas extends CanvasBase {
     }));
   }
 
-  _renderAxis() {
+  #renderAxis() {
     while (this.#axisLayer.firstChild) this.#axisLayer.removeChild(this.#axisLayer.firstChild);
     if (!this.#bbox) return;
     const { min_x, max_x, min_z, max_z } = this.#bbox;
@@ -193,31 +208,23 @@ export class SketchSetupCanvas extends CanvasBase {
       "stroke-dasharray": "6 4", opacity: "0.75",
       "vector-effect": "non-scaling-stroke",
     };
-
-    const addLine = (x1, y1, x2, y2) =>
+    const line = (x1, y1, x2, y2) =>
       this.#axisLayer.appendChild(makeEl("line", { x1, y1, x2, y2, ...attrs }));
 
     switch (this.#mode) {
-      case "mirror_x":
-        addLine(cx, min_z, cx, max_z);
-        break;
-      case "mirror_z":
-        addLine(min_x, cz, max_x, cz);
-        break;
-      case "rot_180":
-      case "rot_90":
-        addLine(cx, min_z, cx, max_z);
-        addLine(min_x, cz, max_x, cz);
-        break;
+      case "mirror_x": line(cx, min_z, cx, max_z); break;
+      case "mirror_z": line(min_x, cz, max_x, cz); break;
+      default:
+        line(cx, min_z, cx, max_z);
+        line(min_x, cz, max_x, cz);
     }
   }
 
-  _updateCrosshair() {
+  #updateCrosshair() {
     if (!this.#crosshair) return;
     if (!this.#bbox) { this.#crosshair.setAttribute("display", "none"); return; }
-    const sx = this.#cx * this._scale + this._panX;
-    const sy = this.#cz * this._scale + this._panY;
+    const sp = this.#toScreen(this.#cx, this.#cz);
     this.#crosshair.setAttribute("display", "");
-    this.#crosshair.setAttribute("transform", `translate(${sx.toFixed(1)}, ${sy.toFixed(1)})`);
+    this.#crosshair.setAttribute("transform", `translate(${sp.x.toFixed(1)},${sp.y.toFixed(1)})`);
   }
 }

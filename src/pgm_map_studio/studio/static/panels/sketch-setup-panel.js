@@ -100,7 +100,6 @@ export class SketchSetupPanel {
       this.#activatePreset("square");
       this.#updateModeAvailability();
       this.#canvas.setBbox(p);
-      this.#canvas.fitToBbox();
     }
     if (setup?.center) {
       this.#cxEl.value = setup.center.cx ?? 0;
@@ -112,7 +111,6 @@ export class SketchSetupPanel {
     } else {
       this.#setMode("rot_180", false);
     }
-    if (setup?.bbox) this.#canvas.fitToBbox();
     this.#setDirty(false);
   }
 
@@ -182,7 +180,6 @@ export class SketchSetupPanel {
     const bbox = this.#parseBbox();
     if (!bbox) return;
     this.#canvas.setBbox(bbox);
-    this.#canvas.fitToBbox();
   }
 
   #commitCenter() {
