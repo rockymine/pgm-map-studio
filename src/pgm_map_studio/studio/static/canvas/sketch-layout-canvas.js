@@ -796,7 +796,7 @@ export class SketchLayoutCanvas extends CanvasBase {
   #makePolyDot(wx, wz, isFirst) {
     return svgEl("rect", {
       x: wx - 0.5, y: wz - 0.5, width: 1, height: 1,
-      fill: isFirst ? "var(--color-warning)" : "var(--text-muted)",
+      fill: "var(--text-muted)",
       stroke: "var(--bg-deep)", "stroke-width": "0.08",
       "pointer-events": "none", "vector-effect": "non-scaling-stroke",
     });
