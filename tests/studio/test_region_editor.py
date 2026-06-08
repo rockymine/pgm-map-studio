@@ -193,6 +193,22 @@ class TestDeleteRegion:
         with pytest.raises(RegionNotFound):
             delete_region({"regions": {}}, "ghost")
 
+    def test_delete_succeeds_when_bystander_has_string_children(self):
+        # Regression: remove_inline_children crashed on string-ref children when
+        # deleting any region while the registry contained composite regions that
+        # reference other named regions by string ID rather than inline dicts.
+        data = {
+            "regions": {
+                "target": _cyl("target"),
+                "composite": {"id": "composite", "type": "union", "children": ["ref_a", "ref_b"]},
+            },
+            "region_categories": {"spawn": ["target"]},
+        }
+        result = delete_region(data, "target")
+        assert "target" not in data["regions"]
+        assert data["regions"]["composite"]["children"] == ["ref_a", "ref_b"]
+        assert result["snapshot"]["root_id"] == "target"
+
 
 # ── restore_region ────────────────────────────────────────────────────────────
 

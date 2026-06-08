@@ -7,56 +7,70 @@ nodes inside the tree without round-tripping through the file.
 from __future__ import annotations
 
 
+def _child_id(child: dict | str) -> str | None:
+    """Return the ID of a child entry regardless of whether it is a dict or a bare string reference."""
+    if isinstance(child, str):
+        return child
+    return child.get("id")
+
+
 def collect_named_child_ids(region: dict, out: set[str]) -> None:
     """Recursively collect IDs of all named children of *region*."""
     for child in region.get("children", []):
-        child_id = child.get("id") or ""
+        child_id = _child_id(child) or ""
         if child_id:
             out.add(child_id)
-        collect_named_child_ids(child, out)
+        if isinstance(child, dict):
+            collect_named_child_ids(child, out)
 
 
 def collect_region_subtree_ids(regions: dict, region_id: str) -> list[str]:
     """Return region_id and all descendant IDs found in *regions* (depth-first)."""
     result = [region_id]
     for child in regions.get(region_id, {}).get("children", []):
-        child_id = child.get("id")
+        child_id = _child_id(child)
         if child_id and child_id in regions:
             result.extend(collect_region_subtree_ids(regions, child_id))
     return result
 
 
 def remove_inline_children(regions: dict, ids_to_remove: set[str]) -> None:
-    """Remove inline child entries matching *ids_to_remove* from every region's children list."""
+    """Remove child entries matching *ids_to_remove* from every region's children list."""
     for region in regions.values():
         children = region.get("children")
         if isinstance(children, list):
-            region["children"] = [c for c in children if c.get("id") not in ids_to_remove]
+            region["children"] = [c for c in children if _child_id(c) not in ids_to_remove]
 
 
 def rename_in_children(region: dict, old_id: str, new_id: str) -> None:
     """Recursively rename *old_id* → *new_id* inside a region's children array."""
-    for child in region.get("children", []):
-        if child.get("id") == old_id:
-            child["id"] = new_id
-        rename_in_children(child, old_id, new_id)
+    children = region.get("children", [])
+    for i, child in enumerate(children):
+        if isinstance(child, str):
+            if child == old_id:
+                children[i] = new_id
+        else:
+            if child.get("id") == old_id:
+                child["id"] = new_id
+            rename_in_children(child, old_id, new_id)
 
 
 def find_parent_of_child(
     regions: dict,
     target_id: str,
-) -> tuple[dict, dict, int] | None:
+) -> tuple[dict, dict | str, int] | None:
     """Search all regions for a child with *target_id*.
 
     Returns (parent_dict, child_dict, child_index) or None if not found.
     """
-    def _walk(region: dict) -> tuple[dict, dict, int] | None:
+    def _walk(region: dict) -> tuple[dict, dict | str, int] | None:
         for i, child in enumerate(region.get("children", [])):
-            if child.get("id") == target_id:
+            if _child_id(child) == target_id:
                 return region, child, i
-            result = _walk(child)
-            if result is not None:
-                return result
+            if isinstance(child, dict):
+                result = _walk(child)
+                if result is not None:
+                    return result
         return None
 
     for region in regions.values():
@@ -75,6 +89,8 @@ def find_child_region(regions_dict: dict, target_sid: str) -> dict | None:
     """
     def _walk(region: dict, region_sid: str) -> dict | None:
         for i, child in enumerate(region.get("children", [])):
+            if isinstance(child, str):
+                continue  # bare string refs point to top-level regions; skip
             child_xml_id = child.get("id", "")
             child_sid = child_xml_id if child_xml_id else f"{region_sid}__{i}"
             if child_sid == target_sid:
@@ -129,4 +145,5 @@ def _walk_embedded(item: dict):
 def _walk_region_recursive(region: dict):
     yield region
     for child in region.get("children", []):
-        yield from _walk_region_recursive(child)
+        if isinstance(child, dict):
+            yield from _walk_region_recursive(child)
