@@ -33,7 +33,7 @@ export class ConfigureActivity {
   #origExcludeBlocks= [];   // snapshot at load time — for change detection
   #blockTypes       = [];   // flat array of {block_id, name, color, count}
   #excludedIds      = new Set();
-  #origExcludedIds  = new Set();  // snapshot when entering step 2
+  #origExcludedIds  = new Set();  // snapshot when entering island exclusion
   #islandsData      = [];
   #symmetryData     = null;
   #symChoice        = null;   // null | "rot_90" | … | "none"
@@ -187,7 +187,7 @@ export class ConfigureActivity {
     if (this.#step > 1) this.#gotoStep(this.#step - 1);
   }
 
-  // ── Step 1: Scan Layer ────────────────────────────────────────────────────
+  // ── Layer selection ──────────────────────────────────────────────────────
 
   #onLayerChipClick(layer) {
     if (!layer || !this.#mapName) return;
@@ -397,7 +397,7 @@ export class ConfigureActivity {
     });
   }
 
-  // ── Step 2: Islands ───────────────────────────────────────────────────────
+  // ── Island exclusion ─────────────────────────────────────────────────────
 
   #renderIslandList() {
     const included = this.#islandsData.filter(i => !this.#excludedIds.has(i.id));
@@ -473,7 +473,7 @@ export class ConfigureActivity {
     this.#updateIslandWarn();
   }
 
-  // ── Step 3: Symmetry ──────────────────────────────────────────────────────
+  // ── Symmetry confirmation ────────────────────────────────────────────────
 
   #renderSymPanel() {
     if (!this.#symmetryData) return;
