@@ -431,7 +431,6 @@ export class SketchLayoutCanvas extends CanvasBase {
         const prev = ds.vertices[ds.vertices.length - 2];
         if (last[0] === prev[0] && last[1] === prev[1]) {
           ds.vertices.pop();
-          const dot  = ds.dots.pop();  dot?.parentNode?.removeChild(dot);
           const line = ds.lines.pop(); line?.parentNode?.removeChild(line);
         }
       }
@@ -739,15 +738,13 @@ export class SketchLayoutCanvas extends CanvasBase {
   #startPolygon(bx, bz) {
     this.#drawHandleData = [{ wx: bx, wz: bz, isFirst: true }];
     this._refreshDrawHandles();
-    const firstDot   = this.#makePolyDot(bx, bz, true);
     const previewLine = svgEl("line", {
       x1: bx, y1: bz, x2: bx, y2: bz,
       stroke: "var(--text-muted)", "stroke-width": "1", "stroke-dasharray": "4 3",
       "pointer-events": "none", "vector-effect": "non-scaling-stroke",
     });
     this.#drawLayer.appendChild(previewLine);
-    this.#drawLayer.appendChild(firstDot);
-    this.#drawState = { type: "polygon", vertices: [[bx, bz]], dots: [firstDot], lines: [], previewLine };
+    this.#drawState = { type: "polygon", vertices: [[bx, bz]], lines: [], previewLine };
   }
 
   #addPolygonVertex(bx, bz) {
@@ -762,9 +759,6 @@ export class SketchLayoutCanvas extends CanvasBase {
     });
     this.#drawLayer.insertBefore(seg, ds.previewLine);
     ds.lines.push(seg);
-    const dot = this.#makePolyDot(bx, bz, false);
-    this.#drawLayer.insertBefore(dot, ds.previewLine);
-    ds.dots.push(dot);
     ds.vertices.push([bx, bz]);
     ds.previewLine.setAttribute("x1", bx);
     ds.previewLine.setAttribute("y1", bz);
@@ -783,22 +777,13 @@ export class SketchLayoutCanvas extends CanvasBase {
     this._refreshDrawHandles();
     const saved = this.#drawState;
     this.#drawState = null;
-    for (const el of [...(saved.dots ?? []), ...(saved.lines ?? []), saved.previewLine]) {
+    for (const el of [...(saved.lines ?? []), saved.previewLine]) {
       el?.parentNode?.removeChild(el);
     }
     if (saved.vertices.length < 3) return;
     this.#callbacks.onShapeCreated?.({
       type: "polygon", operation: this.#activeOperation, override: false,
       vertices: saved.vertices,
-    });
-  }
-
-  #makePolyDot(wx, wz, isFirst) {
-    return svgEl("rect", {
-      x: wx - 0.5, y: wz - 0.5, width: 1, height: 1,
-      fill: "var(--text-muted)",
-      stroke: "var(--bg-deep)", "stroke-width": "0.08",
-      "pointer-events": "none", "vector-effect": "non-scaling-stroke",
     });
   }
 
@@ -845,7 +830,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     this.#drawHandleData = [];
     this._refreshDrawHandles();
     for (const el of [ds.preview, ds.previewPath, ds.previewLine, ds.dot,
-                      ...(ds.dots ?? []), ...(ds.lines ?? [])]) {
+                      ...(ds.lines ?? [])]) {
       el?.parentNode?.removeChild(el);
     }
   }
