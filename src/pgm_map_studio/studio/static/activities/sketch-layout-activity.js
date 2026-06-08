@@ -408,7 +408,7 @@ export class SketchLayoutActivity {
   #updateStatus() {
     const valid = this.#islands.length >= 1;
     this.#onStatusChange?.(valid ? "green" : "yellow");
-    this.#onExportReady?.(this.#islands.length >= 2);
+    this.#onExportReady?.(this.#islands.length >= 1);
   }
 
   // ── Persistence ───────────────────────────────────────────────────────────────

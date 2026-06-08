@@ -139,6 +139,14 @@ async function boot() {
       openEditorBtn.hidden  = false;
     }
 
+    // Pre-enable export if the saved layout already has ≥ 1 islands.
+    // The layout activity will re-evaluate this properly when activated.
+    const savedIslands = data.layout?.islands ?? [];
+    if (savedIslands.length >= 1) {
+      _canExport = true;
+      exportBtn.disabled = false;
+    }
+
     // Pre-load layout activity's setup values so the mirror preview is correct
     // when the user first opens Layout. Fall back to Square defaults when no
     // setup has been saved yet (matches sketch-setup-panel defaults).
