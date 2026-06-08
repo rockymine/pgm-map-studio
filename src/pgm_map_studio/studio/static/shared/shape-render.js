@@ -1,7 +1,8 @@
 /**
- * Shared SVG region shape renderer.
- * Used by both MapCanvas (editor) and ConceptCanvas (sketch) to avoid
- * duplicating the type-dispatch logic. See docs/cross-cutting.md §7.
+ * Shared SVG shape renderer.
+ * Used by both MapCanvas (editor region outlines) and SketchLayoutCanvas
+ * (sketch shapes) to avoid duplicating type-dispatch logic.
+ * See docs/cross-cutting.md §7.
  */
 
 import { svgEl, polyToPath } from "../canvas/transform.js";
@@ -9,16 +10,16 @@ import { svgEl, polyToPath } from "../canvas/transform.js";
 const RADIAL_TYPES = new Set(["cylinder", "circle", "sphere"]);
 
 /**
- * Create an SVG shape element for a region.
+ * Create an SVG element for a geometric shape.
  *
- * @param {string} type          — region type ("rectangle", "cylinder", "circle", etc.)
+ * @param {string} type          — shape/region type ("rectangle", "cylinder", "circle", etc.)
  * @param {object} boundsOrPoly  — either {min_x, min_z, max_x, max_z} extent bounds,
  *                                 or a polygon_2d object {exterior, holes} / {polygons}
  * @param {Function} toSvg       — world→SVG coordinate transform (wx, wz) => {x, y}
  * @param {object} [attrs={}]    — SVG attributes to set on the element
  * @returns {SVGElement|null}
  */
-export function renderRegionShape(type, boundsOrPoly, toSvg, attrs = {}) {
+export function renderShape(type, boundsOrPoly, toSvg, attrs = {}) {
   if (!boundsOrPoly) return null;
 
   // Polygon case: polygon_2d object with exterior ring

@@ -26,7 +26,7 @@ import { buildTransform, buildInverseTransform, svgEl, polyToPath } from "./tran
 import { CanvasBase, ZOOM_MIN, ZOOM_MAX } from "./canvas-base.js";
 import { chatColorHex, dyeColorHex } from "../shared/game-colors.js";
 import { drawnBoundsFromBlocks, blockToExtentBounds } from "../shared/converters.js";
-import { renderRegionShape } from "../shared/region-render.js";
+import { renderShape } from "../shared/shape-render.js";
 
 const HANDLE_SIZE = 7;
 const HANDLE_DEFS = [
@@ -697,7 +697,7 @@ export class MapCanvas extends CanvasBase {
     g.appendChild(title);
 
     const boundsOrPoly = region.polygon_2d ?? region.bounds;
-    const shape = renderRegionShape(type, boundsOrPoly, this.#toSvg, this.#regionAttrs(color));
+    const shape = renderShape(type, boundsOrPoly, this.#toSvg, this.#regionAttrs(color));
     if (shape) { g.appendChild(shape); this.#shapeMap.set(id, { shape, type }); }
     return g;
   }

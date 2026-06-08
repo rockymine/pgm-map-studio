@@ -138,6 +138,25 @@ The inverse returns `{x, z}` (world coordinates), not `{x, y}`.
 
 Both canvases import from this single module.
 
+### Coordinate-space difference between MapCanvas and SketchLayoutCanvas
+
+`CanvasBase._clientToSvg()` returns base-SVG coordinates — pixels in the SVG's own coordinate system, before the viewport pan/zoom group is applied.
+
+- **MapCanvas:** base-SVG pixels are *not* world coordinates. A `buildInverseTransform()` call is needed to convert them to world (block) coordinates.
+- **SketchLayoutCanvas:** world coordinates are used directly as SVG base coordinates. No `buildTransform` is set up; pan and zoom are applied only through the viewport matrix. Base-SVG coordinates therefore equal world block coordinates.
+
+Because of this, `SketchLayoutCanvas` passes an identity transform to all shared path helpers:
+
+```js
+const identityTransform = (x, z) => ({ x, y: z });
+
+ringToPath(vertices, identityTransform);
+polyToPath({ exterior, holes }, identityTransform);
+renderShape(type, bounds, identityTransform, attrs);
+```
+
+This distinction is intentional. Do not generalise `_clientToSvg()` output across both canvases without accounting for it.
+
 ---
 
 ## 4. Shape and Region Format
@@ -300,7 +319,7 @@ The visual rendering of a region node to SVG is the same in both canvases:
 - `cylinder` / `circle` / `sphere` → `<ellipse>` from centre ± radius
 - Any region with `polygon_2d` → `<path>` via `polyToPath`
 
-A shared `renderRegionShape(type, boundsOrPoly, toSvg, attrs)` function avoids repeating this dispatch in both canvas implementations.
+A shared `renderShape(type, boundsOrPoly, toSvg, attrs)` function avoids repeating this dispatch in both canvas implementations.
 
 ---
 

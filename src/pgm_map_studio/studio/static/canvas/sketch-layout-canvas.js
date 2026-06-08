@@ -17,7 +17,9 @@
  */
 
 import { CanvasBase } from "./canvas-base.js";
-import { svgEl } from "./transform.js";
+import { svgEl, ringToPath, polyToPath } from "./transform.js";
+import { drawnBoundsFromBlocks } from "../shared/converters.js";
+import { renderShape } from "../shared/shape-render.js";
 import { pointInRing } from "../sketch/geometry.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -39,6 +41,12 @@ const DEFAULT_ISLAND_STROKE = "#4338ca";
 // Mirror preview overlay
 const MIRROR_FILL    = "var(--canvas-axis)";
 const MIRROR_OPACITY = "0.12";
+
+// In SketchLayoutCanvas, world coords ARE SVG base coords (no buildTransform needed).
+// This identity passes world (x, z) straight through to the SVG coordinate system.
+// MapCanvas uses buildInverseTransform() for the same _clientToSvg() output — do not
+// collapse that distinction.
+const identityTransform = (x, z) => ({ x, y: z });
 
 // 8-handle definitions for rectangle resize (clockwise from NW)
 const HANDLE_DEFS = [
@@ -481,7 +489,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     for (const isl of this.#islands) {
       if (!isl?.exterior?.length) continue;
       this.#islandLayer.appendChild(svgEl("path", {
-        d: this.#polyToSvgPath(isl.exterior, isl.holes ?? []),
+        d: polyToPath({ exterior: isl.exterior, holes: isl.holes ?? [] }, identityTransform),
         fill: DEFAULT_ISLAND_FILL, stroke: DEFAULT_ISLAND_STROKE,
         "stroke-width": "1.5", "fill-opacity": "0.22",
         "fill-rule": "evenodd", "vector-effect": "non-scaling-stroke",
@@ -497,7 +505,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     for (const poly of this.#mirrorPolys) {
       if (!poly?.exterior?.length) continue;
       this.#mirrorLayer.appendChild(svgEl("path", {
-        d: this.#polyToSvgPath(poly.exterior, poly.holes ?? []),
+        d: polyToPath({ exterior: poly.exterior, holes: poly.holes ?? [] }, identityTransform),
         fill: MIRROR_FILL, stroke: MIRROR_FILL,
         "stroke-width": "1", "fill-opacity": MIRROR_OPACITY,
         "fill-rule": "evenodd", "vector-effect": "non-scaling-stroke",
@@ -520,21 +528,19 @@ export class SketchLayoutCanvas extends CanvasBase {
     const g = svgEl("g", { class: "sk-shape", "data-id": shape.id });
 
     if (shape.type === "rectangle") {
-      g.appendChild(svgEl("rect", {
-        x: shape.min_x, y: shape.min_z,
-        width: shape.max_x - shape.min_x, height: shape.max_z - shape.min_z,
-        ...common,
-      }));
+      const el = renderShape("rectangle", shape, identityTransform, common);
+      if (el) g.appendChild(el);
     } else if (shape.type === "circle") {
-      g.appendChild(svgEl("ellipse", {
-        cx: shape.center_x, cy: shape.center_z,
-        rx: shape.radius,   ry: shape.radius,
-        ...common,
-      }));
+      const bounds = {
+        min_x: shape.center_x - shape.radius, max_x: shape.center_x + shape.radius,
+        min_z: shape.center_z - shape.radius, max_z: shape.center_z + shape.radius,
+      };
+      const el = renderShape("circle", bounds, identityTransform, common);
+      if (el) g.appendChild(el);
     } else if (shape.type === "polygon" || shape.type === "lasso") {
       if (shape.vertices?.length >= 3) {
         g.appendChild(svgEl("path", {
-          d: this.#ringToPath(shape.vertices) + " Z",
+          d: ringToPath(shape.vertices, identityTransform),
           "fill-rule": "evenodd", ...common,
         }));
       }
@@ -668,8 +674,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     const { startBx, startBz, preview } = this.#drawState;
     this.#drawState.currentBx = bx;
     this.#drawState.currentBz = bz;
-    const minX = Math.min(startBx, bx), maxX = Math.max(startBx, bx) + 1;
-    const minZ = Math.min(startBz, bz), maxZ = Math.max(startBz, bz) + 1;
+    const { min_x: minX, max_x: maxX, min_z: minZ, max_z: maxZ } = drawnBoundsFromBlocks(startBx, startBz, bx, bz);
     preview.setAttribute("x",      minX);
     preview.setAttribute("y",      minZ);
     preview.setAttribute("width",  maxX - minX);
@@ -690,8 +695,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     this.#drawState = null;
     this.#drawHandleData = [];
     this._refreshDrawHandles();
-    const minX = Math.min(startBx, currentBx), maxX = Math.max(startBx, currentBx) + 1;
-    const minZ = Math.min(startBz, currentBz), maxZ = Math.max(startBz, currentBz) + 1;
+    const { min_x: minX, max_x: maxX, min_z: minZ, max_z: maxZ } = drawnBoundsFromBlocks(startBx, startBz, currentBx, currentBz);
     if (maxX - minX <= 1 && maxZ - minZ <= 1) return;  // reject single-click misfire (no drag)
     this.#callbacks.onShapeCreated?.({
       type: "rectangle", operation: this.#activeOperation, override: false,
@@ -827,7 +831,7 @@ export class SketchLayoutCanvas extends CanvasBase {
   #updateLassoPreview() {
     const { vertices, previewPath } = this.#drawState;
     if (vertices.length < 2) return;
-    previewPath.setAttribute("d", this.#ringToPath(vertices) + " Z");
+    previewPath.setAttribute("d", ringToPath(vertices, identityTransform));
   }
 
   #completeLasso() {
@@ -877,21 +881,4 @@ export class SketchLayoutCanvas extends CanvasBase {
     return false;
   }
 
-  // ── SVG path helpers ──────────────────────────────────────────────────────────
-
-  /** Convert a world-coord ring [[x, z], ...] to an SVG path string (open). */
-  #ringToPath(vertices) {
-    return vertices.map(([x, z], i) =>
-      `${i === 0 ? "M" : "L"}${x},${z}`
-    ).join(" ");
-  }
-
-  /** Convert exterior + holes (world coords) to an evenodd SVG path. */
-  #polyToSvgPath(exterior, holes) {
-    let d = this.#ringToPath(exterior) + " Z";
-    for (const hole of holes) {
-      d += " " + this.#ringToPath(hole) + " Z";
-    }
-    return d;
-  }
 }
