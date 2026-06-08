@@ -44,6 +44,11 @@ export function svgEl(tag, attrs = {}, children = []) {
   return el;
 }
 
+/** Return the x/y/width/height attributes for a centered square handle rect. */
+export function handleRectAttrs(cx, cy, half) {
+  return { x: cx - half, y: cy - half, width: half * 2, height: half * 2 };
+}
+
 /** Convert a polygon ring [[x,z],...] to an SVG path segment. */
 export function ringToPath(ring, toSvg) {
   return ring.map(([x, z], i) => {

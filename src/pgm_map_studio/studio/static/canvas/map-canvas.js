@@ -22,7 +22,7 @@
  * node shape: { id, type, label, color, bounds?: {min_x,min_z,max_x,max_z}, children?, polygon_2d? }
  */
 
-import { buildTransform, buildInverseTransform, svgEl, polyToPath } from "./transform.js";
+import { buildTransform, buildInverseTransform, svgEl, polyToPath, handleRectAttrs } from "./transform.js";
 import { CanvasBase, ZOOM_MIN, ZOOM_MAX } from "./canvas-base.js";
 import { chatColorHex, dyeColorHex } from "../shared/game-colors.js";
 import { drawnBoundsFromBlocks, blockToExtentBounds } from "../shared/converters.js";
@@ -42,13 +42,6 @@ const HANDLE_DEFS = [
 
 const COMPOSITE_TYPES = new Set(["union", "intersect", "negative", "complement"]);
 const RESIZABLE_TYPES = new Set(["rectangle", "cuboid"]);
-
-function darkenHex(hex, factor = 0.55) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
-}
 
 function geojsonToSimplified(polygon) {
   if (!polygon?.coordinates?.length) return null;
@@ -502,10 +495,9 @@ export class MapCanvas extends CanvasBase {
     for (const island of (this.#ctx.islands || [])) {
       const poly = island.simplified_polygon ?? geojsonToSimplified(island.polygon);
       if (!poly?.exterior?.length) continue;
-      const color = "#6b7280";
       g.appendChild(svgEl("path", {
         d: polyToPath(poly, this.#toSvg),
-        fill: color, stroke: darkenHex(color), "stroke-width": "1.2", "fill-rule": "evenodd",
+        fill: "var(--canvas-island)", stroke: "var(--canvas-island-stroke)", "stroke-width": "1.2", "fill-rule": "evenodd",
       }));
     }
     return g;
@@ -591,7 +583,7 @@ export class MapCanvas extends CanvasBase {
     if (!node?.bounds || node.is_negative || !this.#toSvg) return;
 
     const { min_x, min_z, max_x, max_z } = node.bounds;
-    const color = node.color || "#94a3b8";
+    const color = node.color || "var(--canvas-region)";
 
     const p1b = this.#toSvg(min_x, min_z);
     const p2b = this.#toSvg(max_x, max_z);
@@ -627,7 +619,7 @@ export class MapCanvas extends CanvasBase {
       x: mid, y: pillY + PAD_Y + FONT_SZ - 1,
       "text-anchor": "middle", "dominant-baseline": "auto",
       "font-size": FONT_SZ, "font-family": "ui-monospace, monospace",
-      fill: "#0f172a", "font-weight": "600", "pointer-events": "none",
+      fill: "var(--bg-base)", "font-weight": "600", "pointer-events": "none",
     });
     dimEl.textContent = dimText;
     this.#overlayLayer.appendChild(dimEl);
@@ -758,12 +750,12 @@ export class MapCanvas extends CanvasBase {
   #renderHandles(node) {
     const sb = this.#screenBounds(node);
     if (!sb) return;
-    const hs = HANDLE_SIZE / 2, color = node.color || "#94a3b8";
+    const hs = HANDLE_SIZE / 2;
     for (const h of HANDLE_DEFS) {
       const [cx, cy] = h.pos(sb);
       const el = svgEl("rect", {
-        x: cx-hs, y: cy-hs, width: HANDLE_SIZE, height: HANDLE_SIZE, rx: 1,
-        fill: "#1e293b", stroke: color, "stroke-width": "1.5", cursor: h.cursor,
+        ...handleRectAttrs(cx, cy, hs), rx: 1,
+        fill: "var(--canvas-handle-fill)", stroke: "var(--canvas-handle-stroke)", "stroke-width": "1.5", cursor: h.cursor,
       });
       el.addEventListener("mousedown", (e) => {
         if (e.button !== 0) return;
@@ -809,11 +801,10 @@ export class MapCanvas extends CanvasBase {
 
   #startDraw(bx, bz) {
     if (!this.#drawLayerEl || !this.#toSvg) return;
-    const color = "#94a3b8";
     const previewRect = svgEl("rect", {
       x: 0, y: 0, width: 0, height: 0,
-      fill: color, "fill-opacity": "0.12",
-      stroke: color, "stroke-width": "1.5", "stroke-dasharray": "4,2",
+      fill: "var(--canvas-region)", "fill-opacity": "0.12",
+      stroke: "var(--canvas-region)", "stroke-width": "1.5", "stroke-dasharray": "4,2",
       "vector-effect": "non-scaling-stroke", "pointer-events": "none",
     });
     const anchor1 = this.#anchorBlock(bx, bz, color);
@@ -859,10 +850,10 @@ export class MapCanvas extends CanvasBase {
     if (!this.#drawLayerEl || !this.#toSvg) return;
     const centerX = bx + 0.5, centerZ = bz + 0.5;
     const pt = this.#toSvg(centerX, centerZ);
-    const dot = svgEl("circle", { cx: pt.x, cy: pt.y, r: 5, fill: "#a78bfa", stroke: "#fff", "stroke-width": "1.5", "pointer-events": "none" });
-    const line = svgEl("line", { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y, stroke: "#a78bfa", "stroke-width": "1.5", "stroke-dasharray": "4 2", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
-    const previewCircle = svgEl("ellipse", { cx: pt.x, cy: pt.y, rx: 0, ry: 0, fill: "none", stroke: "#a78bfa", "stroke-width": "1.5", "stroke-dasharray": "6 3", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
-    const label = svgEl("text", { x: pt.x, y: pt.y, fill: "#a78bfa", "font-size": "11", "text-anchor": "start", "pointer-events": "none" });
+    const dot = svgEl("circle", { cx: pt.x, cy: pt.y, r: 5, fill: "var(--canvas-axis)", stroke: "#fff", "stroke-width": "1.5", "pointer-events": "none" });
+    const line = svgEl("line", { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y, stroke: "var(--canvas-axis)", "stroke-width": "1.5", "stroke-dasharray": "4 2", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
+    const previewCircle = svgEl("ellipse", { cx: pt.x, cy: pt.y, rx: 0, ry: 0, fill: "none", stroke: "var(--canvas-axis)", "stroke-width": "1.5", "stroke-dasharray": "6 3", "vector-effect": "non-scaling-stroke", "pointer-events": "none" });
+    const label = svgEl("text", { x: pt.x, y: pt.y, fill: "var(--canvas-axis)", "font-size": "11", "text-anchor": "start", "pointer-events": "none" });
     this.#drawLayerEl.append(previewCircle, line, dot, label);
     this.#drawState = { toolType: this._activeTool, centerX, centerZ, dot, line, previewCircle, label, currentRadius: 1 };
   }

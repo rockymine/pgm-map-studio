@@ -17,7 +17,7 @@
  */
 
 import { CanvasBase } from "./canvas-base.js";
-import { svgEl, ringToPath, polyToPath } from "./transform.js";
+import { svgEl, ringToPath, polyToPath, handleRectAttrs } from "./transform.js";
 import { drawnBoundsFromBlocks } from "../shared/converters.js";
 import { renderShape } from "../shared/shape-render.js";
 import { pointInRing } from "../sketch/geometry.js";
@@ -28,19 +28,15 @@ const HANDLE_HALF  = 5;  // half-size of resize handles in screen px
 const VERTEX_HALF  = 4;  // half-size of polygon vertex handles in screen px
 const FIT_MARGIN   = 0.85;
 
-// Shape colours
-const ADD_FILL    = "#0d9488";
-const ADD_STROKE  = "#0f766e";
-const SUB_FILL    = "#dc2626";
-const SUB_STROKE  = "#b91c1c";
+// Shape colours — all defined as tokens in tokens.css
+const ADD_FILL    = "var(--canvas-add-fill)";
+const ADD_STROKE  = "var(--canvas-add-stroke)";
+const SUB_FILL    = "var(--canvas-sub-fill)";
+const SUB_STROKE  = "var(--canvas-sub-stroke)";
 
 // Island result colour (when no per-island colour is supplied)
-const DEFAULT_ISLAND_FILL   = "#6366f1";
-const DEFAULT_ISLAND_STROKE = "#4338ca";
-
-// Mirror preview overlay
-const MIRROR_FILL    = "var(--canvas-axis)";
-const MIRROR_OPACITY = "0.12";
+const DEFAULT_ISLAND_FILL   = "var(--canvas-result-fill)";
+const DEFAULT_ISLAND_STROKE = "var(--canvas-result-stroke)";
 
 // In SketchLayoutCanvas, world coords ARE SVG base coords (no buildTransform needed).
 // This identity passes world (x, z) straight through to the SVG coordinate system.
@@ -506,8 +502,8 @@ export class SketchLayoutCanvas extends CanvasBase {
       if (!poly?.exterior?.length) continue;
       this.#mirrorLayer.appendChild(svgEl("path", {
         d: polyToPath({ exterior: poly.exterior, holes: poly.holes ?? [] }, identityTransform),
-        fill: MIRROR_FILL, stroke: MIRROR_FILL,
-        "stroke-width": "1", "fill-opacity": MIRROR_OPACITY,
+        fill: "var(--canvas-mirror-fill)", stroke: "var(--canvas-mirror-stroke)",
+        "stroke-width": "1",
         "fill-rule": "evenodd", "vector-effect": "non-scaling-stroke",
       }));
     }
@@ -588,8 +584,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     for (const hd of HANDLE_DEFS) {
       const [hx, hy] = hd.pos(b);
       const h = svgEl("rect", {
-        x: hx - HANDLE_HALF, y: hy - HANDLE_HALF,
-        width: HANDLE_HALF * 2, height: HANDLE_HALF * 2,
+        ...handleRectAttrs(hx, hy, HANDLE_HALF),
         fill: "var(--bg-deep)", stroke: "var(--text-muted)", "stroke-width": "1",
         style: `cursor:${hd.cursor}`,
       });
@@ -607,8 +602,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     shape.vertices.forEach(([wx, wz], idx) => {
       const sp = this.#toScreen(wx, wz);
       const h = svgEl("rect", {
-        x: sp.x - VERTEX_HALF, y: sp.y - VERTEX_HALF,
-        width: VERTEX_HALF * 2, height: VERTEX_HALF * 2,
+        ...handleRectAttrs(sp.x, sp.y, VERTEX_HALF),
         fill: "var(--bg-deep)", stroke: "var(--text-muted)", "stroke-width": "1",
         style: "cursor:move",
       });
@@ -629,8 +623,7 @@ export class SketchLayoutCanvas extends CanvasBase {
     for (const { wx, wz, isFirst } of this.#drawHandleData) {
       const sp = this.#toScreen(wx, wz);
       this.#drawHandlesLayer.appendChild(svgEl("rect", {
-        x: sp.x - HANDLE_HALF, y: sp.y - HANDLE_HALF,
-        width: HANDLE_HALF * 2, height: HANDLE_HALF * 2,
+        ...handleRectAttrs(sp.x, sp.y, HANDLE_HALF),
         fill:   isFirst ? "var(--accent-light)" : "var(--canvas-handle-fill)",
         stroke: isFirst ? "var(--accent)"       : "var(--canvas-handle-stroke)",
         "stroke-width": "1.5",
@@ -803,7 +796,7 @@ export class SketchLayoutCanvas extends CanvasBase {
   #makePolyDot(wx, wz, isFirst) {
     return svgEl("rect", {
       x: wx - 0.5, y: wz - 0.5, width: 1, height: 1,
-      fill: isFirst ? "#f59e0b" : "var(--text-muted)",
+      fill: isFirst ? "var(--color-warning)" : "var(--text-muted)",
       stroke: "var(--bg-deep)", "stroke-width": "0.08",
       "pointer-events": "none", "vector-effect": "non-scaling-stroke",
     });
