@@ -11,6 +11,7 @@ import { RegionsPanel }     from "../panels/regions-panel.js";
 import { RegionInspector }  from "../panels/region-inspector.js";
 import { RegionRegistry }   from "../region/region-registry.js";
 import { ToolManager }      from "../shared/tool-manager.js";
+import { normalizeIslands } from "../shared/canvas-helpers.js";
 import * as api             from "../api.js";
 
 export class RegionsActivity {
@@ -23,13 +24,11 @@ export class RegionsActivity {
   #mapName    = null;
   #coordsEl   = null;
   #zoomEl     = null;
-  #blockCache = null;
 
   constructor() {
     this.#el         = document.getElementById("rg-workspace");
-    this.#coordsEl   = document.getElementById("rg-cursor-coords");
-    this.#zoomEl     = document.getElementById("rg-zoom-level");
-    this.#blockCache = new Map();
+    this.#coordsEl = document.getElementById("rg-cursor-coords");
+    this.#zoomEl   = document.getElementById("rg-zoom-level");
 
     this.#registry = new RegionRegistry({
       onSelectionChange: (node, selectedIds) => {
@@ -56,7 +55,6 @@ export class RegionsActivity {
     );
 
     this.#initCanvas();
-    this.#initBlocksToggle();
   }
 
   activate({ mapName } = {}) {
@@ -104,37 +102,18 @@ export class RegionsActivity {
 
     this.#toolMgr.setTool("move");
 
+    this.#canvas.connectBlocksToggle(
+      document.getElementById("rg-toggle-blocks"),
+      document.getElementById("rg-blocks-label"),
+      () => api.fetchTopSurface(this.#mapName),
+    );
+
     document.addEventListener("keydown", (e) => {
       if (this.#el.hidden) return;
       if (e.target.matches("input,select,textarea")) return;
       if (e.key === "m" || e.key === "M") this.#toolMgr.setTool("move");
       if (e.key === "s" || e.key === "S") this.#toolMgr.setTool("select");
       if (e.key === "Escape")             this.#toolMgr.setTool("move");
-    });
-  }
-
-  #initBlocksToggle() {
-    const cb    = document.getElementById("rg-toggle-blocks");
-    const label = document.getElementById("rg-blocks-label");
-    cb?.addEventListener("change", async (e) => {
-      if (!e.target.checked) {
-        this.#canvas.setBlocksVisible(false);
-        label?.classList.remove("filter-chip--active");
-        return;
-      }
-      if (!this.#mapName) { e.target.checked = false; return; }
-      try {
-        if (!this.#blockCache.has(this.#mapName)) {
-          const data = await api.fetchTopSurface(this.#mapName);
-          this.#blockCache.set(this.#mapName, data);
-        }
-        this.#canvas.loadBlockLayer(this.#blockCache.get(this.#mapName));
-        this.#canvas.setBlocksVisible(true);
-        label?.classList.add("filter-chip--active");
-      } catch {
-        e.target.checked = false;
-        label?.classList.remove("filter-chip--active");
-      }
     });
   }
 
@@ -157,64 +136,26 @@ export class RegionsActivity {
       this.#canvas.render(
         {
           bounding_box: treeData.bounding_box,
-          islands: _normalizeIslands(islands ?? []),
+          islands: normalizeIslands(islands ?? []),
         },
-        _colorizeGroups(treeGroups),
+        treeGroups,
       );
 
-      // Register root nodes so canvas hit-test can fire onCanvasClick
       for (const group of treeGroups) {
-        for (const node of group.regions) {
-          if (node.id) this.#registry.register(node, null);
-        }
+        _registerNodes(group.regions, this.#registry);
       }
 
       this.#panel.build(treeGroups);
-
-      // Load block layer by default — Regions activity always opens in block view.
-      this.#loadBlockLayer(mapName);
+      this.#canvas.autoLoadBlocks();
     } catch (err) {
       console.error("RegionsActivity load failed:", err);
     }
   }
+}
 
-  async #loadBlockLayer(mapName) {
-    try {
-      if (!this.#blockCache.has(mapName)) {
-        const data = await api.fetchTopSurface(mapName);
-        this.#blockCache.set(mapName, data);
-      }
-      this.#canvas.loadBlockLayer(this.#blockCache.get(mapName));
-      this.#canvas.setBlocksVisible(true);
-      const cb    = document.getElementById("rg-toggle-blocks");
-      const label = document.getElementById("rg-blocks-label");
-      if (cb)    cb.checked = true;
-      label?.classList.add("filter-chip--active");
-    } catch {
-      // top-surface not available — stay in island view
-    }
+function _registerNodes(nodes, registry) {
+  for (const node of nodes) {
+    if (node.id) registry.register(node, null);
+    if (node.children?.length) _registerNodes(node.children, registry);
   }
-}
-
-const REGION_COLOR = "var(--canvas-region)";
-
-function _colorizeGroups(groups) {
-  function _colorNode(node) {
-    node.color = REGION_COLOR;
-    (node.children ?? []).forEach(_colorNode);
-    if (node.source) _colorNode(node.source);
-  }
-  return groups.map(g => ({ ...g, regions: g.regions.map(n => { _colorNode(n); return n; }) }));
-}
-
-function _normalizeIslands(islands) {
-  return (islands ?? []).map(isl => ({
-    ...isl,
-    simplified_polygon: isl.simplified_polygon ?? _geojsonToSimplified(isl.polygon),
-  }));
-}
-
-function _geojsonToSimplified(polygon) {
-  if (!polygon?.coordinates?.length) return null;
-  return { exterior: polygon.coordinates[0] || [], holes: polygon.coordinates.slice(1) };
 }

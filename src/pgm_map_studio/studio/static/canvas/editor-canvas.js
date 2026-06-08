@@ -94,6 +94,13 @@ export class EditorCanvas extends CanvasBase {
   #blockData  = null;
   #selectedNode = null;
 
+  // blocks toggle wiring (set by connectBlocksToggle)
+  #blocksCbEl      = null;
+  #blocksLabelEl   = null;
+  #blocksFetchFn   = null;
+  #blockFetchId    = 0;
+  #blockFetchPromise = null;
+
   constructor(svgEl_, wrapEl, callbacks = {}) {
     super(svgEl_, wrapEl);
     this.#callbacks = callbacks;
@@ -175,6 +182,9 @@ export class EditorCanvas extends CanvasBase {
     this.#nodeMap.clear();
     this.#visibilityMap.clear();
     this.#currentSelectedIds.clear();
+    this.#blockData        = null;
+    this.#blockFetchId++;
+    this.#blockFetchPromise = null;
     this._scale = 1;
     this._panX  = 0;
     this._panY  = 0;
@@ -260,7 +270,66 @@ export class EditorCanvas extends CanvasBase {
     if (this.#blockLayerEl && this.#toSvg) {
       while (this.#blockLayerEl.firstChild) this.#blockLayerEl.removeChild(this.#blockLayerEl.firstChild);
       this.#renderBlockImage(this.#blockLayerEl);
+      if (this.#showBlocks) this.#blockLayerEl.style.display = "";
     }
+  }
+
+  /**
+   * Wire a filter-chip checkbox + label to the block layer.
+   * fetchFn: async () => blockLayerData  (should close over mapName)
+   * Call this once in the activity constructor; call autoLoadBlocks() after each render().
+   */
+  connectBlocksToggle(cbEl, labelEl, fetchFn) {
+    this.#blocksCbEl    = cbEl;
+    this.#blocksLabelEl = labelEl;
+    this.#blocksFetchFn = fetchFn;
+    cbEl?.addEventListener("change", async (e) => {
+      if (!e.target.checked) {
+        this.setBlocksVisible(false);
+        labelEl?.classList.remove("filter-chip--active");
+        return;
+      }
+      try {
+        await this.#ensureBlockData();
+        this.setBlocksVisible(true);
+        labelEl?.classList.add("filter-chip--active");
+      } catch {
+        e.target.checked = false;
+        labelEl?.classList.remove("filter-chip--active");
+      }
+    });
+  }
+
+  /** Fetch (if needed) and show the block layer; pre-checks the toggle chip. */
+  async autoLoadBlocks() {
+    if (!this.#blocksFetchFn) return;
+    try {
+      await this.#ensureBlockData();
+      this.setBlocksVisible(true);
+      if (this.#blocksCbEl)    this.#blocksCbEl.checked = true;
+      this.#blocksLabelEl?.classList.add("filter-chip--active");
+    } catch {
+      // top-surface not available — stay in island view
+    }
+  }
+
+  /** Re-fetch block data after a render() reset, but only if the user had blocks on. */
+  async reloadBlocks() {
+    if (!this.#blocksFetchFn || !this.#showBlocks) return;
+    try {
+      await this.#ensureBlockData();
+    } catch { /* stay in island view */ }
+  }
+
+  async #ensureBlockData() {
+    if (this.#blockData) return;
+    if (!this.#blockFetchPromise) {
+      const fetchId = this.#blockFetchId;
+      this.#blockFetchPromise = this.#blocksFetchFn()
+        .then(data => { if (fetchId === this.#blockFetchId) this.loadBlockLayer(data); })
+        .finally(() => { this.#blockFetchPromise = null; });
+    }
+    await this.#blockFetchPromise;
   }
 
   setSelectedRegions(ids) {
@@ -449,7 +518,7 @@ export class EditorCanvas extends CanvasBase {
   #buildBlockLayer() {
     const g = svgEl("g", { id: "layer-blocks" });
     this.#blockLayerEl = g;
-    if (!this.#showBlocks) g.style.display = "none";
+    if (!this.#showBlocks || !this.#blockData) g.style.display = "none";
     if (this.#blockData && this.#toSvg) this.#renderBlockImage(g);
     return g;
   }
@@ -629,7 +698,7 @@ export class EditorCanvas extends CanvasBase {
     const node = this.#selectedNode;
     if (!node?.bounds || !this.#toSvg || node.is_negative || COMPOSITE_TYPES.has(node.type)) return;
     const { min_x, min_z, max_x, max_z } = node.bounds;
-    const color = node.color || "#ffffff";
+    const color = node.color ?? "var(--canvas-region)";
     const isCircular = ["cylinder", "circle", "sphere"].includes(node.type);
     if (isCircular) {
       const cx = (min_x + max_x) / 2, cz = (min_z + max_z) / 2;
@@ -668,7 +737,8 @@ export class EditorCanvas extends CanvasBase {
   }
 
   #regionGroup(region) {
-    const { id, type, color } = region;
+    const { id, type } = region;
+    const color = region.color ?? "var(--canvas-region)";
     const g = svgEl("g", { id: `region-${id}` });
     const title = svgEl("title");
     title.textContent = `${id} (${type})`;

@@ -8,8 +8,10 @@ import { TeamsPanel }     from "../panels/teams-panel.js";
 import { RegionRegistry } from "../region/region-registry.js";
 import { ToolManager }    from "../shared/tool-manager.js";
 import * as api           from "../api.js";
-import { chatColorHex }   from "../shared/game-colors.js";
-import { showToast }      from "../shared/ui-helpers.js";
+import { chatColorHex }         from "../shared/game-colors.js";
+import { showToast }            from "../shared/ui-helpers.js";
+import { normalizeIslands,
+         drawResultToPayload }  from "../shared/canvas-helpers.js";
 
 const REGION_COLOR = "var(--canvas-region)";
 
@@ -101,6 +103,12 @@ export class TeamsActivity {
 
     this.#toolMgr.setTool("move");
 
+    this.#canvas.connectBlocksToggle(
+      document.getElementById("pt-toggle-blocks"),
+      document.getElementById("pt-blocks-label"),
+      () => api.fetchTopSurface(this.#mapName),
+    );
+
     document.addEventListener("keydown", (e) => {
       if (this.#el.hidden) return;
       if (e.target.matches("input,select,textarea")) return;
@@ -121,12 +129,13 @@ export class TeamsActivity {
       const groups = _buildSpawnGroups(regionsData.regions, regionsData.categories);
       this.#canvas.render({
         bounding_box: regionsData.bounding_box,
-        islands: _normalizeIslands(islands || []),
+        islands: normalizeIslands(islands || []),
       }, groups);
       this.#registry.clear();
       this.#spawnNodes = groups.flatMap(g => g.regions);
       for (const node of this.#spawnNodes) this.#registry.register(node, null);
       this.#panel.setSpawnRegions(this.#spawnNodes);
+      this.#canvas.autoLoadBlocks();
     } catch (err) {
       console.error("TeamsActivity: failed to load map:", err);
     }
@@ -148,19 +157,10 @@ export class TeamsActivity {
 
   async #onRegionDraw(drawResult) {
     if (!this.#mapName) return;
-
-    let payload = { category: "spawn" };
-    if (drawResult.type === "cylinder") {
-      payload = { ...payload, type: "cylinder",
-        base_x: drawResult.base_x, base_z: drawResult.base_z, radius: drawResult.radius };
-    } else if (drawResult.type === "point") {
-      payload = { ...payload, type: "point",
-        x: drawResult.min_x + 0.5, z: drawResult.min_z + 0.5 };
-    } else {
-      return;
-    }
+    if (!["cylinder", "point"].includes(drawResult.type)) return;
 
     this.#toolMgr.setTool("move");
+    const payload = drawResultToPayload(drawResult, "spawn");
 
     try {
       const result = await api.createRegion(this.#mapName, payload);
@@ -185,19 +185,6 @@ export class TeamsActivity {
   }
 }
 
-// ── helpers ───────────────────────────────────────────────────────────────
-
-function _normalizeIslands(islands) {
-  return islands.map(isl => ({
-    ...isl,
-    simplified_polygon: isl.simplified_polygon ?? _geojsonToSimplified(isl.polygon),
-  }));
-}
-
-function _geojsonToSimplified(polygon) {
-  if (!polygon?.coordinates?.length) return null;
-  return { exterior: polygon.coordinates[0] || [], holes: polygon.coordinates.slice(1) };
-}
 
 function _buildSpawnGroups(regions, categories) {
   const spawnNodes = [];
