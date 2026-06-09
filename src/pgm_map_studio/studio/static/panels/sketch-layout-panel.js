@@ -226,8 +226,7 @@ export class SketchLayoutPanel {
     // Override indicator
     if (shape.override) {
       const shieldEl = document.createElement("span");
-      shieldEl.className = "geo-type-icon";
-      shieldEl.style.cssText = "color:var(--warning);margin-right:0";
+      shieldEl.className = "geo-type-icon geo-type-icon--warning geo-type-icon--flush";
       shieldEl.title = "Override";
       shieldEl.innerHTML = `<i data-lucide="shield"></i>`;
       row.appendChild(shieldEl);
@@ -298,26 +297,24 @@ export class SketchLayoutPanel {
     const labelEl = document.createElement("span");
     labelEl.className = "detail-label";
     labelEl.textContent = `s${shape.id.split("_").pop() ?? "?"}`;
-    const typeTag = document.createElement("span");
-    typeTag.className = "badge badge--neutral";
-    typeTag.textContent = shape.type[0].toUpperCase() + shape.type.slice(1);
-    header.append(iconEl, labelEl, typeTag);
-    this.#inspectorEl.appendChild(header);
-
-    // Row 2: operation + override badges
-    const opRow = document.createElement("div");
-    opRow.style.cssText = "display:flex;gap:var(--space-1);margin-bottom:var(--space-3)";
+    const badges = document.createElement("span");
+    badges.className = "detail-header-badges";
     const opTag = document.createElement("span");
     opTag.className = `badge ${shape.operation === "subtract" ? "badge--error" : "badge--success"}`;
     opTag.textContent = shape.operation;
-    opRow.appendChild(opTag);
+    badges.appendChild(opTag);
     if (shape.override) {
       const ovTag = document.createElement("span");
       ovTag.className = "badge badge--warning";
       ovTag.textContent = "override";
-      opRow.appendChild(ovTag);
+      badges.appendChild(ovTag);
     }
-    this.#inspectorEl.appendChild(opRow);
+    const typeTag = document.createElement("span");
+    typeTag.className = "badge badge--neutral";
+    typeTag.textContent = shape.type[0].toUpperCase() + shape.type.slice(1);
+    badges.appendChild(typeTag);
+    header.append(iconEl, labelEl, badges);
+    this.#inspectorEl.appendChild(header);
 
     // Coordinate table
     if (shape.type === "rectangle") {
@@ -462,7 +459,7 @@ export class SketchLayoutPanel {
 
   #makeCircleTable(shape) {
     const wrap = document.createElement("div");
-    wrap.style.cssText = "display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--font-base);font-variant-numeric:tabular-nums";
+    wrap.className = "coord-summary";
     wrap.innerHTML = `
       <div class="ctrl-row"><span class="coord-prefix">CX</span><span>${shape.center_x}</span></div>
       <div class="ctrl-row"><span class="coord-prefix">CZ</span><span>${shape.center_z}</span></div>
@@ -472,8 +469,7 @@ export class SketchLayoutPanel {
 
   #makeSimplifySection(shape) {
     const sec = document.createElement("div");
-    sec.className = "simplify-section";
-    sec.style.marginTop = "var(--space-3)";
+    sec.className = "simplify-section simplify-section--separated";
 
     const countRow = document.createElement("div");
     countRow.className = "simplify-row";
@@ -487,7 +483,7 @@ export class SketchLayoutPanel {
     tolInput.type = "number";
     tolInput.value = "50";
     tolInput.min = "1";
-    tolInput.style.width = "56px";
+    tolInput.classList.add("coord-input--compact");
     const tolUnit = document.createElement("span");
     tolUnit.className = "simplify-unit";
     tolUnit.textContent = "blocks²";
@@ -500,8 +496,7 @@ export class SketchLayoutPanel {
     sec.appendChild(tolRow);
 
     const btn = document.createElement("button");
-    btn.className = "action-btn";
-    btn.style.cssText = "width:100%;justify-content:center;margin-top:var(--space-2)";
+    btn.className = "action-btn action-btn--full action-btn--separated";
     btn.textContent = "Generalize";
     btn.addEventListener("click", () => {
       const tol = parseFloat(tolInput.value) || 50;

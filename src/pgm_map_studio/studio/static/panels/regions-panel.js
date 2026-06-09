@@ -48,8 +48,7 @@ export class RegionsPanel {
     const hasRegions = groups.some(g => g.regions.length > 0);
     if (!hasRegions) {
       const empty = document.createElement("div");
-      empty.className = "section-desc";
-      empty.style.padding = "16px 14px";
+      empty.className = "panel-empty-msg";
       empty.textContent = "No named regions found.";
       this.#listEl.appendChild(empty);
       return;

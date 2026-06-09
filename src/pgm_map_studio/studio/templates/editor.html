@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PGM Map Studio — Editor</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
 </head>
 <body>
 
-<div id="topbar">
+<div id="topbar" class="topbar">
   <a href="/" class="topbar-breadcrumb-home" title="Back to dashboard">
     <i data-lucide="house"></i>
     <span>Maps</span>
@@ -33,8 +33,8 @@
   </div>
 </div>
 
-<div id="main">
-  <nav id="activity-rail">
+<div id="main" class="app-body">
+  <nav id="activity-rail" class="activity-rail">
     <div class="activity-logo">
       <div class="activity-logo-box">
         <span class="activity-logo-pgm">pgm</span>
@@ -67,7 +67,7 @@
     </button>
   </nav>
 
-  <div id="activity-viewport">
+  <div id="activity-viewport" class="activity-viewport">
 
     <!-- Configure workspace -->
     <div id="cfg-workspace" class="workspace" hidden>
@@ -180,10 +180,10 @@
           <button id="cfg-prev-btn" class="action-btn" hidden>
             <i data-lucide="arrow-left"></i>
           </button>
-          <button id="cfg-next-btn" class="action-btn action-btn--primary" style="margin-left:auto">
+          <button id="cfg-next-btn" class="action-btn action-btn--primary action-btn--push-end">
             Next <i data-lucide="arrow-right"></i>
           </button>
-          <button id="cfg-finish-btn" class="action-btn action-btn--primary" style="margin-left:auto" hidden>
+          <button id="cfg-finish-btn" class="action-btn action-btn--primary action-btn--push-end" hidden>
             Continue to Overview <i data-lucide="arrow-right"></i>
           </button>
         </div>
@@ -206,7 +206,7 @@
             </div>
           </div>
         </div>
-        <svg id="cfg-canvas" style="width:100%;height:100%"></svg>
+        <svg id="cfg-canvas" class="canvas-surface"></svg>
       </div>
     </div><!-- /cfg-workspace -->
 
@@ -243,7 +243,7 @@
               <h2 class="section-title">Authors</h2>
               <button id="ov-add-author" class="action-btn">+ Add</button>
             </div>
-            <div id="ov-authors-list"></div>
+            <div id="ov-authors-list" class="author-list"></div>
           </section>
 
           <section class="panel-section">
@@ -251,7 +251,7 @@
               <h2 class="section-title">Contributors</h2>
               <button id="ov-add-contributor" class="action-btn">+ Add</button>
             </div>
-            <div id="ov-contributors-list"></div>
+            <div id="ov-contributors-list" class="author-list"></div>
           </section>
 
           <section class="panel-section">
@@ -263,9 +263,11 @@
         </div>
       </div>
 
-      <div class="sidebar-handle" id="ov-left-handle"></div>
+      <div class="sidebar-handle" id="ov-left-handle"
+           data-resize-target="ov-left" data-resize-side="left"
+           data-resize-min="200" data-resize-max="480"></div>
       <div id="ov-canvas-wrap" class="workspace-canvas">
-        <svg id="ov-map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="ov-map-svg" class="canvas-surface" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
     </div>
 
@@ -284,12 +286,14 @@
             <div class="section-header section-header--ruled">
               <h2 class="section-title">Spawn Regions</h2>
             </div>
-            <div id="pt-spawn-list" class="panel-list"></div>
+            <div id="pt-spawn-list" class="panel-list geo-icons-flush"></div>
           </section>
         </div>
       </div>
 
-      <div class="sidebar-handle" id="pt-left-handle"></div>
+      <div class="sidebar-handle" id="pt-left-handle"
+           data-resize-target="pt-left" data-resize-side="left"
+           data-resize-min="180" data-resize-max="420"></div>
 
       <div id="pt-canvas-wrap" class="workspace-canvas">
         <div id="pt-canvas-subbar" class="canvas-subbar">
@@ -308,7 +312,7 @@
             </button>
           </div>
           <label class="filter-chip" id="pt-blocks-label" title="Show top-surface block colours">
-            <input type="checkbox" id="pt-toggle-blocks" style="display:none">
+            <input type="checkbox" id="pt-toggle-blocks" class="control-input--hidden">
             Blocks
           </label>
           <div id="pt-cursor-coords" class="canvas-cursor"></div>
@@ -317,14 +321,16 @@
           </div>
         </div>
         <div id="pt-svg-area" class="svg-area">
-          <svg id="pt-map-svg" xmlns="http://www.w3.org/2000/svg">
+          <svg id="pt-map-svg" class="map-canvas-svg" xmlns="http://www.w3.org/2000/svg">
             <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
                   fill="var(--text-muted)" font-size="14">Loading map…</text>
           </svg>
         </div>
       </div>
 
-      <div class="sidebar-handle" id="pt-right-handle"></div>
+      <div class="sidebar-handle" id="pt-right-handle"
+           data-resize-target="pt-right" data-resize-side="right"
+           data-resize-min="240" data-resize-max="480"></div>
 
       <div id="pt-right" class="workspace-inspector">
         <div id="pt-right-scroll" class="workspace-scroll">
@@ -371,7 +377,7 @@
             </section>
           </div>
 
-          <div id="pt-spawn-inspector" hidden>
+          <div id="pt-spawn-inspector" class="panel-stack" hidden>
             <section class="panel-section" id="pt-spawn-region-detail"></section>
             <section class="panel-section" id="pt-spawn-assignment">
               <div class="section-header section-header--ruled">
@@ -390,7 +396,7 @@
                 <input id="pt-spawn-kit" class="field-input" type="text" placeholder="e.g. spawn-kit" spellcheck="false"/>
               </div>
               <div class="panel-actions">
-                <button id="pt-spawn-unlink-btn" class="action-btn action-btn--danger" style="flex:1">Remove Spawn Link</button>
+                <button id="pt-spawn-unlink-btn" class="action-btn action-btn--danger action-btn--fill">Remove Spawn Link</button>
               </div>
             </section>
           </div>
@@ -448,13 +454,15 @@
           <button id="br-prev-btn" class="action-btn" hidden>
             <i data-lucide="arrow-left"></i> Back
           </button>
-          <button id="br-next-btn" class="action-btn action-btn--primary" style="margin-left:auto">
+          <button id="br-next-btn" class="action-btn action-btn--primary action-btn--push-end">
             Next <i data-lucide="arrow-right"></i>
           </button>
         </div>
       </div>
 
-      <div class="sidebar-handle" id="br-left-handle"></div>
+      <div class="sidebar-handle" id="br-left-handle"
+           data-resize-target="br-left" data-resize-side="left"
+           data-resize-min="200" data-resize-max="480"></div>
 
       <!-- Step 1 canvas: side view -->
       <div id="br-canvas-step1" class="workspace-canvas">
@@ -483,7 +491,7 @@
             <button id="br-tool-point"     class="draw-tool-btn" title="Point (P)"><i data-lucide="dot"></i></button>
           </div>
           <label class="filter-chip" id="br2-blocks-label" title="Show top-surface block colours">
-            <input type="checkbox" id="br2-toggle-blocks" style="display:none">
+            <input type="checkbox" id="br2-toggle-blocks" class="control-input--hidden">
             Blocks
           </label>
           <div id="br-cursor-coords" class="canvas-cursor"></div>
@@ -500,7 +508,9 @@
       </div>
 
       <!-- Right inspector (step 2 only) -->
-      <div class="sidebar-handle" id="br-right-handle" hidden></div>
+      <div class="sidebar-handle" id="br-right-handle"
+           data-resize-target="br-right" data-resize-side="right"
+           data-resize-min="240" data-resize-max="480" hidden></div>
       <div id="br-right" class="workspace-inspector" hidden>
         <div class="workspace-scroll">
           <div id="br-region-detail" class="panel-section"></div>
@@ -526,7 +536,9 @@
         </div>
       </div>
 
-      <div class="sidebar-handle" id="rg-left-handle"></div>
+      <div class="sidebar-handle" id="rg-left-handle"
+           data-resize-target="rg-left" data-resize-side="left"
+           data-resize-min="180" data-resize-max="480"></div>
 
       <div id="rg-canvas-wrap" class="workspace-canvas">
         <div id="rg-canvas-subbar" class="canvas-subbar">
@@ -539,7 +551,7 @@
             </button>
           </div>
           <label class="filter-chip" id="rg-blocks-label" title="Show top-surface block colours">
-            <input type="checkbox" id="rg-toggle-blocks" style="display:none">
+            <input type="checkbox" id="rg-toggle-blocks" class="control-input--hidden">
             Blocks
           </label>
           <div id="rg-cursor-coords" class="canvas-cursor"></div>
@@ -555,7 +567,9 @@
         </div>
       </div>
 
-      <div class="sidebar-handle" id="rg-right-handle"></div>
+      <div class="sidebar-handle" id="rg-right-handle"
+           data-resize-target="rg-right" data-resize-side="right"
+           data-resize-min="240" data-resize-max="480"></div>
 
       <div id="rg-right" class="workspace-inspector">
         <div id="rg-right-scroll" class="workspace-scroll">
@@ -570,38 +584,5 @@
 
 <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
 <script type="module" src="{{ url_for('static', filename='main.js') }}"></script>
-<script>
-(function() {
-  function resizeSidebar(handle, sidebar, side, min, max) {
-    handle.addEventListener("mousedown", function(e) {
-      e.preventDefault();
-      handle.classList.add("sidebar-handle--dragging");
-      document.body.style.userSelect = "none";
-      document.body.style.cursor = "ew-resize";
-      var startX = e.clientX, startW = sidebar.offsetWidth;
-      function onMove(e) {
-        var delta = side === "left" ? e.clientX - startX : startX - e.clientX;
-        sidebar.style.width = Math.max(min, Math.min(max, startW + delta)) + "px";
-      }
-      function onUp() {
-        handle.classList.remove("sidebar-handle--dragging");
-        document.body.style.userSelect = "";
-        document.body.style.cursor = "";
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-      }
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    });
-  }
-  resizeSidebar(document.getElementById("ov-left-handle"), document.getElementById("ov-left"), "left", 200, 480);
-  resizeSidebar(document.getElementById("pt-left-handle"), document.getElementById("pt-left"), "left", 180, 420);
-  resizeSidebar(document.getElementById("pt-right-handle"), document.getElementById("pt-right"), "right", 240, 480);
-  resizeSidebar(document.getElementById("br-left-handle"),  document.getElementById("br-left"),  "left",  200, 480);
-  resizeSidebar(document.getElementById("br-right-handle"), document.getElementById("br-right"), "right", 240, 480);
-  resizeSidebar(document.getElementById("rg-left-handle"),  document.getElementById("rg-left"),  "left",  180, 480);
-  resizeSidebar(document.getElementById("rg-right-handle"), document.getElementById("rg-right"), "right", 240, 480);
-}());
-</script>
 </body>
 </html>

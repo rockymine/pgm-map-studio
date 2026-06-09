@@ -341,8 +341,7 @@ export class TeamsPanel {
       iconSpan.style.color = isObserver ? chatColorHex("aqua") : node.color;
       iconSpan.innerHTML = typeIcon(node.type, 14);
       const labelSpan = document.createElement("span");
-      labelSpan.className = "detail-label";
-      labelSpan.style.fontFamily = "ui-monospace, monospace";
+      labelSpan.className = "detail-label detail-label--mono";
       labelSpan.textContent = node.id;
       const typeBadge = document.createElement("span");
       typeBadge.className = "badge badge--neutral";
@@ -361,7 +360,6 @@ export class TeamsPanel {
       idInput.type = "text";
       idInput.spellcheck = false;
       idInput.value = node.id;
-      idInput.style.fontFamily = "ui-monospace, monospace";
       idField.append(idLabel, idInput);
       detailEl.appendChild(idField);
 
@@ -445,9 +443,10 @@ export class TeamsPanel {
       }
 
       // Delete region button
+      const deleteFooter = document.createElement("div");
+      deleteFooter.className = "section-footer section-footer--separated";
       const deleteBtn = document.createElement("button");
-      deleteBtn.className = "action-btn action-btn--danger";
-      deleteBtn.style.cssText = "margin-bottom:var(--space-4);width:100%";
+      deleteBtn.className = "action-btn action-btn--danger action-btn--fill";
       deleteBtn.textContent = "Delete Region";
       deleteBtn.addEventListener("click", async () => {
         if (!this._mapName) return;
@@ -461,7 +460,8 @@ export class TeamsPanel {
           showToast(`Delete failed: ${err.message}`, "error");
         }
       }, { signal: sig.signal });
-      detailEl.appendChild(deleteBtn);
+      deleteFooter.appendChild(deleteBtn);
+      detailEl.appendChild(deleteFooter);
     }
 
     // ── Spawn assignment ──────────────────────────────────────────────────
