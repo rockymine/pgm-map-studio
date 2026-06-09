@@ -67,7 +67,21 @@ All text and interactive elements must meet **WCAG AA** contrast minimums:
 
 ## Dev server
 
-The studio runs on **port 7892** via the `run-studio` skill.
+Use the project scripts — not raw `fuser`/`Popen` one-liners.
+
+**VirtualBox / Claude (Linux VM) — port 7892, binds to `0.0.0.0`:**
+```bash
+./tools/studio-dev.sh restart   # or start / stop / status
+```
+Reachable from Windows host at `http://localhost:7892/`. The `/run-studio` skill wraps this script.
+
+**Windows / Codex local — port 7893, binds to `127.0.0.1`:**
+```powershell
+.\tools\studio-dev.ps1 restart   # or start / stop / status
+```
+Reachable at `http://127.0.0.1:7893/`. No firewall prompt needed.
+
+PID and log files go to `.tmp/studio-dev-<port>.pid` / `.tmp/studio-dev-<port>.log`.
 
 **When to restart vs when to just reload:**
 
