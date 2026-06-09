@@ -14,7 +14,7 @@ import { RegionInspector }   from "../panels/region-inspector.js";
 import { RegionRegistry }    from "../region/region-registry.js";
 import { ToolManager }                        from "../shared/tool-manager.js";
 import { showToast }                          from "../shared/ui-helpers.js";
-import { normalizeIslands, drawResultToPayload } from "../shared/canvas-helpers.js";
+import { normalizeIslands, drawResultToPayload, makeBoundsHandlers } from "../shared/canvas-helpers.js";
 import * as api                               from "../api.js";
 
 export class BuildRegionsActivity {
@@ -94,6 +94,11 @@ export class BuildRegionsActivity {
           } catch (err) {
             showToast(`Delete failed: ${err.message}`, "error");
           }
+        },
+        onPatch: async (regionId, payload) => {
+          if (!this.#mapName) return;
+          await api.patchRegion(this.#mapName, regionId, payload);
+          await this.#reloadBuildRegion(this.#mapName, payload.id ?? regionId);
         },
       },
     );
@@ -177,6 +182,11 @@ export class BuildRegionsActivity {
         if (!this.#mapName) return;
         await this.#createRegionFromDraw(drawResult);
       },
+      ...makeBoundsHandlers(
+        () => this.#mapName,
+        (id) => this.#reloadBuildRegion(this.#mapName, id),
+        (node, nb) => this.#editorCanvas.refreshRegionBounds(node.id, nb),
+      ),
     });
 
     this.#toolMgr = new ToolManager(this.#editorCanvas, {
@@ -232,7 +242,7 @@ export class BuildRegionsActivity {
     }
   }
 
-  async #reloadBuildRegion(mapName) {
+  async #reloadBuildRegion(mapName, selectId = null) {
     this.#registry.clear();
     this.#regionsPanel.build([]);
     this.#inspector.clear();
@@ -258,6 +268,7 @@ export class BuildRegionsActivity {
       }
 
       this.#regionsPanel.build(groups);
+      if (selectId) this.#registry.select(selectId);
       if (this.#buildRegionFirstLoad) {
         this.#editorCanvas.autoLoadBlocks();
         this.#buildRegionFirstLoad = false;

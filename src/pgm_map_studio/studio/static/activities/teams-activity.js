@@ -11,7 +11,8 @@ import * as api           from "../api.js";
 import { chatColorHex }         from "../shared/game-colors.js";
 import { showToast }            from "../shared/ui-helpers.js";
 import { normalizeIslands,
-         drawResultToPayload }  from "../shared/canvas-helpers.js";
+         drawResultToPayload,
+         makeBoundsHandlers }  from "../shared/canvas-helpers.js";
 
 const REGION_COLOR = "var(--canvas-region)";
 
@@ -86,6 +87,11 @@ export class TeamsActivity {
         else      this.#registry.deselect();
       },
       onRegionDraw: (drawResult) => this.#onRegionDraw(drawResult),
+      ...makeBoundsHandlers(
+        () => this.#mapName,
+        (id) => this.#reloadRegions(id),
+        (node, nb) => this.#canvas.refreshRegionBounds(node.id, nb),
+      ),
     });
 
     // Wire draw tool buttons via ToolManager

@@ -434,6 +434,22 @@ export class EditorCanvas extends CanvasBase {
     this.#repaint();
   }
 
+  refreshRegionBounds(nodeId, newBounds) {
+    const node = this.#nodeMap.get(nodeId);
+    if (!node || !this.#toSvg) return;
+    node.bounds = newBounds;
+    const entry = this.#shapeMap.get(nodeId);
+    const groupEl = this.#regionGroupMap.get(nodeId);
+    if (!entry || !groupEl) return;
+    const color = node.color ?? "var(--canvas-region)";
+    const newShape = renderShape(node.type, newBounds, this.#toSvg, this.#regionAttrs(color));
+    if (newShape) {
+      groupEl.replaceChild(newShape, entry.shape);
+      this.#shapeMap.set(nodeId, { shape: newShape, type: node.type });
+    }
+    this.#updateOverlay();
+  }
+
   refreshRegions(groups) {
     this.#groups = groups || [];
     this.#addedNodes = [];

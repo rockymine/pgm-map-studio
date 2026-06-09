@@ -1,9 +1,13 @@
 /**
  * canvas-helpers.js — shared utilities for activity→canvas wiring.
  *
- * normalizeIslands   — coerce island polygon to simplified_polygon format
+ * normalizeIslands    — coerce island polygon to simplified_polygon format
  * drawResultToPayload — convert an EditorCanvas drawResult into a createRegion payload
+ * makeBoundsHandlers  — factory for onBoundsChange / onBoundsSave callbacks (drag-resize)
  */
+
+import * as api      from "../api.js";
+import { showToast } from "./ui-helpers.js";
 
 /**
  * Ensure every island has a simplified_polygon (exterior/holes) that
@@ -44,4 +48,42 @@ export function drawResultToPayload(drawResult, category, extra = {}) {
       // rectangle, cuboid
       return { ...base, type, min_x, min_z, max_x, max_z };
   }
+}
+
+/**
+ * Factory for EditorCanvas drag-resize callbacks.
+ *
+ * Usage (inside any activity that owns an EditorCanvas):
+ *
+ *   const boundsHandlers = makeBoundsHandlers(
+ *     () => this.#mapName,
+ *     (selectId) => this.#reloadRegions(selectId),
+ *     (node, nb) => this.#canvas.refreshRegionBounds(node.id, nb),  // optional live feedback
+ *   );
+ *   this.#canvas = new EditorCanvas(svgEl, wrapEl, {
+ *     ...boundsHandlers,
+ *     ...otherCallbacks,
+ *   });
+ *
+ * @param {() => string|null} getMapName  — returns current mapName (checked at call time)
+ * @param {(selectId?: string) => void} reloadFn — called after a successful save to refresh
+ * @param {(node, newBounds) => void} [liveUpdate] — optional visual update during drag
+ */
+export function makeBoundsHandlers(getMapName, reloadFn, liveUpdate = null) {
+  return {
+    onBoundsChange: (node, newBounds) => {
+      node.bounds = newBounds;
+      liveUpdate?.(node, newBounds);
+    },
+    onBoundsSave: async (node, newBounds) => {
+      const mapName = getMapName();
+      if (!mapName || !node.id) return;
+      try {
+        await api.patchRegion(mapName, node.id, { bounds: newBounds });
+        reloadFn(node.id);
+      } catch (err) {
+        showToast(`Resize failed: ${err.message}`, "error");
+      }
+    },
+  };
 }
