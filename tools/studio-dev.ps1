@@ -2,7 +2,7 @@ param(
     [ValidateSet("start", "stop", "restart", "status")]
     [string]$Command = "restart",
 
-    [string]$HostAddress = "127.0.0.1",
+    [string]$HostAddress = "localhost",
 
     [int]$Port = 7893
 )

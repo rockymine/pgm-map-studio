@@ -1,7 +1,7 @@
 """Start, stop, restart, and inspect the PGM Map Studio dev server.
 
 Examples:
-    python tools/run_studio_dev.py start --host 127.0.0.1 --port 7893
+    python tools/run_studio_dev.py start --host localhost --port 7893
     python tools/run_studio_dev.py restart --host 0.0.0.0 --port 7892
     python tools/run_studio_dev.py stop --port 7893
     python tools/run_studio_dev.py status --port 7893
@@ -32,6 +32,26 @@ def log_file(port: int) -> Path:
 
 
 def is_process_running(pid: int) -> bool:
+    if os.name == "nt":
+        import ctypes
+
+        process_query_limited_information = 0x1000
+        still_active = 259
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(
+            process_query_limited_information, False, pid
+        )
+        if not handle:
+            return False
+        try:
+            exit_code = ctypes.c_ulong()
+            return bool(
+                kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
+                and exit_code.value == still_active
+            )
+        finally:
+            kernel32.CloseHandle(handle)
+
     try:
         os.kill(pid, 0)
     except OSError:
@@ -87,11 +107,12 @@ def start_server(host: str, port: int) -> None:
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
     )
 
-    pid_file(port).write_text(str(process.pid), encoding="utf-8")
-
     if wait_until_ready(host, port):
+        listener_pids = _pids_on_port(port)
+        server_pid = listener_pids[0] if listener_pids else process.pid
+        pid_file(port).write_text(str(server_pid), encoding="utf-8")
         print(f"Started PGM Map Studio at http://{host}:{port}/")
-        print(f"PID: {process.pid}")
+        print(f"PID: {server_pid}")
         print(f"Log: {log_path}")
     else:
         print(f"Started process {process.pid}, but server did not become ready in time.")
@@ -109,13 +130,7 @@ def _pids_on_port(port: int) -> list[int]:
                 stderr=subprocess.DEVNULL,
                 text=True,
             )
-            for line in out.splitlines():
-                if f":{port} " in line and "LISTENING" in line:
-                    parts = line.split()
-                    try:
-                        pids.append(int(parts[-1]))
-                    except ValueError:
-                        pass
+            pids.extend(_parse_windows_netstat_pids(out, port))
         else:
             out = subprocess.check_output(
                 ["ss", "-tlnp", f"sport = :{port}"],
@@ -132,6 +147,34 @@ def _pids_on_port(port: int) -> list[int]:
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
     return pids
+
+
+def _parse_windows_netstat_pids(output: str, port: int) -> list[int]:
+    """Parse TCP listeners without depending on the localized state label."""
+    pids: set[int] = set()
+    for line in output.splitlines():
+        parts = line.split()
+        if len(parts) != 5 or parts[0].upper() != "TCP":
+            continue
+
+        local_address, remote_address = parts[1], parts[2]
+        if not local_address.endswith(f":{port}") or not remote_address.endswith(":0"):
+            continue
+
+        try:
+            pids.add(int(parts[-1]))
+        except ValueError:
+            continue
+    return sorted(pids)
+
+
+def _wait_until_stopped(port: int, timeout_seconds: float = 5.0) -> bool:
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        if not _pids_on_port(port):
+            return True
+        time.sleep(0.1)
+    return not _pids_on_port(port)
 
 
 def stop_server(port: int) -> None:
@@ -178,6 +221,11 @@ def stop_server(port: int) -> None:
                         os.kill(p, signal.SIGKILL)
                     except OSError:
                         pass
+        if not _wait_until_stopped(port):
+            listeners = _pids_on_port(port)
+            raise RuntimeError(
+                f"Server did not stop; port {port} is still owned by {listeners}"
+            )
     finally:
         path.unlink(missing_ok=True)
 
@@ -200,7 +248,7 @@ def status_server(host: str, port: int) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["start", "stop", "restart", "status"])
-    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--host", default="localhost")
     parser.add_argument("--port", type=int, default=7893)
     args = parser.parse_args()
 
