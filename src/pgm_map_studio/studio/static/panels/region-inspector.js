@@ -1,9 +1,13 @@
 /**
- * RegionInspector — read-only right panel for the Regions activity.
- * Follows the same header + field/coord-field pattern as TeamsPanel.
+ * RegionInspector — region detail panel used by multiple activities.
+ *
+ * Read-only by default. Pass `onPatch` to enable ID rename and editable
+ * coordinate fields; the callback receives (regionId, payload) where payload
+ * is { id } for renames or { coords } for coordinate updates.
  */
 
-import { typeIcon } from "../region/region-types.js";
+import { typeIcon }  from "../region/region-types.js";
+import { showToast } from "../shared/ui-helpers.js";
 
 function fmt(v) {
   if (v == null) return "—";
@@ -14,18 +18,27 @@ export class RegionInspector {
   #el;
   #onSelect;
   #onDelete;
+  #onPatch;
+  #abort = null;
 
-  constructor(el, { onSelect, onDelete } = {}) {
-    this.#el = el;
+  constructor(el, { onSelect, onDelete, onPatch } = {}) {
+    this.#el      = el;
     this.#onSelect = onSelect ?? null;
     this.#onDelete = onDelete ?? null;
+    this.#onPatch  = onPatch  ?? null;
     this.clear();
   }
 
   show(node) {
+    this.#abort?.abort();
+    this.#abort = new AbortController();
+    const sig = { signal: this.#abort.signal };
+
     while (this.#el.firstChild) this.#el.removeChild(this.#el.firstChild);
 
-    // ── detail-header: icon + id + type badge ─────────────────────────────
+    const editable = !!this.#onPatch;
+
+    // ── detail-header: icon + id label + type badge ───────────────────────
     const header = document.createElement("div");
     header.className = "detail-header";
 
@@ -44,53 +57,123 @@ export class RegionInspector {
     header.append(iconSpan, labelSpan, typeBadge);
     this.#el.appendChild(header);
 
-    // ── coord fields (type-specific, readonly) ────────────────────────────
+    // ── ID field (editable when onPatch provided, read-only otherwise) ───────
+    if (node.id) {
+      const idField = document.createElement("div");
+      idField.className = "field";
+      const idLabel = document.createElement("label");
+      idLabel.className = "field-label";
+      idLabel.textContent = "ID";
+      const idInput = document.createElement("input");
+      idInput.className = "field-input";
+      idInput.type = "text";
+      idInput.spellcheck = false;
+      idInput.value = node.id;
+      if (editable) {
+        idInput.addEventListener("change", async () => {
+          const newId = idInput.value.trim();
+          if (!newId || newId === node.id) { idInput.value = node.id; return; }
+          try {
+            await this.#onPatch(node.id, { id: newId });
+          } catch (err) {
+            showToast(`Rename failed: ${err.message}`, "error");
+            idInput.value = node.id;
+          }
+        }, sig);
+      } else {
+        idInput.readOnly = true;
+        idInput.tabIndex = -1;
+      }
+      idField.append(idLabel, idInput);
+      this.#el.appendChild(idField);
+    }
+
+    // ── coord fields (type-specific) ──────────────────────────────────────
     const coords = node.coords ?? {};
     const type   = node.type;
+    const coordInputs = [];  // collected when editable for batch save
 
     if (type === "cuboid" || type === "rectangle") {
-      this.#el.appendChild(_coordField("Min", _coordRow(type === "cuboid"
-        ? [["X", coords.min_x], ["Y", coords.min_y], ["Z", coords.min_z]]
-        : [["X", coords.min_x], ["Z", coords.min_z]])));
-      this.#el.appendChild(_coordField("Max", _coordRow(type === "cuboid"
-        ? [["X", coords.max_x], ["Y", coords.max_y], ["Z", coords.max_z]]
-        : [["X", coords.max_x], ["Z", coords.max_z]])));
+      const minPairs = type === "cuboid"
+        ? [["X", coords.min_x, "min_x"], ["Y", coords.min_y, "min_y"], ["Z", coords.min_z, "min_z"]]
+        : [["X", coords.min_x, "min_x"], ["Z", coords.min_z, "min_z"]];
+      const maxPairs = type === "cuboid"
+        ? [["X", coords.max_x, "max_x"], ["Y", coords.max_y, "max_y"], ["Z", coords.max_z, "max_z"]]
+        : [["X", coords.max_x, "max_x"], ["Z", coords.max_z, "max_z"]];
+      const { el: minEl, inputs: minIns } = _coordRow(minPairs, editable);
+      const { el: maxEl, inputs: maxIns } = _coordRow(maxPairs, editable);
+      this.#el.appendChild(_field("Min", minEl));
+      this.#el.appendChild(_field("Max", maxEl));
+      coordInputs.push(...minIns, ...maxIns);
 
     } else if (type === "cylinder") {
-      this.#el.appendChild(_coordField("Base", _coordRow([
-        ["X", coords.base_x], ["Y", coords.base_y], ["Z", coords.base_z],
-      ])));
-      this.#el.appendChild(_coordField("Dimensions", _coordRow([
-        ["R", coords.radius], ["H", coords.height],
-      ])));
+      const basePairs = [
+        ["X", coords.base_x, "base_x"], ["Y", coords.base_y, "base_y"], ["Z", coords.base_z, "base_z"],
+      ];
+      const dimPairs = [
+        ["R", coords.radius, "radius", 0.5], ["H", coords.height, "height", 1],
+      ];
+      const { el: baseEl, inputs: baseIns } = _coordRow(basePairs, editable);
+      const { el: dimEl,  inputs: dimIns  } = _coordRow(dimPairs, editable);
+      this.#el.appendChild(_field("Base", baseEl));
+      this.#el.appendChild(_field("Dimensions", dimEl));
+      coordInputs.push(...baseIns, ...dimIns);
 
     } else if (type === "circle") {
-      this.#el.appendChild(_coordField("Center", _coordRow([
-        ["X", coords.center_x], ["Z", coords.center_z],
-      ])));
-      this.#el.appendChild(_coordField("Radius", _coordRow([["R", coords.radius]])));
+      const centerPairs = [
+        ["X", coords.center_x, "center_x"], ["Z", coords.center_z, "center_z"],
+      ];
+      const { el: cEl, inputs: cIns } = _coordRow(centerPairs, editable);
+      const { el: rEl, inputs: rIns } = _coordRow([["R", coords.radius, "radius", 0.5]], editable);
+      this.#el.appendChild(_field("Center", cEl));
+      this.#el.appendChild(_field("Radius", rEl));
+      coordInputs.push(...cIns, ...rIns);
 
     } else if (type === "sphere") {
-      this.#el.appendChild(_coordField("Origin", _coordRow([
-        ["X", coords.origin_x], ["Y", coords.origin_y], ["Z", coords.origin_z],
-      ])));
-      this.#el.appendChild(_coordField("Radius", _coordRow([["R", coords.radius]])));
+      const originPairs = [
+        ["X", coords.origin_x, "origin_x"], ["Y", coords.origin_y, "origin_y"], ["Z", coords.origin_z, "origin_z"],
+      ];
+      const { el: oEl, inputs: oIns } = _coordRow(originPairs, editable);
+      const { el: rEl, inputs: rIns } = _coordRow([["R", coords.radius, "radius", 0.5]], editable);
+      this.#el.appendChild(_field("Origin", oEl));
+      this.#el.appendChild(_field("Radius", rEl));
+      coordInputs.push(...oIns, ...rIns);
 
     } else if (type === "point" || type === "block") {
-      this.#el.appendChild(_coordField("Position", _coordRow([
-        ["X", coords.x ?? coords.pos_x],
-        ["Y", coords.y ?? coords.pos_y],
-        ["Z", coords.z ?? coords.pos_z],
-      ])));
+      const posPairs = [
+        ["X", coords.x ?? coords.pos_x, "x"],
+        ["Y", coords.y ?? coords.pos_y, "y"],
+        ["Z", coords.z ?? coords.pos_z, "z"],
+      ];
+      const { el: posEl, inputs: posIns } = _coordRow(posPairs, editable);
+      this.#el.appendChild(_field("Position", posEl));
+      coordInputs.push(...posIns);
 
     } else if (node.bounds) {
-      // Composite / unknown types: show 2D bounds
-      this.#el.appendChild(_coordField("Min", _coordRow([
-        ["X", node.bounds.min_x], ["Z", node.bounds.min_z],
-      ])));
-      this.#el.appendChild(_coordField("Max", _coordRow([
-        ["X", node.bounds.max_x], ["Z", node.bounds.max_z],
-      ])));
+      const { el: minEl } = _coordRow([
+        ["X", node.bounds.min_x, "min_x"], ["Z", node.bounds.min_z, "min_z"],
+      ], false);
+      const { el: maxEl } = _coordRow([
+        ["X", node.bounds.max_x, "max_x"], ["Z", node.bounds.max_z, "max_z"],
+      ], false);
+      this.#el.appendChild(_field("Min", minEl));
+      this.#el.appendChild(_field("Max", maxEl));
+    }
+
+    // Attach coord save listeners when editable
+    if (editable && coordInputs.length) {
+      const _saveCoords = async () => {
+        const c = {};
+        for (const inp of coordInputs) c[inp.dataset.key] = parseFloat(inp.value);
+        try {
+          await this.#onPatch(node.id, { coords: c });
+        } catch (err) {
+          showToast(`Coord update failed: ${err.message}`, "error");
+        }
+      };
+      for (const inp of coordInputs) {
+        inp.addEventListener("change", _saveCoords, sig);
+      }
     }
 
     // ── delete action ──────────────────────────────────────────────────────
@@ -100,7 +183,7 @@ export class RegionInspector {
       const del = document.createElement("button");
       del.className = "action-btn action-btn--danger action-btn--fill";
       del.textContent = "Delete Region";
-      del.addEventListener("click", () => this.#onDelete(node));
+      del.addEventListener("click", () => this.#onDelete(node), sig);
       footer.appendChild(del);
       this.#el.appendChild(footer);
     }
@@ -126,15 +209,15 @@ export class RegionInspector {
         icon.className = "geo-type-icon detail-icon--muted";
         icon.innerHTML = typeIcon(kid.type, 13);
 
-        const id = document.createElement("span");
-        id.className = "list-label list-label--mono";
-        id.textContent = kid.id || `(${kid.type})`;
+        const idEl = document.createElement("span");
+        idEl.className = "list-label list-label--mono";
+        idEl.textContent = kid.id || `(${kid.type})`;
 
-        const type = document.createElement("span");
-        type.className = "list-tag";
-        type.textContent = kid.type;
+        const typeEl = document.createElement("span");
+        typeEl.className = "list-tag";
+        typeEl.textContent = kid.type;
 
-        row.append(icon, id, type);
+        row.append(icon, idEl, typeEl);
         if (this.#onSelect && kid.id) {
           row.addEventListener("click", () => this.#onSelect(kid));
         }
@@ -145,6 +228,8 @@ export class RegionInspector {
   }
 
   clear() {
+    this.#abort?.abort();
+    this.#abort = null;
     while (this.#el.firstChild) this.#el.removeChild(this.#el.firstChild);
     const empty = document.createElement("div");
     empty.className = "panel-empty-msg";
@@ -155,20 +240,26 @@ export class RegionInspector {
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
-function _coordField(label, ctrlRow) {
+function _field(label, ctrlEl) {
   const field = document.createElement("div");
   field.className = "field";
   const lbl = document.createElement("label");
   lbl.className = "field-label";
   lbl.textContent = label;
-  field.append(lbl, ctrlRow);
+  field.append(lbl, ctrlEl);
   return field;
 }
 
-function _coordRow(pairs) {
+/**
+ * Build a ctrl-row of coord cells.
+ * pairs: [prefix, value, dataKey?, step?]
+ * Returns { el, inputs } — inputs is empty when not editable.
+ */
+function _coordRow(pairs, editable = false) {
   const row = document.createElement("div");
   row.className = "ctrl-row";
-  for (const [prefix, val] of pairs) {
+  const inputs = [];
+  for (const [prefix, val, key, step = 1] of pairs) {
     const cell = document.createElement("div");
     cell.className = "coord-field";
     const pre = document.createElement("span");
@@ -177,11 +268,17 @@ function _coordRow(pairs) {
     const inp = document.createElement("input");
     inp.className = "coord-input";
     inp.type = "number";
-    inp.readOnly = true;
-    inp.tabIndex = -1;
+    if (editable && key) {
+      inp.step = step;
+      inp.dataset.key = key;
+      inputs.push(inp);
+    } else {
+      inp.readOnly = true;
+      inp.tabIndex = -1;
+    }
     inp.value = fmt(val);
     cell.append(pre, inp);
     row.appendChild(cell);
   }
-  return row;
+  return { el: row, inputs };
 }
