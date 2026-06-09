@@ -54,7 +54,7 @@ def to_dict(xml_data: MapXml) -> dict[str, Any]:
         'teams': [_encode_team(t) for t in xml_data.teams],
         'spawns': [_encode_spawn(s) for s in xml_data.spawns],
         'observer_spawn': _encode_spawn(xml_data.observer_spawn) if xml_data.observer_spawn else None,
-        'wools': [_encode_wool(w) for w in xml_data.wools],
+        'wools': _encode_wools_grouped(xml_data.wools),
         'spawners': [_encode_spawner(s) for s in xml_data.spawners],
         'renewables': [_encode_renewable(r) for r in xml_data.renewables],
         'block_drop_rules': [_encode_block_drop_rule(r) for r in xml_data.block_drop_rules],
@@ -243,18 +243,31 @@ def _encode_spawn(spawn: Spawn) -> dict[str, Any]:
     return result
 
 
-def _encode_wool(wool: Wool) -> dict[str, Any]:
-    result: dict[str, Any] = {
-        'team': wool.team,
-        'color': wool.color,
-        'location': {'x': wool.location[0], 'y': wool.location[1], 'z': wool.location[2]},
-        'monument': {
-            'x': wool.monument[0], 'y': wool.monument[1], 'z': wool.monument[2],
-            **({'region_id': wool.monument_region_id} if wool.monument_region_id else {}),
-        },
-        'wool_room_region': wool.wool_room_region,
-    }
-    return result
+def _encode_wools_grouped(wools: list[Wool]) -> list[dict[str, Any]]:
+    """Serialize wools grouped by color into the studio's canonical format:
+    [{id, color, location, wool_room_region, monuments: [{id, team, location, monument_region}]}].
+    """
+    import uuid
+    def _id() -> str:
+        return uuid.uuid4().hex[:8]
+
+    by_color: dict[str, dict[str, Any]] = {}
+    for w in wools:
+        if w.color not in by_color:
+            by_color[w.color] = {
+                'id':               _id(),
+                'color':            w.color,
+                'location':         {'x': w.location[0], 'y': w.location[1], 'z': w.location[2]},
+                'wool_room_region': w.wool_room_region,
+                'monuments':        [],
+            }
+        by_color[w.color]['monuments'].append({
+            'id':              _id(),
+            'team':            w.team,
+            'location':        {'x': w.monument[0], 'y': w.monument[1], 'z': w.monument[2]},
+            'monument_region': w.monument_region_id,
+        })
+    return list(by_color.values())
 
 
 def _encode_spawner(s: WoolSpawner) -> dict[str, Any]:

@@ -57,10 +57,12 @@ export class RegionsPanel {
     const visible = groups.filter(g => g.regions.length > 0);
     for (let i = 0; i < visible.length; i++) {
       const g = visible[i];
-      const header = document.createElement("div");
-      header.className = "cat-header";
-      header.textContent = g.label;
-      this.#listEl.appendChild(header);
+      if (g.label) {
+        const header = document.createElement("div");
+        header.className = "cat-header";
+        header.textContent = g.label;
+        this.#listEl.appendChild(header);
+      }
       this.#appendTree(g.regions, this.#listEl, 0, null, null);
       if (i < visible.length - 1) {
         const div = document.createElement("div");

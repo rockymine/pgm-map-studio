@@ -7,6 +7,7 @@ from flask import Blueprint, abort, jsonify, request
 
 from pgm_map_studio.studio.services.config import get_output_root
 from pgm_map_studio.studio.services.region_encoder import encode_region_tree
+from pgm_map_studio.studio.services.wool_editor import _ensure_grouped
 from pgm_map_studio.studio.services.xml_data import load_xml_data, save_xml_data
 
 bp = Blueprint("map_api", __name__, url_prefix="/api/map")
@@ -17,6 +18,7 @@ _META_FIELDS = {"name", "version", "objective", "max_build_height", "gamemode", 
 @bp.route("/<name>")
 def get_map(name: str):
     data, _ = load_xml_data(name)
+    _ensure_grouped(data)   # migrate old flat format transparently on read
     return jsonify(data)
 
 

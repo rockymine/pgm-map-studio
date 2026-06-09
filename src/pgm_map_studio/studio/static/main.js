@@ -9,6 +9,7 @@
 import { ConfigureActivity }      from "./activities/configure-activity.js";
 import { OverviewActivity }       from "./activities/overview-activity.js";
 import { TeamsActivity }          from "./activities/teams-activity.js";
+import { ObjectivesActivity }     from "./activities/objectives-activity.js";
 import { BuildRegionsActivity }   from "./activities/build-regions-activity.js";
 import { RegionsActivity }        from "./activities/regions-activity.js";
 import * as api                   from "./api.js";
@@ -47,10 +48,13 @@ const ACTIVITIES = {
   "activity-build-regions": new BuildRegionsActivity({
     onStatusChange: dot => { buildRegionsBtn.dataset.status = dot ?? ""; },
   }),
+  "activity-objective": new ObjectivesActivity({
+    onStatusChange: dot => { objectiveBtn.dataset.status = dot ?? ""; },
+  }),
   "activity-regions": new RegionsActivity(),
 };
 
-const STUB_IDS = ["activity-objective"];
+const STUB_IDS = [];
 
 let currentId  = "activity-overview";
 let currentMap = null;
@@ -116,6 +120,7 @@ async function loadMap(name) {
     overviewBtn.disabled     = false;
     teamsBtn.disabled        = false;
     buildRegionsBtn.disabled = false;
+    objectiveBtn.disabled    = false;
     regionsBtn.disabled      = false;
     exportBtn.disabled       = false;
     clearSystemError();

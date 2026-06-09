@@ -302,6 +302,69 @@ export async function exportSketch(sketchId) {
   return body;
 }
 
+// ── Wools ─────────────────────────────────────────────────────────────────
+
+export async function addWool(mapName, payload) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/wools`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Add wool failed (${r.status})`);
+  return body;
+}
+
+export async function updateWool(mapName, woolId, fields) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/wools/${encodeURIComponent(woolId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Update wool failed (${r.status})`);
+  return body;
+}
+
+export async function deleteWool(mapName, woolId) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/wools/${encodeURIComponent(woolId)}`, {
+    method: "DELETE",
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Delete wool failed (${r.status})`);
+  return body;
+}
+
+export async function addMonument(mapName, woolId, payload) {
+  const r = await fetch(
+    `/api/map/${encodeURIComponent(mapName)}/wools/${encodeURIComponent(woolId)}/monuments`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+  );
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Add monument failed (${r.status})`);
+  return body;
+}
+
+export async function updateMonument(mapName, woolId, monId, fields) {
+  const r = await fetch(
+    `/api/map/${encodeURIComponent(mapName)}/wools/${encodeURIComponent(woolId)}/monuments/${encodeURIComponent(monId)}`,
+    { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) },
+  );
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Update monument failed (${r.status})`);
+  return body;
+}
+
+export async function deleteMonument(mapName, woolId, monId) {
+  const r = await fetch(
+    `/api/map/${encodeURIComponent(mapName)}/wools/${encodeURIComponent(woolId)}/monuments/${encodeURIComponent(monId)}`,
+    { method: "DELETE" },
+  );
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `Delete monument failed (${r.status})`);
+  return body;
+}
+
 // ── Minecraft ────────────────────────────────────────────────────────────
 
 export async function fetchMinecraftPlayer(nameOrUuid) {

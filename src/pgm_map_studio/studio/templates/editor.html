@@ -519,8 +519,131 @@
 
     </div><!-- /br-workspace -->
 
-    <!-- Placeholder for future activities -->
-    <div id="obj-workspace" class="workspace workspace--placeholder" hidden>Objective editor — coming soon</div>
+    <!-- Objectives workspace (2.6) -->
+    <div id="po-workspace" class="workspace" hidden>
+
+      <div id="po-left" class="workspace-sidebar">
+        <div id="po-left-scroll" class="workspace-scroll">
+          <section class="panel-section" id="po-wools-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Wools</h2>
+              <button id="po-add-wool-btn" class="action-btn">+ Add</button>
+            </div>
+            <div id="po-wool-list" class="panel-list"></div>
+          </section>
+          <section class="panel-section">
+            <div class="section-header section-header--ruled">
+              <h2 class="section-title">Wool Regions</h2>
+            </div>
+          </section>
+          <div id="po-region-list"></div>
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="po-left-handle"
+           data-resize-target="po-left" data-resize-side="left"
+           data-resize-min="180" data-resize-max="420"></div>
+
+      <div id="po-canvas-wrap" class="workspace-canvas">
+        <div id="po-canvas-subbar" class="canvas-subbar">
+          <div class="canvas-toolbar" id="po-draw-toolbar">
+            <button id="po-tool-move"      class="draw-tool-btn" title="Move (M)"><i data-lucide="hand"></i></button>
+            <button id="po-tool-select"    class="draw-tool-btn" title="Select (S)"><i data-lucide="mouse-pointer-2"></i></button>
+            <button id="po-tool-rectangle" class="draw-tool-btn" title="Rectangle (R)"><i data-lucide="rectangle-horizontal"></i></button>
+            <button id="po-tool-cuboid"    class="draw-tool-btn" title="Cuboid (C)"><i data-lucide="box"></i></button>
+            <button id="po-tool-cylinder"  class="draw-tool-btn" title="Cylinder (Y)"><i data-lucide="cylinder"></i></button>
+            <button id="po-tool-circle"    class="draw-tool-btn" title="Circle (O)"><i data-lucide="circle"></i></button>
+            <button id="po-tool-block"     class="draw-tool-btn" title="Block (B)"><i data-lucide="square"></i></button>
+            <button id="po-tool-point"     class="draw-tool-btn" title="Point (P)"><i data-lucide="dot"></i></button>
+          </div>
+          <label class="filter-chip" id="po-blocks-label" title="Show top-surface block colours">
+            <input type="checkbox" id="po-toggle-blocks" class="control-input--hidden">
+            Blocks
+          </label>
+          <div id="po-cursor-coords" class="canvas-cursor"></div>
+          <div class="canvas-subbar-right">
+            <span id="po-zoom-level" class="canvas-zoom">—</span>
+          </div>
+        </div>
+        <div id="po-svg-area" class="svg-area">
+          <svg id="po-map-svg" class="map-canvas-svg" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                  fill="var(--text-muted)" font-size="14">Loading map…</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="sidebar-handle" id="po-right-handle"
+           data-resize-target="po-right" data-resize-side="right"
+           data-resize-min="240" data-resize-max="480"></div>
+
+      <div id="po-right" class="workspace-inspector">
+        <div id="po-right-scroll" class="workspace-scroll">
+
+          <!-- Empty state -->
+          <div id="po-inspector-empty">
+            <p class="panel-empty-msg">Select a wool or region to inspect.</p>
+          </div>
+
+          <!-- Wool inspector -->
+          <div id="po-wool-inspector" hidden>
+            <div class="panel-stack">
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <span class="list-swatch po-wool-color-swatch"></span>
+                <h2 id="po-wool-section-title" class="section-title">Wool</h2>
+              </div>
+              <div class="section-body">
+                <div class="field">
+                  <label class="field-label" for="po-wool-color">Color</label>
+                  <select id="po-wool-color" class="field-input"></select>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="po-wool-team">Owning Team</label>
+                  <div class="field-pick-row">
+                    <span id="po-wool-team-swatch" class="field-swatch"></span>
+                    <select id="po-wool-team" class="field-input"></select>
+                  </div>
+                </div>
+              </div>
+              <div class="section-footer section-footer--separated">
+                <button id="po-delete-wool-btn" class="action-btn action-btn--danger action-btn--fill">Delete Wool</button>
+              </div>
+            </section>
+
+            <section class="panel-section">
+              <div class="section-header section-header--ruled">
+                <h2 class="section-title">Wool Location</h2>
+              </div>
+              <div class="section-body">
+                <div class="field">
+                  <label class="field-label">Block Position</label>
+                  <div class="ctrl-row">
+                    <div class="coord-field"><span class="coord-prefix">X</span><input id="po-wool-loc-x" class="coord-input po-loc-input" type="number" step="1" placeholder="—"></div>
+                    <div class="coord-field"><span class="coord-prefix">Y</span><input id="po-wool-loc-y" class="coord-input po-loc-input" type="number" step="1" placeholder="—"></div>
+                    <div class="coord-field"><span class="coord-prefix">Z</span><input id="po-wool-loc-z" class="coord-input po-loc-input" type="number" step="1" placeholder="—"></div>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="po-wool-room-region">Wool Room Region</label>
+                  <input id="po-wool-room-region" class="field-input" type="text" placeholder="region-id" spellcheck="false"/>
+                </div>
+              </div>
+            </section>
+
+            <!-- Monuments rendered dynamically by JS -->
+            <div id="po-monuments-container"></div>
+
+            </div><!-- /panel-stack -->
+          </div>
+
+          <!-- Region inspector -->
+          <div id="po-region-inspector" class="panel-section" hidden></div>
+
+        </div>
+      </div>
+
+    </div><!-- /po-workspace -->
 
     <!-- Regions workspace (2.7) -->
     <div id="rg-workspace" class="workspace" hidden>

@@ -43,7 +43,13 @@ export function chatColorHex(name) {
   return PGM_CHAT_COLORS.find(c => c.value === n)?.hex ?? "#475569";
 }
 
+const _normDye = name => (name ?? "").replace(/_/g, " ").toLowerCase();
+
 export function dyeColorHex(name) {
-  const n = (name ?? "").replace(/_/g, " ").toLowerCase();
-  return MINECRAFT_DYE_COLORS.find(c => c.value === n)?.hex ?? "#475569";
+  return MINECRAFT_DYE_COLORS.find(c => c.value === _normDye(name))?.hex ?? "#475569";
+}
+
+export function dyeColorLabel(name) {
+  return MINECRAFT_DYE_COLORS.find(c => c.value === _normDye(name))?.label
+    ?? name.replace(/_/g, " ");
 }
