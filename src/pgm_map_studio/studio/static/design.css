@@ -112,11 +112,17 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
 }
+.ds-workspace-frame .workspace { flex: 1; min-height: 0; }
 .ds-workspace-frame .workspace-sidebar { width: 220px; }
 .ds-workspace-frame .workspace-inspector { width: 240px; }
 .ds-workspace-frame .workspace-scroll { padding: var(--space-4); }
 .ds-canvas-sample {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
   background-color: var(--bg-deep);
   background-image:
     linear-gradient(var(--border) 1px, transparent 1px),
