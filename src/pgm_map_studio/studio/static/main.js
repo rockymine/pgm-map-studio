@@ -13,8 +13,10 @@ import { BuildRegionsActivity }   from "./activities/build-regions-activity.js";
 import { RegionsActivity }        from "./activities/regions-activity.js";
 import * as api                   from "./api.js";
 import { showSystemError, clearSystemError, showToast, getMapParam } from "./shared/ui-helpers.js";
+import { connectPanelResizers } from "./shared/panel-resize.js";
 
 lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "16", height: "16" } });
+connectPanelResizers();
 
 // ── DOM ───────────────────────────────────────────────────────────────────
 

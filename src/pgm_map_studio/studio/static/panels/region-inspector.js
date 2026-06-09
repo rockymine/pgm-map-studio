@@ -30,13 +30,11 @@ export class RegionInspector {
     header.className = "detail-header";
 
     const iconSpan = document.createElement("span");
-    iconSpan.className = "geo-type-icon";
-    iconSpan.style.color = "var(--text-muted)";
+    iconSpan.className = "geo-type-icon detail-icon--muted";
     iconSpan.innerHTML = typeIcon(node.type, 14);
 
     const labelSpan = document.createElement("span");
-    labelSpan.className = "detail-label";
-    labelSpan.style.fontFamily = "ui-monospace, monospace";
+    labelSpan.className = "detail-label detail-label--mono";
     labelSpan.textContent = node.id ?? node.type;
 
     const typeBadge = document.createElement("span");
@@ -97,12 +95,14 @@ export class RegionInspector {
 
     // ── delete action ──────────────────────────────────────────────────────
     if (this.#onDelete && node.id) {
+      const footer = document.createElement("div");
+      footer.className = "section-footer section-footer--separated";
       const del = document.createElement("button");
-      del.className = "action-btn action-btn--danger";
-      del.style.width = "100%";
+      del.className = "action-btn action-btn--danger action-btn--fill";
       del.textContent = "Delete Region";
       del.addEventListener("click", () => this.#onDelete(node));
-      this.#el.appendChild(del);
+      footer.appendChild(del);
+      this.#el.appendChild(footer);
     }
 
     // ── children list ──────────────────────────────────────────────────────
@@ -117,14 +117,13 @@ export class RegionInspector {
       this.#el.appendChild(hdr);
 
       const list = document.createElement("div");
-      list.className = "list-container";
+      list.className = "panel-list";
       for (const kid of allKids) {
         const row = document.createElement("div");
         row.className = "list-row list-row--compact";
 
         const icon = document.createElement("span");
-        icon.className = "geo-type-icon";
-        icon.style.color = "var(--text-muted)";
+        icon.className = "geo-type-icon detail-icon--muted";
         icon.innerHTML = typeIcon(kid.type, 13);
 
         const id = document.createElement("span");
@@ -137,7 +136,6 @@ export class RegionInspector {
 
         row.append(icon, id, type);
         if (this.#onSelect && kid.id) {
-          row.style.cursor = "pointer";
           row.addEventListener("click", () => this.#onSelect(kid));
         }
         list.appendChild(row);
@@ -149,8 +147,7 @@ export class RegionInspector {
   clear() {
     while (this.#el.firstChild) this.#el.removeChild(this.#el.firstChild);
     const empty = document.createElement("div");
-    empty.className = "section-desc";
-    empty.style.padding = "16px 14px";
+    empty.className = "panel-empty-msg";
     empty.textContent = "Select a region to inspect.";
     this.#el.appendChild(empty);
   }

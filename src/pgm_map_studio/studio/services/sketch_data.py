@@ -24,7 +24,7 @@ _DEFAULTS: dict = {
 def _path(sketch_id: str) -> Path:
     root = SKETCHES_DIR.resolve()
     resolved = (root / sketch_id).resolve()
-    if not str(resolved).startswith(str(root) + "/"):
+    if not resolved.is_relative_to(root):
         raise KeyError(sketch_id)
     return resolved / "sketch.json"
 

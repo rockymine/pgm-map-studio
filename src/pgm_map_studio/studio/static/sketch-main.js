@@ -15,8 +15,10 @@ import { SketchSetupActivity }    from "./activities/sketch-setup-activity.js";
 import { SketchLayoutActivity }   from "./activities/sketch-layout-activity.js";
 import * as api from "./api.js";
 import { showSystemError, clearSystemError, showToast } from "./shared/ui-helpers.js";
+import { connectPanelResizers } from "./shared/panel-resize.js";
 
 lucide.createIcons({ attrs: { "stroke-width": "1.5", width: "16", height: "16" } });
+connectPanelResizers();
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
 

@@ -38,16 +38,17 @@ All UI work must follow `docs/ui-conventions.md`.
 
 Key rules — read the doc for full detail:
 
-- **CSS file split:** game-agnostic patterns → `components.css`. Editor/game-aware patterns → `editor.css`. Tokens → `tokens.css`. Design-page helpers → `design.css`.
-- **Selectors:** use classes for styling, IDs for JS references only. Never use an ID selector to express a shared layout pattern.
+- **CSS file split:** game-agnostic patterns → `components.css`. Editor/game-aware patterns → `editor.css`. Tokens → `tokens.css`. Design-page helpers → `design.css`. One owning file per selector — never copy a component rule into `editor.css` to patch one activity.
+- **Selectors:** use classes for styling, IDs for JS references only. Never use an ID selector to express a shared layout pattern. Production templates contain no inline `style` attributes (runtime data-driven values excepted).
 - **Tokens:** never hardcode a color, spacing, radius, or transition that has a CSS variable in `tokens.css`.
-- **Workspace layout:** use `.workspace`, `.workspace-sidebar`, `.workspace-inspector`, `.workspace-scroll`, `.workspace-canvas`. Do not repeat these properties on ID selectors.
-- **Components:** check `/design` before writing any new CSS. If the class exists, use it. If it doesn't, add it to the right CSS file and add a demo to `/design` in the same change.
-- **Buttons:** four variants only — `.action-btn`, `--primary`, `--danger`, `.btn-remove`.
+- **Workspace layout:** use `.workspace`, `.workspace-sidebar`, `.workspace-inspector`, `.workspace-scroll`, `.workspace-canvas`. Resizable panels get an adjacent `.sidebar-handle` with `data-resize-target` and `data-resize-side` attributes. Resize behavior comes exclusively from `shared/panel-resize.js` — do not write local drag code.
+- **Components:** open `/design` first. Copy the nearest production example structure. If a needed pattern is absent, add it to the owning CSS file and add a `/design` example in the same change. Do not use `/design` as a second implementation — examples must stay small, copyable fragments built from production classes.
+- **Buttons:** five variants — `.action-btn`, `--primary`, `--warn`, `--danger`, `.btn-remove`. Layout modifiers (`--fill`, `--full`, `--push-end`) change placement only, not visual meaning.
 - **Badges:** one system — `.badge` with `--success`, `--warning`, `--error`, `--neutral`, `--dim`.
 - **Notifications:** four types only — `#topbar-error`, `.toast`, `.canvas-hint`, `.panel-warning`.
+- **Structural tests:** when adding an important UI contract (nesting rule, required attribute, forbidden pattern), add a test in `tests/studio/test_ui_structure.py` so future work cannot silently break it.
 
-The `/design` page (start the app, navigate to `/design`) is the living visual reference.
+The `/design` page (start the app, navigate to `/design`) is the living visual reference. Full contracts in `docs/ui-conventions.md` and `plans/ui-system-consolidation.md`.
 
 ## Accessibility
 

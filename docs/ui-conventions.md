@@ -1,212 +1,146 @@
 # UI Conventions
 
-Living reference for how UI is built in PGM Map Studio.
-The `/design` page (run the app, navigate to `/design`) is the visual counterpart —
-every class documented here has a rendered example there.
+The studio uses a small set of production structures. `/design` renders the same
+classes and nesting used by Dashboard, Editor, and Sketch; it is the visual reference,
+while this document defines the contract.
 
----
+## CSS ownership
 
-## CSS file responsibilities
+Stylesheets load in this order:
 
-Ask one question before adding CSS:
-**Does this class know anything about PGM, CTW, regions, or the editor's page structure?**
+1. `tokens.css`: custom properties only.
+2. `components.css`: reusable controls and panel composition.
+3. `editor.css`: app shell, workspaces, canvas tools, dashboard, and game-aware UI.
+4. `design.css`: `/design` gallery helpers only.
 
-| No → | `components.css` |
-| Yes → | `editor.css` |
+A shared selector has one owning file. Never copy a component rule into `editor.css`
+to adjust one activity. Add a modifier to the owning component when the distinction is
+reusable; otherwise add an activity-specific semantic class.
 
-| File | Owns | Never contains |
-|---|---|---|
-| `tokens.css` | CSS custom properties only (`:root`) | Any selector beyond `:root` |
-| `components.css` | Game-agnostic UI patterns — buttons, badges, fields, list rows, panels, console, step rows, notifications, canvas subbar structure | Activity-specific IDs, workspace layout, game terminology |
-| `editor.css` | App shell, topbar, workspace layouts, activity rail, region tree, history panel, context menu, inspector/detail, dashboard | Reusable component classes, design-page helpers |
-| `design.css` | Layout helpers for the `/design` page only (`.ds-*`, `#ds-nav`) | Production component or structural classes |
+## Selectors and tokens
 
----
+- Classes style elements. IDs are JavaScript references only.
+- Do not style activity IDs such as `#ov-left` or `#pt-right`.
+- Use existing color, spacing, radius, type, transition, and shadow tokens.
+- The five text levels in `tokens.css` are the complete text hierarchy.
+- Data-driven colors, element visibility, cursor state, and drag position/width may be
+  set at runtime. Static layout must be expressed by a class.
+- Production templates contain no inline `style` attributes.
 
-## Selector rules
+## Application shell
 
-### IDs are for JavaScript, not CSS
-
-```html
-<div id="pt-left" class="workspace-sidebar">
-```
-
-- `id="pt-left"` → JS handle so `document.getElementById("pt-left")` works
-- `class="workspace-sidebar"` → all styling
-
-**Never use an ID selector in CSS to express a shared or repeated layout pattern.**
-Only use an ID selector in CSS when the element is:
-1. A truly one-of-a-kind page shell element (`#topbar`, `#activity-rail`, `#dashboard-layout`) **and**
-2. Has no shared pattern to extract into a class
-
-If you find yourself writing `#ov-left { width: 280px }` and `#pt-left { width: 240px }`,
-that is the wrong approach — the width belongs on a class.
-
-### Why this matters — specificity
-
-ID selectors have specificity `(1,0,0)`. Class selectors have `(0,1,0)`.
-An ID rule beats a class rule even if the class comes later in the file,
-making the system fragile and hard to override.
-
-```
-#topbar          (1,0,0)  ← heaviest
-.action-btn      (0,1,0)
-button           (0,0,1)
-*                (0,0,0)  ← lightest
-```
-
-### Selector reference
-
-```css
-button           /* type — every <button> */
-.action-btn      /* class — any element with this class */
-#topbar          /* id — the one element with this id (JS handle only) */
-[hidden]         /* attribute */
-[data-status="green"]::after  /* attribute + pseudo-element */
-.action-btn:hover             /* pseudo-class (state) */
-.sidebar-handle::before       /* pseudo-element (generated part) */
-*                /* universal */
-
-/* Combinators */
-#pt-spawn-list .region-type-icon   /* descendant */
-.workspace-scroll > .panel-section /* direct child */
-.field + .field                    /* adjacent sibling */
-```
-
----
-
-## Design tokens
-
-All CSS custom properties live in `tokens.css`. Never hardcode a value that has a token.
-
-### Key tokens
-
-```css
-/* Sidebar widths — change here to affect all panels */
---sidebar-width:   280px;
---inspector-width: 280px;
-
-/* Backgrounds */
---bg-base          /* page body */
---bg-panel         /* sidebars, topbar, panels */
---bg-selected      /* selected row, active button fill */
---bg-selected-hover /* row hover */
-
-/* Text (muted → bright) */
---text-muted       /* section labels, metadata */
---text-dim         /* helper text, synthetic labels */
---text-secondary   /* field labels, secondary content */
---text-primary     /* default list/body text */
---text-bright      /* headings, topbar titles */
---text-white       /* hover/active states */
-
-/* Border & accent */
---border           /* all dividers and input borders */
---accent           /* primary action border, active tool border */
---accent-light     /* active tool text, focus highlights */
---code-color       /* monospace/XML text */
-
-/* Semantic status */
---color-success / --color-success-bg
---color-warning
---color-error / --color-error-bg / --color-error-light
-
-/* Spacing scale */
---space-1: 4px   --space-2: 8px   --space-3: 12px
---space-4: 16px  --space-5: 20px  --space-6: 24px
-
-/* Radii */
---radius-sm: 3px   --radius-md: 6px
-
-/* Motion */
---transition-fast: 0.12s ease
-```
-
----
-
-## Workspace structure classes
-
-Every editor activity workspace uses these four classes.
-**Never repeat these properties on an ID selector.**
-
-```css
-.workspace          /* container — display:flex, flex:1, overflow:hidden */
-.workspace-sidebar  /* left panel — width:--sidebar-width, bg-panel, flex col */
-.workspace-inspector /* right panel — width:--inspector-width, bg-panel, flex col */
-.workspace-scroll   /* inner scroll area — flex:1, overflow-y:auto, padding:16px 14px */
-.workspace-canvas   /* canvas column — flex:1, flex col, overflow:hidden, bg:--bg-deep,
-                       position:relative (positioning context for .canvas-hint overlays) */
-```
-
-Pattern in HTML:
+Dashboard, Editor, and Sketch use the same shell:
 
 ```html
-<div id="pt-workspace" class="workspace">
-  <div id="pt-left" class="workspace-sidebar">
-    <div id="pt-left-scroll" class="workspace-scroll"> … </div>
-  </div>
-  <div class="sidebar-handle" id="pt-left-handle"></div>
-  <div id="pt-canvas-wrap" class="workspace-canvas"> … </div>
-  <div class="sidebar-handle" id="pt-right-handle"></div>
-  <div id="pt-right" class="workspace-inspector">
-    <div id="pt-right-scroll" class="workspace-scroll"> … </div>
-  </div>
-</div>
+<header id="topbar" class="topbar">...</header>
+<main id="main" class="app-body">
+  <nav id="activity-rail" class="activity-rail">...</nav>
+  <div id="activity-viewport" class="activity-viewport">...</div>
+</main>
 ```
 
-The ID prefix (`ov-`, `pt-`) is an activity namespace — all workspaces live in the
-DOM simultaneously, so IDs must be unique. The prefix prevents collisions.
-CSS must never reference these prefixed IDs for shared layout.
+Dashboard places `.master-detail` inside the viewport. Editor and Sketch place one or
+more `.workspace` elements there.
 
----
+## Workspace
 
-## Component rules
+Use this structure for a three-column activity:
 
-### Buttons — four variants only
+```html
+<section class="workspace">
+  <aside id="activity-left" class="workspace-sidebar">
+    <div class="workspace-scroll">
+      <section class="panel-section">...</section>
+    </div>
+  </aside>
 
-All `.action-btn` variants use `display: inline-flex; align-items: center; gap: --space-1` so icons and text are always vertically centred. When adding a Lucide icon, omit the space character between the `<i>` and label text — gap handles the spacing.
+  <div class="sidebar-handle"
+       data-resize-target="activity-left"
+       data-resize-side="left"></div>
 
-| Class | Use when |
-|---|---|
-| `.action-btn` | Any action — panels, topbar, sidebars |
-| `.action-btn--primary` | Single primary action per section (Save, Open) |
-| `.action-btn--danger` | Irreversible destructive actions only |
-| `.action-btn--icon` | Icon-only button — equal padding on all sides, square aspect |
-| `.btn-remove` | Inline row removal icon (✕) |
-| `.draw-tool-btn` | Canvas toolbar tools (editor.css — editor-specific) |
+  <div class="workspace-canvas">
+    <div class="canvas-subbar">...</div>
+    <svg class="canvas-surface">...</svg>
+  </div>
 
-Never add a new button variant without adding an example to `/design`.
+  <div class="sidebar-handle"
+       data-resize-target="activity-right"
+       data-resize-side="right"></div>
 
-### Badges — one system
+  <aside id="activity-right" class="workspace-inspector">
+    <div class="workspace-scroll">
+      <section class="panel-section">...</section>
+    </div>
+  </aside>
+</section>
+```
 
-`.badge` with semantic variants: `--success`, `--warning`, `--error`, `--neutral`, `--dim`.
-Works both inline and standalone. Do not create a separate tag or badge system.
+Rules:
 
-### Notifications — four types, no fifth
+- A sidebar or inspector owns exactly one direct `.workspace-scroll`.
+- A resizable panel has an adjacent `.sidebar-handle`.
+- Resize behavior comes from `shared/panel-resize.js`; do not add local drag code.
+- `.workspace-canvas` owns column layout. `.canvas-surface` owns the drawable area.
+- `.canvas-subbar` is optional but always sits before the surface.
 
-| Type | When |
-|---|---|
-| `#topbar-error.visible` | Unrecoverable page-level error |
-| `.toast.visible` + `--success/--error` | Short-lived operation feedback |
-| `.canvas-hint.visible` | Draw hints while a tool is active |
-| `.panel-warning` | Persistent inline validation issue |
+## Panel section
 
-### List rows
+```html
+<section class="panel-section">
+  <header class="section-header section-header--ruled">
+    <h2 class="section-title">Authors</h2>
+    <div class="section-actions">...</div>
+  </header>
 
-Always use `.list-row` for teams, wools, spawns, islands.
-For region tree rows use `.region-row` (editor.css — game-aware).
+  <div class="section-body">...</div>
 
----
+  <footer class="section-footer">...</footer>
+</section>
+```
 
-## Adding new UI
+`section-header`, `section-body`, and `section-footer` are optional structural slots.
+Direct controls are allowed when a section does not need an extra grouping element.
+Use the ruled header by default in side panels.
 
-Before writing any new CSS:
+Common content:
 
-1. Open `/design` — check if the class already exists.
-2. If yes, use it.
-3. If no, decide which file it belongs in (game-aware? → `editor.css`, generic? → `components.css`).
-4. Write the class rule, add a demo to `/design`, then use it in the feature.
+- `.panel-stack`: multiple sibling sections inside one inspector or sidebar state.
+- `.field`, `.field-row`: labels and form controls.
+- `.coord-field`, `.coord-input`, `.detail-table`: coordinates and geometry.
+- `.control-list`, `.check-row`: repeated toggles and options.
+- `.panel-list`, `.list-row`: repeated selectable or editable records.
+- `.author-list`, `.author-row`: author and contributor records.
+- `.panel-empty`, `.panel-empty-msg`, `.list-empty`: empty states at their respective
+  scopes.
+- `.panel-warning`: persistent validation feedback inside a panel.
 
-Never define a class solely inside a template's `<style>` block.
-Never style a shared pattern via an ID selector.
-Never hardcode a color, spacing value, or border-radius that has a token.
+## Actions and status
+
+Buttons:
+
+- `.action-btn`
+- `.action-btn--primary`
+- `.action-btn--danger`
+- `.action-btn--icon`
+- `.btn-remove`
+
+Layout modifiers such as `--fill`, `--full`, and `--push-end` change placement, not
+visual meaning. Do not create another visual button family.
+
+Badges use `.badge` with `--success`, `--warning`, `--error`, `--neutral`, or `--dim`.
+
+Notifications are limited to `#topbar-error`, `.toast`, `.canvas-hint`, and
+`.panel-warning`.
+
+## Adding or changing UI
+
+1. Open `/design` and find the closest production example.
+2. Copy its structure and classes.
+3. If a needed pattern is missing, add it to the owning CSS file.
+4. Add or update the `/design` example in the same change.
+5. Add a structural test when the rule is important enough that future work could
+   silently break it.
+6. Verify Dashboard, Editor, and Sketch at the affected panel widths.
+
+Do not use `/design` as a second implementation. Its examples should remain small,
+copyable fragments built from production classes.

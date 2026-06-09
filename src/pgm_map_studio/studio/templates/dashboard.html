@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PGM Map Studio</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
 </head>
 <body class="dashboard-page">
 
-<div id="topbar">
+<div id="topbar" class="topbar">
   <span class="topbar-crumb">Map Studio</span>
 
   <div class="topbar-right">
@@ -21,10 +21,10 @@
   </div>
 </div>
 
-<div id="dashboard-layout">
+<div id="dashboard-layout" class="app-body master-detail">
 
   <!-- ── Activity rail ─────────────────────────────────────────────────────── -->
-  <nav id="activity-rail">
+  <nav id="activity-rail" class="activity-rail">
     <div class="activity-logo">
       <div class="activity-logo-box">
         <span class="activity-logo-pgm">pgm</span>
@@ -44,7 +44,7 @@
   </nav>
 
   <!-- ── Left sidebar ───────────────────────────────────────────────────── -->
-  <div id="map-list-panel">
+  <div id="map-list-panel" class="master-detail-sidebar">
 
     <!-- Maps activity -->
     <div id="tab-maps-content" class="dash-sidebar-pane">
@@ -81,7 +81,7 @@
     <!-- Sketches activity -->
     <div id="tab-sketches-content" class="dash-sidebar-pane" hidden>
       <div class="sidebar-actions">
-        <button id="new-sketch-btn" class="action-btn action-btn--primary" style="justify-content:center">
+        <button id="new-sketch-btn" class="action-btn action-btn--primary action-btn--fill">
           <i data-lucide="pencil-ruler"></i>New sketch
         </button>
       </div>
@@ -118,7 +118,7 @@
   </div>
 
   <!-- ── Detail panel ───────────────────────────────────────────────────── -->
-  <div id="map-detail-panel">
+  <div id="map-detail-panel" class="master-detail-content">
 
     <div class="map-detail-empty" id="map-detail-empty">
       Select an item from the list.

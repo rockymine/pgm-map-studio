@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PGM Map Studio — Sketch</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}"/>
 </head>
 <body>
 
-<div id="topbar">
+<div id="topbar" class="topbar">
   <a href="/" class="topbar-breadcrumb-home" title="Back to dashboard">
     <i data-lucide="house"></i>
     <span>Maps</span>
@@ -19,7 +19,7 @@
   <span id="topbar-sketch-name" class="topbar-crumb">New sketch</span>
 
   <div class="topbar-right">
-    <div id="sk-topbar-actions">
+    <div id="sk-topbar-actions" class="topbar-actions">
       <span id="sk-changes-badge" class="topbar-changes-badge" hidden>
         <i data-lucide="triangle-alert"></i>Changes detected — re-export needed
       </span>
@@ -35,8 +35,8 @@
   </div>
 </div>
 
-<div id="main">
-  <nav id="activity-rail">
+<div id="main" class="app-body">
+  <nav id="activity-rail" class="activity-rail">
     <div class="activity-logo">
       <div class="activity-logo-box">
         <span class="activity-logo-pgm">pgm</span>
@@ -54,7 +54,7 @@
     </button>
   </nav>
 
-  <div id="activity-viewport">
+  <div id="activity-viewport" class="activity-viewport">
 
     <!-- Overview workspace -->
     <div id="sk-overview-workspace" class="workspace">
@@ -91,7 +91,7 @@
               <h2 class="section-title">Authors <span class="field-required">*</span></h2>
               <button id="sk-add-author" class="action-btn">+ Add</button>
             </div>
-            <div id="sk-authors-list"></div>
+            <div id="sk-authors-list" class="author-list"></div>
           </section>
 
           <section class="panel-section">
@@ -99,7 +99,7 @@
               <h2 class="section-title">Contributors</h2>
               <button id="sk-add-contributor" class="action-btn">+ Add</button>
             </div>
-            <div id="sk-contributors-list"></div>
+            <div id="sk-contributors-list" class="author-list"></div>
           </section>
 
           <section class="panel-section">
@@ -112,7 +112,9 @@
         </div>
       </div>
 
-      <div class="sidebar-handle" id="sk-ov-handle"></div>
+      <div class="sidebar-handle" id="sk-ov-handle"
+           data-resize-target="sk-ov-left" data-resize-side="left"
+           data-resize-min="200" data-resize-max="480"></div>
 
       <div id="sk-ov-canvas-wrap" class="workspace-canvas">
         <svg id="sk-ov-svg" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -229,7 +231,9 @@
         </div>
       </div>
 
-      <div class="sidebar-handle" id="sk-setup-handle"></div>
+      <div class="sidebar-handle" id="sk-setup-handle"
+           data-resize-target="sk-setup-left" data-resize-side="left"
+           data-resize-min="200" data-resize-max="480"></div>
 
       <div id="sk-setup-canvas-wrap" class="workspace-canvas">
         <div class="canvas-subbar">
@@ -250,16 +254,16 @@
             <div class="section-header section-header--ruled">
               <h2 class="section-title">Overlays</h2>
             </div>
-            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
-              <label class="ctrl-row" style="cursor:pointer">
+            <div class="control-list">
+              <label class="check-row">
                 <input type="checkbox" id="sk-layout-toggle-mirror" checked/>
                 <span>Mirror preview</span>
               </label>
-              <label class="ctrl-row" style="cursor:pointer">
+              <label class="check-row">
                 <input type="checkbox" id="sk-layout-toggle-shapes"/>
                 <span>Shapes overlay</span>
               </label>
-              <label class="ctrl-row" style="cursor:pointer">
+              <label class="check-row">
                 <input type="checkbox" id="sk-layout-toggle-chunks" checked/>
                 <span>Chunk grid</span>
               </label>
@@ -276,7 +280,9 @@
         </div>
       </div>
 
-      <div class="sidebar-handle" id="sk-layout-handle"></div>
+      <div class="sidebar-handle" id="sk-layout-handle"
+           data-resize-target="sk-layout-left" data-resize-side="left"
+           data-resize-min="200" data-resize-max="480"></div>
 
       <!-- Canvas with draw toolbar subbar -->
       <div id="sk-layout-canvas-wrap" class="workspace-canvas">
@@ -321,6 +327,9 @@
       </div>
 
       <!-- Right inspector panel -->
+      <div class="sidebar-handle" id="sk-layout-right-handle"
+           data-resize-target="sk-layout-right" data-resize-side="right"
+           data-resize-min="240" data-resize-max="480"></div>
       <div id="sk-layout-right" class="workspace-inspector">
         <div class="workspace-scroll">
           <div id="sk-layout-inspector">

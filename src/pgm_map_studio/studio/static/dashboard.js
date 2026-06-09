@@ -358,7 +358,7 @@ function buildFilterPanel() {
 
   if (!anyGroup) {
     const empty = document.createElement("div");
-    empty.className = "filter-group-label";
+    empty.className = "section-desc";
     empty.textContent = "No filter options available";
     filterPanel.appendChild(empty);
   }
@@ -367,8 +367,7 @@ function buildFilterPanel() {
   const anyActive = Object.values(state.filters).some(v => v !== null);
   if (anyActive) {
     const clearBtn = document.createElement("button");
-    clearBtn.className = "action-btn action-btn--danger";
-    clearBtn.style.alignSelf = "flex-start";
+    clearBtn.className = "action-btn action-btn--danger action-btn--self-start";
     clearBtn.textContent = "Clear filters";
     clearBtn.addEventListener("click", () => {
       state.filters = { teams: null, wools: null, symmetry: null };
@@ -391,7 +390,7 @@ async function loadSources() {
       selectMap(state.sources[0].slug);
     }
   } catch (err) {
-    mapListEl.innerHTML = `<div class="list-empty" style="color:var(--color-error)">${err.message}</div>`;
+    mapListEl.innerHTML = `<div class="list-empty list-empty--error">${err.message}</div>`;
   }
 }
 
@@ -457,7 +456,7 @@ async function selectMap(slug) {
   detailName.textContent    = "";
   detailVersion.textContent = "";
   detailAuthors.innerHTML   = "";
-  detailSteps.innerHTML     = '<div class="step-row"><span class="step-label" style="color:var(--text-muted)">Loading…</span></div>';
+  detailSteps.innerHTML     = '<div class="step-row"><span class="step-label text-muted">Loading…</span></div>';
   openEditorBtn.hidden    = true;
   runPipelineBtn.hidden   = true;
   pipelineConsole.hidden  = true;
@@ -478,7 +477,7 @@ async function selectMap(slug) {
     state.status = status;
     renderDetail(slug, status);
   } catch (err) {
-    detailSteps.innerHTML = `<span style="color:var(--color-error);font-size:12px">${err.message}</span>`;
+    detailSteps.innerHTML = `<span class="inline-error">${err.message}</span>`;
   }
 }
 
