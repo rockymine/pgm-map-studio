@@ -12,7 +12,7 @@ bp = Blueprint("build_regions", __name__, url_prefix="/api/map")
 def _resolve_out_dir(name: str):
     root = get_output_root().resolve()
     out_dir = (root / name).resolve()
-    if not str(out_dir).startswith(str(root) + "/"):
+    if not out_dir.is_relative_to(root):
         abort(400)
     return out_dir
 

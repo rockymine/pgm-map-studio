@@ -11,7 +11,7 @@ from .config import get_output_root
 def load_xml_data(name: str) -> tuple[dict, Path]:
     root = get_output_root().resolve()
     path = (root / name).resolve() / "xml_data.json"
-    if not str(path).startswith(str(root) + "/"):
+    if not path.is_relative_to(root):
         abort(400)
     if not path.exists():
         abort(404)

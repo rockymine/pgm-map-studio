@@ -131,12 +131,12 @@ def import_from_url():
     else:
         slug = _norm(Path(urlparse(url).path).name) or "imported_map"
 
-    dest = (maps_folder / slug).resolve()
-    if not str(dest).startswith(str(maps_folder.resolve()) + "/"):
+    maps_folder_resolved = maps_folder.resolve()
+    dest = (maps_folder_resolved / slug).resolve()
+    if not dest.is_relative_to(maps_folder_resolved):
         return jsonify({"error": "Invalid map name"}), 400
     dest.mkdir(parents=True, exist_ok=True)
 
-    maps_folder_resolved = maps_folder.resolve()
     for member in zf.infolist():
         rel = member.filename
         if zip_top:
@@ -147,7 +147,7 @@ def import_from_url():
             if not rel:
                 continue
         target = (dest / rel).resolve()
-        if not str(target).startswith(str(maps_folder_resolved) + "/"):
+        if not target.is_relative_to(maps_folder_resolved):
             continue
         if member.is_dir():
             target.mkdir(parents=True, exist_ok=True)
