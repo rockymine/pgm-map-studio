@@ -12,6 +12,7 @@
 .panel-section { display: flex; flex-direction: column; gap: var(--space-3); }
 .panel-stack { display: flex; flex-direction: column; gap: var(--space-6); }
 .section-body { display: flex; flex-direction: column; gap: var(--space-3); }
+.section-heading { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .section-actions { display: flex; align-items: center; gap: var(--space-2); }
 
 .section-title {
@@ -79,7 +80,7 @@
 .field-input--textarea { resize: vertical; min-height: 34px; line-height: 1.4; }
 .field-input--error    { border-color: var(--color-error) !important; }
 
-.field-pick-row { display: flex; align-items: center; gap: 8px; }
+.field-pick-row { display: flex; align-items: center; gap: var(--space-2); }
 .field-pick-row .field-input { flex: 1; }
 .field-swatch {
   width: 20px;

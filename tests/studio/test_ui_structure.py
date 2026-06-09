@@ -175,6 +175,39 @@ def test_design_gallery_contains_canonical_reference_examples():
     assert any("panel-section" in item for item in classes)
     assert any("author-list" in item for item in classes)
     assert any("panel-stack" in item for item in classes)
+    assert any("field-row" in item for item in classes)
+    assert any("region-tree" in item for item in classes)
+
+
+def test_region_trees_use_shared_class_inside_panel_sections():
+    root = _parse_template("editor.html")
+    trees = [
+        node
+        for node in _walk(root)
+        if node.attrs.get("id") in {
+            "br-region-list",
+            "po-region-list",
+            "rg-region-list",
+        }
+    ]
+
+    assert len(trees) == 3
+    for tree in trees:
+        assert "region-tree" in tree.classes
+        assert tree.parent is not None
+        assert "panel-section" in tree.parent.classes
+
+
+def test_objective_wool_header_groups_swatch_and_title():
+    root = _parse_template("editor.html")
+    title = next(
+        node
+        for node in _walk(root)
+        if node.attrs.get("id") == "po-wool-section-title"
+    )
+
+    assert title.parent is not None
+    assert "section-heading" in title.parent.classes
 
 
 def test_spawn_inspector_groups_its_sections_in_panel_stack():

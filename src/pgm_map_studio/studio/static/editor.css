@@ -387,7 +387,8 @@ body {
    REGIONS WORKSPACE (future)
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* Region list uses tighter padding since .geo-row has its own horizontal padding */
+/* Explicit collection wrapper for recursive region rows. */
+.region-tree { min-width: 0; }
 
 /* Visibility-toggle icon button — appears on row hover */
 .geo-row:hover .vis-btn    { opacity: 1; }

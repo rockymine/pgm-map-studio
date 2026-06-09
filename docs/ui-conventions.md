@@ -105,11 +105,15 @@ Use the ruled header by default in side panels.
 Common content:
 
 - `.panel-stack`: multiple sibling sections inside one inspector or sidebar state.
+- `.section-heading`: a left-aligned title cluster for an icon or swatch plus
+  `.section-title`; keep `.section-actions` as the optional right-side cluster.
 - `.field`, `.field-row`: labels and form controls.
 - `.coord-field`, `.coord-input`, `.detail-table`: coordinates and geometry.
 - `.control-list`, `.check-row`: repeated toggles and options.
 - `.panel-list`, `.list-row`: repeated selectable or editable records.
 - `.author-list`, `.author-row`: author and contributor records.
+- `.region-tree`, `.geo-row`: recursive game-region collections and their rows. Keep
+  the tree inside the `.panel-section` that owns its ruled header.
 - `.panel-empty`, `.panel-empty-msg`, `.list-empty`: empty states at their respective
   scopes.
 - `.panel-warning`: persistent validation feedback inside a panel.

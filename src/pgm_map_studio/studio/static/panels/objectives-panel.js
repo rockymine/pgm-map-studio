@@ -393,7 +393,7 @@ export class ObjectivesPanel {
 
     // Delete button
     const actions = document.createElement("div");
-    actions.className = "panel-actions";
+    actions.className = "section-footer section-footer--separated";
     const delBtn = document.createElement("button");
     delBtn.className = "action-btn action-btn--danger action-btn--fill";
     delBtn.textContent = "Delete Monument";
