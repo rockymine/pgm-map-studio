@@ -10,6 +10,7 @@ import { EditorCanvas }     from "../canvas/editor-canvas.js";
 import { RegionsPanel }     from "../panels/regions-panel.js";
 import { RegionInspector }  from "../panels/region-inspector.js";
 import { RegionRegistry }   from "../region/region-registry.js";
+import { registerRegionGroups } from "../region/region-tree.js";
 import { ToolManager }      from "../shared/tool-manager.js";
 import { normalizeIslands } from "../shared/canvas-helpers.js";
 import * as api             from "../api.js";
@@ -141,21 +142,12 @@ export class RegionsActivity {
         treeGroups,
       );
 
-      for (const group of treeGroups) {
-        _registerNodes(group.regions, this.#registry);
-      }
+      registerRegionGroups(this.#registry, treeGroups);
 
       this.#panel.build(treeGroups);
       this.#canvas.autoLoadBlocks();
     } catch (err) {
       console.error("RegionsActivity load failed:", err);
     }
-  }
-}
-
-function _registerNodes(nodes, registry) {
-  for (const node of nodes) {
-    if (node.id) registry.register(node, null);
-    if (node.children?.length) _registerNodes(node.children, registry);
   }
 }

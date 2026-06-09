@@ -49,7 +49,7 @@ export class ObjectivesPanel {
           if (!this._mapName) return;
           try {
             await api.deleteRegion(this._mapName, node.id);
-            this._opts.onDeleteRegion?.(node.id);
+            await this._opts.onDeleteRegion?.(node.id);
             showToast("Region deleted", "success");
           } catch (err) {
             showToast(`Delete failed: ${err.message}`, "error");
@@ -57,9 +57,10 @@ export class ObjectivesPanel {
         },
         onPatch: async (regionId, payload) => {
           if (!this._mapName) return;
-          await api.patchRegion(this._mapName, regionId, payload);
-          this._opts.onRegionPatched?.(regionId, payload.id ?? null);
+          const result = await api.patchRegion(this._mapName, regionId, payload);
+          this._opts.onRegionPatched?.(regionId, payload, result);
         },
+        validateId: (newId, currentId) => this._opts.validateRegionId?.(newId, currentId) ?? "",
       },
     );
 

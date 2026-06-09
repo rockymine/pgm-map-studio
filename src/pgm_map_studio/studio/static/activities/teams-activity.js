@@ -6,15 +6,18 @@
 import { EditorCanvas }   from "../canvas/editor-canvas.js";
 import { TeamsPanel }     from "../panels/teams-panel.js";
 import { RegionRegistry } from "../region/region-registry.js";
+import {
+  applyRegionPatchToNode,
+  findRegionNode,
+  getRegionGroups,
+  registerRegionGroups,
+} from "../region/region-tree.js";
 import { ToolManager }    from "../shared/tool-manager.js";
 import * as api           from "../api.js";
-import { chatColorHex }         from "../shared/game-colors.js";
 import { showToast }            from "../shared/ui-helpers.js";
 import { normalizeIslands,
          drawResultToPayload,
          makeBoundsHandlers }  from "../shared/canvas-helpers.js";
-
-const REGION_COLOR = "var(--canvas-region)";
 
 export class TeamsActivity {
   #el         = null;
@@ -49,8 +52,13 @@ export class TeamsActivity {
       onStatusChange,
       onSpawnRowClick:  (regionId) => this.#registry.select(regionId),
       onDeselectRegion: ()         => this.#registry.deselect(),
-      onDeleteRegion:   (regionId) => this.#deleteSpawnRegion(regionId),
-      onRegionPatched:  (regionId, newId) => this.#reloadRegions(newId ?? regionId),
+      onDeleteRegion:   async () => {
+        this.#registry.deselect();
+        await this.#reloadRegions();
+      },
+      onRegionPatched:  (regionId, payload, result) => this.#handleRegionPatch(regionId, payload, result),
+      validateRegionId: (newId, currentId) =>
+        this.#registry.has(newId) && newId !== currentId ? `Region ID "${newId}" is already in use.` : "",
     });
 
     this.#initCanvas();
@@ -96,16 +104,28 @@ export class TeamsActivity {
 
     // Wire draw tool buttons via ToolManager
     this.#toolMgr = new ToolManager(this.#canvas, {
-      move:     document.getElementById("pt-tool-move"),
-      select:   document.getElementById("pt-tool-select"),
+      move:      document.getElementById("pt-tool-move"),
+      select:    document.getElementById("pt-tool-select"),
+      rectangle: document.getElementById("pt-tool-rectangle"),
+      cuboid:    document.getElementById("pt-tool-cuboid"),
       cylinder: document.getElementById("pt-tool-cylinder"),
-      point:    document.getElementById("pt-tool-point"),
+      circle:    document.getElementById("pt-tool-circle"),
+      block:     document.getElementById("pt-tool-block"),
+      point:     document.getElementById("pt-tool-point"),
     });
 
-    document.getElementById("pt-tool-move")?.addEventListener("click",     () => this.#toolMgr.setTool("move"));
-    document.getElementById("pt-tool-select")?.addEventListener("click",   () => this.#toolMgr.setTool("select"));
-    document.getElementById("pt-tool-cylinder")?.addEventListener("click", () => this.#toolMgr.setTool("cylinder"));
-    document.getElementById("pt-tool-point")?.addEventListener("click",    () => this.#toolMgr.setTool("point"));
+    for (const [id, tool] of [
+      ["pt-tool-move",      "move"],
+      ["pt-tool-select",    "select"],
+      ["pt-tool-rectangle", "rectangle"],
+      ["pt-tool-cuboid",    "cuboid"],
+      ["pt-tool-cylinder",  "cylinder"],
+      ["pt-tool-circle",    "circle"],
+      ["pt-tool-block",     "block"],
+      ["pt-tool-point",     "point"],
+    ]) {
+      document.getElementById(id)?.addEventListener("click", () => this.#toolMgr.setTool(tool));
+    }
 
     this.#toolMgr.setTool("move");
 
@@ -118,28 +138,29 @@ export class TeamsActivity {
     document.addEventListener("keydown", (e) => {
       if (this.#el.hidden) return;
       if (e.target.matches("input,select,textarea")) return;
-      if (e.key === "m" || e.key === "M") this.#toolMgr.setTool("move");
-      if (e.key === "s" || e.key === "S") this.#toolMgr.setTool("select");
-      if (e.key === "y" || e.key === "Y") this.#toolMgr.setTool("cylinder");
-      if (e.key === "p" || e.key === "P") this.#toolMgr.setTool("point");
-      if (e.key === "Escape")             this.#toolMgr.setTool("move");
+      const map = { m: "move", M: "move", s: "select", S: "select",
+                    r: "rectangle", R: "rectangle", c: "cuboid", C: "cuboid",
+                    y: "cylinder", Y: "cylinder", o: "circle", O: "circle",
+                    b: "block", B: "block", p: "point", P: "point" };
+      if (map[e.key]) this.#toolMgr.setTool(map[e.key]);
+      if (e.key === "Escape") this.#toolMgr.setTool("move");
     });
   }
 
   async #loadMap(mapName) {
     try {
-      const [regionsData, islands] = await Promise.all([
-        api.fetchRegions(mapName),
+      const [treeData, islands] = await Promise.all([
+        api.fetchRegionsTree(mapName),
         api.fetchIslands(mapName).catch(() => null),
       ]);
-      const groups = _buildSpawnGroups(regionsData.regions, regionsData.categories);
+      const groups = getRegionGroups(treeData, "spawn");
       this.#canvas.render({
-        bounding_box: regionsData.bounding_box,
+        bounding_box: treeData.bounding_box,
         islands: normalizeIslands(islands || []),
       }, groups);
       this.#registry.clear();
       this.#spawnNodes = groups.flatMap(g => g.regions);
-      for (const node of this.#spawnNodes) this.#registry.register(node, null);
+      registerRegionGroups(this.#registry, groups);
       this.#panel.setSpawnRegions(this.#spawnNodes);
       this.#canvas.autoLoadBlocks();
     } catch (err) {
@@ -148,29 +169,30 @@ export class TeamsActivity {
   }
 
   async #reloadRegions(selectId = null) {
-    const regionsData = await api.fetchRegions(this.#mapName);
-    const groups = _buildSpawnGroups(regionsData.regions, regionsData.categories);
+    if (!selectId) this.#registry.deselect();
+    const treeData = await api.fetchRegionsTree(this.#mapName);
+    const groups = getRegionGroups(treeData, "spawn");
     this.#canvas.refreshRegions(groups);
     this.#registry.clear();
     this.#spawnNodes = groups.flatMap(g => g.regions);
-    for (const node of this.#spawnNodes) this.#registry.register(node, null);
+    registerRegionGroups(this.#registry, groups);
     this.#panel.setSpawnRegions(this.#spawnNodes);
     if (selectId) {
-      const node = this.#spawnNodes.find(n => n.id === selectId);
+      const node = findRegionNode(groups, selectId);
       if (node) this.#registry.select(selectId);
     }
   }
 
   async #onRegionDraw(drawResult) {
     if (!this.#mapName) return;
-    if (!["cylinder", "point"].includes(drawResult.type)) return;
+    if (!["rectangle", "cuboid", "cylinder", "circle", "block", "point"].includes(drawResult.type)) return;
 
-    this.#toolMgr.setTool("move");
     const payload = drawResultToPayload(drawResult, "spawn");
 
     try {
       const result = await api.createRegion(this.#mapName, payload);
       await this.#reloadRegions();
+      this.#toolMgr.setTool("select");
       if (result?.id) {
         const node = this.#spawnNodes.find(n => n.id === result.id);
         if (node) this.#registry.select(result.id);
@@ -180,47 +202,18 @@ export class TeamsActivity {
     }
   }
 
-  #deleteSpawnRegion(regionId) {
-    this.#canvas.removeRegion(regionId);
-    this.#spawnNodes = this.#spawnNodes.filter(n => n.id !== regionId);
-    this.#registry.clear();
-    for (const node of this.#spawnNodes) this.#registry.register(node, null);
-    this.#panel.setSpawnRegions(this.#spawnNodes);
-    this.#panel.onRegionDeselect();
-    this.#panel.reloadSpawnList(this.#mapName);
-  }
-}
-
-
-function _buildSpawnGroups(regions, categories) {
-  const spawnNodes = [];
-  for (const [id, region] of Object.entries(regions || {})) {
-    if (categories[id] !== "spawn") continue;
-    const b = region.bounds_2d;
-    const node = {
-      id,
-      type:   region.type,
-      label:  id,
-      color:  REGION_COLOR,
-      bounds: b ? {
-        min_x: b.min.x, min_z: b.min.z,
-        max_x: b.max.x, max_z: b.max.z,
-      } : null,
-      children: [],
-    };
-    if (region.type === "cylinder") {
-      node.base_x = region.base?.x ?? 0;
-      node.base_y = region.base?.y ?? 0;
-      node.base_z = region.base?.z ?? 0;
-      node.radius = region.radius ?? 0;
-      node.height = region.height ?? 0;
-    } else if (region.type === "point") {
-      node.pos_x = region.position?.x ?? 0;
-      node.pos_y = region.position?.y ?? 0;
-      node.pos_z = region.position?.z ?? 0;
+  #handleRegionPatch(regionId, payload, result) {
+    if (payload.id) {
+      this.#reloadRegions(payload.id);
+      return;
     }
-    spawnNodes.push(node);
+
+    const node = this.#registry.getNode(regionId);
+    if (!node) return;
+    applyRegionPatchToNode(node, payload, result);
+    if (result?.bounds) this.#canvas.refreshRegionBounds(regionId, result.bounds);
+    this.#canvas.showAnchors(node);
+    this.#panel.onRegionSelect(node);
   }
-  if (!spawnNodes.length) return [];
-  return [{ name: "spawns", label: "Spawn Regions", color: REGION_COLOR, regions: spawnNodes }];
+
 }

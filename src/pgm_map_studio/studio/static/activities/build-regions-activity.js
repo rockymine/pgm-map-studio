@@ -12,6 +12,11 @@ import { BuildRegionsPanel } from "../panels/build-regions-panel.js";
 import { RegionsPanel }      from "../panels/regions-panel.js";
 import { RegionInspector }   from "../panels/region-inspector.js";
 import { RegionRegistry }    from "../region/region-registry.js";
+import {
+  applyRegionPatchToNode,
+  getRegionGroups,
+  registerRegionGroups,
+} from "../region/region-tree.js";
 import { ToolManager }                        from "../shared/tool-manager.js";
 import { showToast }                          from "../shared/ui-helpers.js";
 import { normalizeIslands, drawResultToPayload, makeBoundsHandlers } from "../shared/canvas-helpers.js";
@@ -97,9 +102,15 @@ export class BuildRegionsActivity {
         },
         onPatch: async (regionId, payload) => {
           if (!this.#mapName) return;
-          await api.patchRegion(this.#mapName, regionId, payload);
-          await this.#reloadBuildRegion(this.#mapName, payload.id ?? regionId);
+          const result = await api.patchRegion(this.#mapName, regionId, payload);
+          if (payload.id) {
+            await this.#reloadBuildRegion(this.#mapName, payload.id);
+            return;
+          }
+          this.#applyRegionPatch(regionId, payload, result);
         },
+        validateId: (newId, currentId) =>
+          this.#registry.has(newId) && newId !== currentId ? `Region ID "${newId}" is already in use.` : "",
       },
     );
 
@@ -196,6 +207,7 @@ export class BuildRegionsActivity {
       cuboid:    document.getElementById("br-tool-cuboid"),
       cylinder:  document.getElementById("br-tool-cylinder"),
       circle:    document.getElementById("br-tool-circle"),
+      block:     document.getElementById("br-tool-block"),
       point:     document.getElementById("br-tool-point"),
     });
 
@@ -206,6 +218,7 @@ export class BuildRegionsActivity {
       ["br-tool-cuboid",    "cuboid"],
       ["br-tool-cylinder",  "cylinder"],
       ["br-tool-circle",    "circle"],
+      ["br-tool-block",     "block"],
       ["br-tool-point",     "point"],
     ];
     for (const [id, tool] of toolBtns) {
@@ -227,7 +240,7 @@ export class BuildRegionsActivity {
         m: "move", M: "move", s: "select", S: "select",
         r: "rectangle", R: "rectangle", c: "cuboid", C: "cuboid",
         y: "cylinder", Y: "cylinder", o: "circle", O: "circle",
-        p: "point", P: "point", Escape: "move",
+        b: "block", B: "block", p: "point", P: "point", Escape: "move",
       };
       if (map[e.key]) this.#toolMgr.setTool(map[e.key]);
     });
@@ -235,14 +248,8 @@ export class BuildRegionsActivity {
 
   // ── Build region data loading ──────────────────────────────────────────────
 
-  #registerNodes(nodes) {
-    for (const node of nodes) {
-      if (node.id) this.#registry.register(node, null);
-      if (node.children?.length) this.#registerNodes(node.children);
-    }
-  }
-
   async #reloadBuildRegion(mapName, selectId = null) {
+    if (!selectId) this.#registry.deselect();
     this.#registry.clear();
     this.#regionsPanel.build([]);
     this.#inspector.clear();
@@ -253,8 +260,7 @@ export class BuildRegionsActivity {
         api.fetchIslands(mapName).catch(() => null),
       ]);
 
-      const buildGroup = treeData.groups.find(g => g.name === "build");
-      const groups     = buildGroup ? [buildGroup] : [];
+      const groups = getRegionGroups(treeData, "build");
       this.#editorCanvas.render(
         {
           bounding_box: treeData.bounding_box,
@@ -263,9 +269,7 @@ export class BuildRegionsActivity {
         groups,
       );
 
-      for (const group of groups) {
-        this.#registerNodes(group.regions);
-      }
+      registerRegionGroups(this.#registry, groups);
 
       this.#regionsPanel.build(groups);
       if (selectId) this.#registry.select(selectId);
@@ -283,12 +287,12 @@ export class BuildRegionsActivity {
   // ── Region CRUD ────────────────────────────────────────────────────────────
 
   async #createRegionFromDraw(drawResult) {
-    this.#toolMgr.setTool("move");
     const payload = drawResultToPayload(drawResult, "build");
 
     try {
       const result = await api.createRegion(this.#mapName, payload);
       await this.#reloadBuildRegion(this.#mapName);
+      this.#toolMgr.setTool("select");
       if (result.id) this.#registry.select(result.id);
       showToast("Region created", "success");
     } catch (err) {
@@ -311,5 +315,13 @@ export class BuildRegionsActivity {
       this.#sideviewCanvas.setData(null);
     }
   }
-}
 
+  #applyRegionPatch(regionId, payload, result) {
+    const node = this.#registry.getNode(regionId);
+    if (!node) return;
+    applyRegionPatchToNode(node, payload, result);
+    if (result?.bounds) this.#editorCanvas.refreshRegionBounds(regionId, result.bounds);
+    this.#editorCanvas.showAnchors(node);
+    this.#inspector.show(node);
+  }
+}

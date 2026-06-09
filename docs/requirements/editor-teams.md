@@ -38,7 +38,7 @@
 
 **User requirements**
 - Define at least one spawn per team.
-- For each spawn: select the owning team, define the spawn region (the spatial volume players materialise in — cuboid or cylinder), optionally select a kit, set facing direction (yaw in degrees).
+- For each spawn: select the owning team, define the spawn region using any currently supported primitive region type, optionally select a kit, set facing direction (yaw in degrees). Type-specific refinement is deferred.
 - Define an observer spawn with no team association (region + facing direction).
 - A team may have multiple spawn definitions; one per team is the common case.
 

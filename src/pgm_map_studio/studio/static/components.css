@@ -79,6 +79,12 @@
 .field-input:focus     { border-color: var(--accent); }
 .field-input--textarea { resize: vertical; min-height: 34px; line-height: 1.4; }
 .field-input--error    { border-color: var(--color-error) !important; }
+.field-error {
+  margin-top: var(--space-1);
+  color: var(--color-error);
+  font-size: var(--font-sm);
+  line-height: 1.4;
+}
 
 .field-pick-row { display: flex; align-items: center; gap: var(--space-2); }
 .field-pick-row .field-input { flex: 1; }

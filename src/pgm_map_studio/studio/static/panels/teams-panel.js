@@ -19,6 +19,7 @@ import {
 } from "../shared/game-colors.js";
 import { showToast } from "../shared/ui-helpers.js";
 import { typeIcon } from "../region/region-types.js";
+import { RegionInspector } from "./region-inspector.js";
 
 export class TeamsPanel {
   constructor(opts = {}) {
@@ -60,6 +61,33 @@ export class TeamsPanel {
 
     this._teamAbort  = null;
     this._spawnAbort = null;
+    this._regionInsp = new RegionInspector(
+      document.getElementById("pt-spawn-region-detail"),
+      {
+        onDelete: async (node) => {
+          if (!this._mapName) return;
+          const spawn = this.getSpawnLink(node.id);
+          const isObserver = _obsRegionId(this._observerSpawn) === node.id;
+          try {
+            if (spawn) await api.deleteSpawn(this._mapName, node.id);
+            if (isObserver) await api.deleteObserverSpawn(this._mapName);
+            await api.deleteRegion(this._mapName, node.id);
+            await this._opts.onDeleteRegion?.(node.id);
+            await this.reloadSpawnList(this._mapName);
+            showToast("Spawn region deleted", "success");
+          } catch (err) {
+            showToast(`Delete failed: ${err.message}`, "error");
+          }
+        },
+        onPatch: async (regionId, payload) => {
+          if (!this._mapName) return;
+          const result = await api.patchRegion(this._mapName, regionId, payload);
+          await this._opts.onRegionPatched?.(regionId, payload, result);
+          if (payload.id) await this.reloadSpawnList(this._mapName);
+        },
+        validateId: (newId, currentId) => this._opts.validateRegionId?.(newId, currentId) ?? "",
+      },
+    );
 
     this._buildColorDropdowns();
     this._attachStaticListeners();
@@ -252,6 +280,13 @@ export class TeamsPanel {
     const _save = async () => {
       if (!this._mapName) return;
       try {
+        const newId = this._teamIdInput.value.trim();
+        const duplicate = newId !== teamId && this._teams.some(t => t.id === newId);
+        this._teamIdInput.setCustomValidity(duplicate ? `Team ID "${newId}" is already in use.` : "");
+        if (duplicate) {
+          this._teamIdInput.reportValidity();
+          return;
+        }
         const payload = {
           name:        this._teamNameInput.value.trim() || team.id,
           color:       this._teamColorSel.value,
@@ -259,7 +294,6 @@ export class TeamsPanel {
           max_players: parseInt(this._teamMaxInput.value) || 20,
           min_players: parseInt(this._teamMinInput.value) || 0,
         };
-        const newId = this._teamIdInput.value.trim();
         if (newId && newId !== teamId) payload.id = newId;
         await api.updateTeam(this._mapName, teamId, payload);
         const data = await api.fetchMapData(this._mapName);
@@ -328,141 +362,7 @@ export class TeamsPanel {
     this._spawnAbort = new AbortController();
     const sig = { signal: this._spawnAbort.signal };
 
-    // ── Region detail section (built dynamically) ─────────────────────────
-    const detailEl = document.getElementById("pt-spawn-region-detail");
-    if (detailEl) {
-      while (detailEl.firstChild) detailEl.removeChild(detailEl.firstChild);
-
-      // detail-header: type icon + id label + type badge
-      const header = document.createElement("div");
-      header.className = "detail-header";
-      const iconSpan = document.createElement("span");
-      iconSpan.className = "geo-type-icon";
-      iconSpan.style.color = isObserver ? chatColorHex("aqua") : node.color;
-      iconSpan.innerHTML = typeIcon(node.type, 14);
-      const labelSpan = document.createElement("span");
-      labelSpan.className = "detail-label detail-label--mono";
-      labelSpan.textContent = node.id;
-      const typeBadge = document.createElement("span");
-      typeBadge.className = "badge badge--neutral";
-      typeBadge.textContent = node.type.charAt(0).toUpperCase() + node.type.slice(1);
-      header.append(iconSpan, labelSpan, typeBadge);
-      detailEl.appendChild(header);
-
-      // ID rename field
-      const idField = document.createElement("div");
-      idField.className = "field";
-      const idLabel = document.createElement("label");
-      idLabel.className = "field-label";
-      idLabel.textContent = "ID";
-      const idInput = document.createElement("input");
-      idInput.className = "field-input";
-      idInput.type = "text";
-      idInput.spellcheck = false;
-      idInput.value = node.id;
-      idField.append(idLabel, idInput);
-      detailEl.appendChild(idField);
-
-      idInput.addEventListener("change", async () => {
-        const newId = idInput.value.trim();
-        if (!newId || newId === node.id || !this._mapName) return;
-        try {
-          await api.patchRegion(this._mapName, node.id, { id: newId });
-          this._opts.onRegionPatched?.(node.id, newId);
-        } catch (err) {
-          showToast(`Rename failed: ${err.message}`, "error");
-          idInput.value = node.id;
-        }
-      }, sig);
-
-      // Coordinate fields (type-specific) — each group is a .field so panel-section gap applies
-      if (node.type === "cylinder") {
-        const baseField = document.createElement("div");
-        baseField.className = "field";
-        baseField.innerHTML = `
-          <label class="field-label">Base</label>
-          <div class="ctrl-row">
-            <div class="coord-field"><span class="coord-prefix">X</span><input class="coord-input" data-key="base_x" type="number" step="0.5" value="${node.base_x}"></div>
-            <div class="coord-field"><span class="coord-prefix">Y</span><input class="coord-input" data-key="base_y" type="number" step="1" value="${node.base_y}"></div>
-            <div class="coord-field"><span class="coord-prefix">Z</span><input class="coord-input" data-key="base_z" type="number" step="0.5" value="${node.base_z}"></div>
-          </div>`;
-        const dimsField = document.createElement("div");
-        dimsField.className = "field";
-        dimsField.innerHTML = `
-          <label class="field-label">Dimensions</label>
-          <div class="ctrl-row">
-            <div class="coord-field"><span class="coord-prefix">R</span><input class="coord-input" data-key="radius" type="number" step="0.5" min="0.5" value="${node.radius}"></div>
-            <div class="coord-field"><span class="coord-prefix">H</span><input class="coord-input" data-key="height" type="number" step="1" min="1" value="${node.height}"></div>
-          </div>`;
-        detailEl.appendChild(baseField);
-        detailEl.appendChild(dimsField);
-
-        const _saveCoords = async () => {
-          const coords = {};
-          for (const inp of [...baseField.querySelectorAll("[data-key]"), ...dimsField.querySelectorAll("[data-key]")]) {
-            coords[inp.dataset.key] = parseFloat(inp.value);
-          }
-          try {
-            await api.patchRegion(this._mapName, node.id, { coords });
-            this._opts.onRegionPatched?.(node.id, null);
-          } catch (err) {
-            showToast(`Coord update failed: ${err.message}`, "error");
-          }
-        };
-        for (const inp of [...baseField.querySelectorAll(".coord-input"), ...dimsField.querySelectorAll(".coord-input")]) {
-          inp.addEventListener("change", _saveCoords, sig);
-        }
-
-      } else if (node.type === "point") {
-        const posField = document.createElement("div");
-        posField.className = "field";
-        posField.innerHTML = `
-          <label class="field-label">Position</label>
-          <div class="ctrl-row">
-            <div class="coord-field"><span class="coord-prefix">X</span><input class="coord-input" data-key="x" type="number" step="1" value="${node.pos_x}"></div>
-            <div class="coord-field"><span class="coord-prefix">Y</span><input class="coord-input" data-key="y" type="number" step="1" value="${node.pos_y}"></div>
-            <div class="coord-field"><span class="coord-prefix">Z</span><input class="coord-input" data-key="z" type="number" step="1" value="${node.pos_z}"></div>
-          </div>`;
-        detailEl.appendChild(posField);
-
-        const _saveCoords = async () => {
-          const coords = {};
-          for (const inp of posField.querySelectorAll("[data-key]")) {
-            coords[inp.dataset.key] = parseFloat(inp.value);
-          }
-          try {
-            await api.patchRegion(this._mapName, node.id, { coords });
-            this._opts.onRegionPatched?.(node.id, null);
-          } catch (err) {
-            showToast(`Coord update failed: ${err.message}`, "error");
-          }
-        };
-        for (const inp of posField.querySelectorAll(".coord-input")) {
-          inp.addEventListener("change", _saveCoords, sig);
-        }
-      }
-
-      // Delete region button
-      const deleteFooter = document.createElement("div");
-      deleteFooter.className = "section-footer section-footer--separated";
-      const deleteBtn = document.createElement("button");
-      deleteBtn.className = "action-btn action-btn--danger action-btn--fill";
-      deleteBtn.textContent = "Delete Region";
-      deleteBtn.addEventListener("click", async () => {
-        if (!this._mapName) return;
-        try {
-          if (spawn)      await api.deleteSpawn(this._mapName, node.id);
-          if (isObserver) await api.deleteObserverSpawn(this._mapName);
-          await api.deleteRegion(this._mapName, node.id);
-          this._opts.onDeleteRegion?.(node.id);
-          showToast("Spawn region deleted", "success");
-        } catch (err) {
-          showToast(`Delete failed: ${err.message}`, "error");
-        }
-      }, { signal: sig.signal });
-      deleteFooter.appendChild(deleteBtn);
-      detailEl.appendChild(deleteFooter);
-    }
+    this._regionInsp.show(node);
 
     // ── Spawn assignment ──────────────────────────────────────────────────
     this._spawnTeamSel.innerHTML =

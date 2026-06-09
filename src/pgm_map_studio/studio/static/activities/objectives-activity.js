@@ -6,14 +6,18 @@
 import { EditorCanvas }      from "../canvas/editor-canvas.js";
 import { ObjectivesPanel }   from "../panels/objectives-panel.js";
 import { RegionRegistry }    from "../region/region-registry.js";
+import {
+  applyRegionPatchToNode,
+  findRegionNode,
+  getRegionGroups,
+  registerRegionGroups,
+} from "../region/region-tree.js";
 import { ToolManager }       from "../shared/tool-manager.js";
 import * as api              from "../api.js";
 import { showToast }         from "../shared/ui-helpers.js";
 import { normalizeIslands,
          drawResultToPayload,
          makeBoundsHandlers } from "../shared/canvas-helpers.js";
-
-const WOOL_REGION_COLOR = "var(--canvas-region)";
 
 export class ObjectivesActivity {
   #el         = null;
@@ -48,8 +52,13 @@ export class ObjectivesActivity {
       onStatusChange,
       onRegionRowClick: (regionId) => this.#registry.select(regionId),
       onDeselectRegion: ()         => this.#registry.deselect(),
-      onDeleteRegion:   (regionId) => this.#removeRegion(regionId),
-      onRegionPatched:  (regionId, newId) => this.#reloadRegions(newId ?? regionId),
+      onDeleteRegion:   async () => {
+        this.#registry.deselect();
+        await this.#reloadRegions();
+      },
+      onRegionPatched:  (regionId, payload, result) => this.#handleRegionPatch(regionId, payload, result),
+      validateRegionId: (newId, currentId) =>
+        this.#registry.has(newId) && newId !== currentId ? `Region ID "${newId}" is already in use.` : "",
     });
 
     this.#initCanvas();
@@ -139,20 +148,20 @@ export class ObjectivesActivity {
 
   async #loadMap(mapName) {
     try {
-      const [regionsData, islands] = await Promise.all([
-        api.fetchRegions(mapName),
+      const [treeData, islands] = await Promise.all([
+        api.fetchRegionsTree(mapName),
         api.fetchIslands(mapName).catch(() => null),
       ]);
-      if (!regionsData.bounding_box) return;
-      const nodes  = _buildWoolNodes(regionsData.regions, regionsData.categories);
-      const groups = nodes.length ? [{ name: "wool", label: null, regions: nodes }] : [];
+      if (!treeData.bounding_box) return;
+      const groups = getRegionGroups(treeData, "wool");
+      const nodes = groups.flatMap(group => group.regions);
       this.#canvas.render({
-        bounding_box: regionsData.bounding_box,
+        bounding_box: treeData.bounding_box,
         islands: normalizeIslands(islands || []),
       }, groups);
       this.#registry.clear();
       this.#woolNodes = nodes;
-      _registerNodes(nodes, this.#registry);
+      registerRegionGroups(this.#registry, groups);
       this.#panel.setWoolRegions(nodes);
       this.#canvas.autoLoadBlocks();
     } catch (err) {
@@ -161,16 +170,17 @@ export class ObjectivesActivity {
   }
 
   async #reloadRegions(selectId = null) {
-    const regionsData = await api.fetchRegions(this.#mapName);
-    const nodes  = _buildWoolNodes(regionsData.regions, regionsData.categories);
-    const groups = nodes.length ? [{ name: "wool", label: null, regions: nodes }] : [];
+    if (!selectId) this.#registry.deselect();
+    const treeData = await api.fetchRegionsTree(this.#mapName);
+    const groups = getRegionGroups(treeData, "wool");
+    const nodes = groups.flatMap(group => group.regions);
     this.#canvas.refreshRegions(groups);
     this.#registry.clear();
     this.#woolNodes = nodes;
-    _registerNodes(nodes, this.#registry);
+    registerRegionGroups(this.#registry, groups);
     this.#panel.setWoolRegions(nodes);
     if (selectId) {
-      const node = this.#woolNodes.find(n => n.id === selectId);
+      const node = findRegionNode(groups, selectId);
       if (node) this.#registry.select(selectId);
     }
   }
@@ -179,12 +189,12 @@ export class ObjectivesActivity {
     if (!this.#mapName) return;
     if (!["rectangle", "cuboid", "cylinder", "circle", "block", "point"].includes(drawResult.type)) return;
 
-    this.#toolMgr.setTool("move");
     const payload = drawResultToPayload(drawResult, "wool");
 
     try {
       const result = await api.createRegion(this.#mapName, payload);
       await this.#reloadRegions();
+      this.#toolMgr.setTool("select");
       if (result?.id) {
         const node = this.#woolNodes.find(n => n.id === result.id);
         if (node) this.#registry.select(result.id);
@@ -194,82 +204,18 @@ export class ObjectivesActivity {
     }
   }
 
-  #removeRegion(regionId) {
-    this.#canvas.removeRegion(regionId);
-    this.#woolNodes = this.#woolNodes.filter(n => n.id !== regionId);
-    this.#registry.clear();
-    for (const node of this.#woolNodes) this.#registry.register(node, null);
-    this.#panel.setWoolRegions(this.#woolNodes);
-    this.#panel.onRegionDeselect();
-  }
-}
-
-
-const _TYPE_PRIORITY = { block: 0, point: 0, rectangle: 1, cuboid: 1, cylinder: 1, circle: 1, sphere: 1 };
-function _typePriority(type) { return _TYPE_PRIORITY[type] ?? 2; }
-
-/** Build tree nodes for all wool-category regions from the flat regions dict. */
-function _buildWoolNodes(regions, categories) {
-  const nodes = [];
-  for (const [id, region] of Object.entries(regions || {})) {
-    if (categories[id] !== "wool") continue;
-    nodes.push(_encodeNode(id, region, regions));
-  }
-  nodes.sort((a, b) => {
-    const pd = _typePriority(a.type) - _typePriority(b.type);
-    return pd !== 0 ? pd : a.id.localeCompare(b.id);
-  });
-  return nodes;
-}
-
-function _encodeNode(id, region, registry) {
-  const b = region.bounds_2d;
-  const children = [];
-  for (const child of region.children || []) {
-    if (typeof child === "string") {
-      const childRegion = registry?.[child];
-      if (childRegion) children.push(_encodeNode(child, childRegion, registry));
-    } else if (child && typeof child === "object") {
-      children.push(_encodeNode(child.id || "", child, registry));
+  #handleRegionPatch(regionId, payload, result) {
+    if (payload.id) {
+      this.#reloadRegions(payload.id);
+      return;
     }
-  }
-  return {
-    id,
-    type:        region.type,
-    label:       id || `(${region.type})`,
-    color:       WOOL_REGION_COLOR,
-    bounds:      b ? { min_x: b.min.x, min_z: b.min.z, max_x: b.max.x, max_z: b.max.z } : null,
-    coords:      _buildCoords(region),
-    children,
-    synthetic_id: !id,
-  };
-}
 
-function _buildCoords(region) {
-  const t = region.type;
-  if (t === "rectangle" || t === "cuboid") {
-    const mn = region.min || region.bounds_2d?.min || {};
-    const mx = region.max || region.bounds_2d?.max || {};
-    return { min_x: mn.x, min_y: mn.y, min_z: mn.z, max_x: mx.x, max_y: mx.y, max_z: mx.z };
+    const node = this.#registry.getNode(regionId);
+    if (!node) return;
+    applyRegionPatchToNode(node, payload, result);
+    if (result?.bounds) this.#canvas.refreshRegionBounds(regionId, result.bounds);
+    this.#canvas.showAnchors(node);
+    this.#panel.onRegionSelect(node);
   }
-  if (t === "cylinder") {
-    const b = region.base || {};
-    return { base_x: b.x, base_y: b.y, base_z: b.z, radius: region.radius, height: region.height };
-  }
-  if (t === "circle") {
-    const c = region.center || {};
-    return { center_x: c.x, center_z: c.z, radius: region.radius };
-  }
-  if (t === "point" || t === "block") {
-    const p = region.position || {};
-    return { x: p.x, y: p.y, z: p.z };
-  }
-  return null;
-}
 
-function _registerNodes(nodes, registry) {
-  for (const n of nodes) {
-    if (n.id) registry.register(n, null);
-    if (n.children?.length) _registerNodes(n.children, registry);
-  }
 }

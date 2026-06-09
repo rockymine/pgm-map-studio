@@ -40,6 +40,7 @@ export class RegionRegistry {
   }
 
   getNode(id) { return this.#entries.get(id)?.node ?? null; }
+  has(id) { return this.#entries.has(id); }
 
   renameNode(oldId, newId) {
     const entry = this.#entries.get(oldId);

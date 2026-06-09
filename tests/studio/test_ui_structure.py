@@ -177,6 +177,7 @@ def test_design_gallery_contains_canonical_reference_examples():
     assert any("panel-stack" in item for item in classes)
     assert any("field-row" in item for item in classes)
     assert any("region-tree" in item for item in classes)
+    assert any("field-error" in item for item in classes)
 
 
 def test_region_trees_use_shared_class_inside_panel_sections():
@@ -219,6 +220,15 @@ def test_spawn_inspector_groups_its_sections_in_panel_stack():
     )
 
     assert "panel-stack" in spawn_inspector.classes
+
+
+def test_region_editors_expose_same_supported_primitive_tools():
+    root = _parse_template("editor.html")
+    ids = {node.attrs.get("id") for node in _walk(root)}
+
+    for prefix in ("pt", "br", "po"):
+        for tool_name in ("rectangle", "cuboid", "cylinder", "circle", "block", "point"):
+            assert f"{prefix}-tool-{tool_name}" in ids
 
 
 @pytest.mark.parametrize(

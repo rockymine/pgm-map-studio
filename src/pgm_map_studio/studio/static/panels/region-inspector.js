@@ -19,13 +19,16 @@ export class RegionInspector {
   #onSelect;
   #onDelete;
   #onPatch;
+  #validateId;
+  #validationEls = new Map();
   #abort = null;
 
-  constructor(el, { onSelect, onDelete, onPatch } = {}) {
+  constructor(el, { onSelect, onDelete, onPatch, validateId } = {}) {
     this.#el      = el;
     this.#onSelect = onSelect ?? null;
     this.#onDelete = onDelete ?? null;
     this.#onPatch  = onPatch  ?? null;
+    this.#validateId = validateId ?? null;
     this.clear();
   }
 
@@ -69,14 +72,24 @@ export class RegionInspector {
       idInput.type = "text";
       idInput.spellcheck = false;
       idInput.value = node.id;
+      const errorEl = _fieldError();
+      this.#validationEls.set("id", errorEl);
       if (editable) {
+        idInput.addEventListener("input", () => this.#setFieldError("id", idInput, ""), sig);
         idInput.addEventListener("change", async () => {
           const newId = idInput.value.trim();
           if (!newId || newId === node.id) { idInput.value = node.id; return; }
+          const validationMessage = this.#validateId?.(newId, node.id) ?? "";
+          if (validationMessage) {
+            this.#setFieldError("id", idInput, validationMessage);
+            idInput.value = node.id;
+            return;
+          }
           try {
             await this.#onPatch(node.id, { id: newId });
+            this.#setFieldError("id", idInput, "");
           } catch (err) {
-            showToast(`Rename failed: ${err.message}`, "error");
+            this.#setFieldError("id", idInput, err.message || "Rename failed.");
             idInput.value = node.id;
           }
         }, sig);
@@ -84,7 +97,7 @@ export class RegionInspector {
         idInput.readOnly = true;
         idInput.tabIndex = -1;
       }
-      idField.append(idLabel, idInput);
+      idField.append(idLabel, idInput, errorEl);
       this.#el.appendChild(idField);
     }
 
@@ -230,11 +243,20 @@ export class RegionInspector {
   clear() {
     this.#abort?.abort();
     this.#abort = null;
+    this.#validationEls.clear();
     while (this.#el.firstChild) this.#el.removeChild(this.#el.firstChild);
     const empty = document.createElement("div");
     empty.className = "panel-empty-msg";
     empty.textContent = "Select a region to inspect.";
     this.#el.appendChild(empty);
+  }
+
+  #setFieldError(key, inputEl, message) {
+    const errorEl = this.#validationEls.get(key);
+    if (!errorEl) return;
+    errorEl.hidden = !message;
+    errorEl.textContent = message || "";
+    inputEl.classList.toggle("field-input--error", !!message);
   }
 }
 
@@ -281,4 +303,11 @@ function _coordRow(pairs, editable = false) {
     row.appendChild(cell);
   }
   return { el: row, inputs };
+}
+
+function _fieldError() {
+  const el = document.createElement("div");
+  el.className = "field-error";
+  el.hidden = true;
+  return el;
 }

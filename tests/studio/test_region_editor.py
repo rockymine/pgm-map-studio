@@ -271,6 +271,25 @@ class TestRestoreRegion:
         assert "r1" in data["regions"]
         assert "r1" in data["region_categories"]["spawn"]
 
+    def test_delete_parent_removes_named_descendants_and_external_references(self):
+        child = _rect("child")
+        data = {
+            "regions": {
+                "parent": {"id": "parent", "type": "union", "children": [child]},
+                "child": child,
+                "bystander": {"id": "bystander", "type": "union", "children": ["child"]},
+            },
+            "region_categories": {"build": ["parent"], "other": ["child", "bystander"]},
+        }
+
+        delete_region(data, "parent")
+
+        assert "parent" not in data["regions"]
+        assert "child" not in data["regions"]
+        assert data["regions"]["bystander"]["children"] == []
+        assert data["region_categories"]["build"] == []
+        assert data["region_categories"]["other"] == ["bystander"]
+
 
 # ── patch_region ──────────────────────────────────────────────────────────────
 
