@@ -1,23 +1,90 @@
 # CLAUDE.md
 
-## Implementation plan
+## Where things stand — read this first
 
-See `plans/implementation-plan.md` for the full ordered plan: Phase 0 (infrastructure) → Phase 1 (Sketch workflow) → Phase 2 (Editor workflow).
+This project is mid **contract-first refactor** on branch `refactor/contract-first`. The goal of
+the refactor is to stabilize the data/API contract (round-trip, typed models, categorization,
+filters) before the larger framework/UI migration and hosting.
 
-### Implementation order — per activity
+**Source of truth for the work:**
+- `plans/refactor-plan.md` — the ordered **status tracker** (Workstreams A–E). Keep it current as
+  work lands; each task is tagged with what it needs (none / audit / clarification).
+- `docs/contracts/` — the **contract** (the *what*):
+  - `studio-domain-and-api-contract.md` — verified domain model + API surface (grounded in the real
+    code + a 350-map corpus, not idealized).
+  - `region-categorization.md` — the two-facet region model (`category` + `roles`).
+  - `refactor-constraints-and-pitfalls.md` — strategy/risk notes.
+  - `plans/contract-first-migration-plan.md` — the original phased intent.
+- Auto-memory at `/root/.claude/projects/-media-sf-repos/memory/` (esp. `project_contract_phase1.md`)
+  records every decision and the session history across context resets — read `MEMORY.md` first.
 
-Follow these steps **in this order** every time a new activity or infrastructure item is started:
+**Done — Workstream A (round-trip repair):** `xml_data.json ↔ MapXml ↔ map.xml` is lossless again.
+The corpus harness `tools/roundtrip_check.py` is **green (350/350)**. The sketch-export→editor bug
+(A11) is fixed and browser-verified. Full Python suite passes (~792 tests).
 
-1. **Read the requirements document** for the item (`docs/requirements/<file>.md` or `docs/cross-cutting.md`).
-2. **Check the project tree** — `find src/` and `find tests/` — to know what already exists.
-3. **Read the design document** — `docs/ui-conventions.md` for UI work; `plans/editor-vision.md` for editor activities; `docs/sketch-workflow.md` for sketch activities.
-4. **Clarify unknowns** — use `AskUserQuestion` for anything genuinely unclear; update the requirements doc if the answer changes scope.
-5. **Write tests first** — Python unit tests in `tests/` (pytest) and/or JS unit tests; one test file per source file.
-6. **Follow all other rules in this CLAUDE.md** (cross-cutting concerns, UI conventions, dev server restart rules, package READMEs).
-7. **Verify after completion** — run `pytest` and open the browser (`/run-studio` skill) to confirm the feature works end-to-end. Use direct DOM interaction for anything too finicky to test via unit tests.
-8. **Describe what was done and ask the user to test** before considering the activity closed.
+**Current task — B5 (region categorization derivation):**
+- Model: `docs/contracts/region-categorization.md` — two facets: `category` ∈ {spawn,
+  observer_spawn, wool_room, monument, wool_spawner, build, mechanic, other} + orthogonal `roles`
+  (`rule_container`, `rule_group`, `time_gated`, `rules`). Build is derived from the
+  void-enforcement *structure*, not naming.
+- **Verified oracle:** `tests/fixtures/region_categories/annealing_iv.json` (rockymine-signed-off;
+  readable `.md` alongside). Build the derivation module to satisfy it, then add fixtures for
+  `vertex`, `acapulco`, `icecream_sandwiched_ii`.
+- Refinements the oracle pins: `spawner.player_region → wool_room` (only `spawn_region` is
+  `wool_spawner`); `rule_group` detection descends anonymous intermediate unions and requires a
+  uniform child category. Categories stay **derived**; `region_categories` in `xml_data.json` is a
+  **user-override store only**, never canonical.
 
-Never commit unless the user explicitly asks.
+**Other queued work** (in `plans/refactor-plan.md`): B6–B11, C1–C12, D1–D2, E1. Several need
+rockymine's design input (tagged). `docs/requirements/editor-filters.md` is flagged **unstable** —
+the filter↔region wiring design will live in a new `docs/contracts/filter-region-wiring.md` (C9).
+
+## Environment & commands (easy to lose across sessions)
+
+- **Python:** `/root/ctw-venv/bin/python` — the VirtualBox shared folder can't host a repo venv.
+- **Tests:** `/root/ctw-venv/bin/python -m pytest` from repo root. JS: `cd /root/pgm-studio-tests &&
+  node_modules/.bin/vitest run`.
+- **Round-trip harness (must stay green):** `/root/ctw-venv/bin/python tools/roundtrip_check.py`.
+- **Dev server:** `./tools/studio-dev.sh restart|status|stop` (port 7892, http://localhost:7892).
+  The `/run-studio` skill wraps it. Browser automation via the Chrome MCP tools.
+- **Map corpus:** `/media/sf_repos/CommunityMaps/ctw` (199) + `/media/sf_repos/PublicMaps/ctw` (151)
+  = 350 maps. Regenerate fresh `xml_data.json`:
+  `tools/run_pipeline.py <maproot> <out> --xml-only --force` (fast; outputs currently at
+  `/tmp/pipeline_out` + `/tmp/publicmaps_out`). Config (`maps_folder`,
+  `output_folder=/tmp/pgm-studio-output`): `~/.config/pgm-map-studio/config.json`.
+- **Git:** branch `refactor/contract-first`. Commit **only when the user explicitly asks**; end
+  commit messages with the `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>` line.
+
+## The pgm round-trip core — do not break it
+
+`src/pgm_map_studio/pgm/`: `parser` (map.xml → MapXml), `serializer`/`deserializer`
+(MapXml ↔ `xml_data.json` dict), `xml_writer` (MapXml → map.xml). `regions.py` / `filters.py` /
+`datatypes.py` are the typed domain. Invariants now enforced (see contract §13):
+- Wools are **grouped by colour** with deterministic ids (wool = colour slug, monument =
+  `colour-team`); capturing team lives on `monuments[].team`; owner is derived.
+- `regions` and `filters` are **id-keyed dicts**, not lists.
+- Compound `children` and transform `source_id` are **string-id references** into the flat
+  registry — never inline dicts.
+- Spawns reference their region by id; `never`/`always` are always-available built-in filters.
+
+Any change under `pgm/` (or to region/spawn/wool editor services): run the harness + `pytest`.
+
+## Implementation order — per activity (when building an editor/sketch activity)
+
+1. **Read the requirements** (`docs/requirements/<file>.md` or `docs/cross-cutting.md`) and the
+   relevant **contract** (`docs/contracts/*`).
+2. **Check the tree** — `find src/` / `find tests/` — to know what exists.
+3. **Read the design doc** — `docs/ui-conventions.md` (UI); `plans/editor-vision.md` (editor);
+   `docs/sketch-workflow.md` (sketch).
+4. **Clarify unknowns** with `AskUserQuestion`; update the requirement/contract if scope changes.
+5. **Write tests first** — pytest in `tests/` (mirroring `src/`) and/or Vitest; one test file per
+   source file. For data-model work, validate against the corpus + harness.
+6. **Follow the rest of this CLAUDE.md** (cross-cutting, UI, dev server, package READMEs).
+7. **Verify** — `pytest`, the harness where relevant, and the browser (`/run-studio`).
+8. **Describe what was done and ask the user to test** before closing it out.
+
+`plans/implementation-plan.md` is the original Phase 0→1→2 activity plan; the **active driver is now
+`plans/refactor-plan.md`**.
 
 ---
 
@@ -95,7 +162,7 @@ Always use `Ctrl+Shift+R` (hard reload) in the browser after any change to bypas
 
 ## Tests
 
-**Python:** pytest (`pytest` from project root). One test file per source file, mirroring `src/pgm_map_studio/` under `tests/`. File naming: `test_<source_filename>.py`. Function naming: `test_<thing>_<condition>`. Fixtures in `conftest.py` — synthetic data only, no real game files. Integration tests (real `.mca` files) go in `tools/`, not `tests/`.
+**Python:** pytest (`pytest` from project root). One test file per source file, mirroring `src/pgm_map_studio/` under `tests/`. File naming: `test_<source_filename>.py`. Function naming: `test_<thing>_<condition>`. Fixtures in `conftest.py` — synthetic data only, no real game files. Integration/corpus tools using real maps go in `tools/` (e.g. `tools/roundtrip_check.py`), not `tests/`. Curated corpus oracles (e.g. categorization fixtures) live under `tests/fixtures/`.
 
 **JavaScript:** Vitest. Test files in `tests/js/**/*.test.js`. The VirtualBox shared folder cannot host node_modules, so the runner lives locally:
 - Runner: `/root/pgm-studio-tests/` (package.json + node_modules installed there)
@@ -115,7 +182,8 @@ Per-activity requirements live in `docs/requirements/`. One file per activity, p
 - `editor-teams.md` — teams, kits, spawns, spawn access rules
 - `editor-build-regions.md` — build area, boundary enforcement, lockdowns
 - `editor-objectives.md` — wool objectives, wool room access, availability check
-- `editor-filters.md` — rule review and advanced mechanics
+- `editor-filters.md` — rule review and advanced mechanics — **UNSTABLE/OUTDATED**; see C9 / the
+  forthcoming `docs/contracts/filter-region-wiring.md`
 - `editor-regions.md` — spatial registry audit
 
 **Sketch workflow** (concept-first / new map path):
@@ -179,7 +247,7 @@ Kill with `fuser -k 7891/tcp`.
 
 | Source path | Purpose | Notes |
 |---|---|---|
-| `map_viewer/static/shared/tool-manager.js` | ToolManager class — Phase 0.4 target | Direct port candidate |
+| `map_viewer/static/shared/tool-manager.js` | ToolManager class | Direct port candidate |
 | `map_viewer/static/canvas/concept-canvas.js` | ConceptCanvas drawing logic | Port carefully — different bbox interface |
 | `map_viewer/static/shared/transform.js` | Old transform utilities | Already ported; uses array bbox `[minX,maxX,minZ,maxZ]` — convert to object form |
 | `layout_analysis/region_reader.py` | Anvil `.mca` reader | Clean, well-contained |
