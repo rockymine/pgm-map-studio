@@ -1,5 +1,10 @@
 # Requirements: Filters
 
+> ⚠️ **UNSTABLE / OUTDATED (2026-06-10).** This document predates the contract-first refactor and
+> does not reflect the current filter/region model. The current filter↔region wiring and
+> intelligent-template design lives in `docs/contracts/filter-region-wiring.md` (see plan task C9).
+> Do not treat the contents below as authoritative until this notice is removed.
+
 **Semantic purpose:** Review all spatial event rules applied so far, and configure any advanced mechanics not covered by the earlier steps. The high-prevalence rules (spawn protection, wool room access, build lockdowns) are surfaced inline during their originating activities; this step covers the complete rule audit and the remaining mechanics.
 
 *Author goals: Are there resources that replenish? Should spawn protection expire on leaving spawn? Are there launch pads, zone-specific loadouts, or timed unlocks?*

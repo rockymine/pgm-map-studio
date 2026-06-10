@@ -142,13 +142,17 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   directly (set_base_child for complement ordering), and backfill `change_region_type` tests.
   Makes create symmetric with the now-generalized ungroup. (Authoring, not round-trip.)
 - [ ] **C9. Filter↔region wiring + intelligent templates.** Routes/UI to attach filters to
-  regions/unions, plus the tool *suggesting/questioning* filters from map setup. v1 must cover
-  (a) wiring the positive build regions with the correct void/never filter in the build step
-  (auto-group + apply, using `layer_y0.parquet`), and (b) apply-enter rules. Surface the most
-  common corpus filter usages as "intelligent templates". Start from `docs/filter-use-cases.md`,
-  extended across the full dataset; `docs/requirements/editor-filters.md` is **outdated** and needs
-  rewriting. *Needs: corpus analysis (partly doable) + heavy clarification.* *(rockymine §1
-  "Filters, Regions and their Relation".)*
+  regions/unions, plus the tool *suggesting/questioning* filters from map setup. *Decisions
+  (rockymine):* build-step void-enforcement wiring is **suggest + confirm** (detect positive build
+  regions → propose "auto-group + apply void filter to the complement?" → user confirms/adjusts,
+  using `layer_y0.parquet`). **v1 template set (all four):** (1) void/never build enforcement,
+  (2) spawn protection `enter=only-team`, (3) wool-room defense `enter=not-owner`, (4) wool-room
+  build/break filters. Templates are surfaced as suggestions grounded in the corpus's most common
+  filter shapes. **Doc:** write a **new** `docs/contracts/filter-region-wiring.md` (like the
+  categorization doc) from `docs/filter-use-cases.md` + the full corpus; **mark
+  `docs/requirements/editor-filters.md` as unstable** rather than rewriting it. *Needs: corpus
+  analysis (doable) + the new doc, then routes/UI.* *(rockymine §1 "Filters, Regions and their
+  Relation".)*
 - [ ] **C10. Route consistency audit + CRUD conventions.** *Audited (autonomous session).*
   Inconsistencies to resolve: (1) **singular/plural** mixed — `/teams` + `/teams/:id` and
   `/wools` + `/wools/:id` (plural) vs `/regions` POST + `/region/:id` and `/spawns` POST +
