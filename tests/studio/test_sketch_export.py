@@ -263,6 +263,32 @@ def test_export_creates_output_files(sketch_env):
     assert (out_dir / "islands.json").exists()
     assert (out_dir / "symmetry.json").exists()
     assert (out_dir / "xml_data.json").exists()
+    # A11: the editor side view needs layer_segments.parquet or it shows
+    # "No segment data" (it can't fall back to a maps_folder world for a sketch).
+    assert (out_dir / "layer_segments.parquet").exists()
+
+
+def test_export_segments_parquet_schema(sketch_env):
+    sid = _make_two_island_sketch(sketch_env)
+    result = export_sketch(sid)
+    out_dir = sketch_env / "output" / result["slug"]
+    df = pd.read_parquet(out_dir / "layer_segments.parquet")
+    assert {"world_x", "world_z", "world_y_start", "world_y_end"} <= set(df.columns)
+    assert len(df) > 0
+    assert (df["world_y_start"] == 0).all() and (df["world_y_end"] == 0).all()
+
+
+def test_export_regions_filters_are_dicts(sketch_env):
+    # A11: regions/filters must be id-keyed dicts (not lists), or the editor's
+    # /regions/tree (encode_region_tree → .values()) crashes and the canvas
+    # stays stuck on "Loading map…".
+    from pgm_map_studio.studio.services.region_encoder import encode_region_tree
+    sid = _make_two_island_sketch(sketch_env)
+    result = export_sketch(sid)
+    out_dir = sketch_env / "output" / result["slug"]
+    xml = json.loads((out_dir / "xml_data.json").read_text())
+    assert isinstance(xml["regions"], dict) and isinstance(xml["filters"], dict)
+    assert encode_region_tree(xml["regions"], {}, None) == []  # no crash
 
 
 def test_export_layer_parquet_schema(sketch_env):

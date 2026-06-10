@@ -1,7 +1,8 @@
 """sketch_export — Rasterize a sketch layout to a synthetic scan layer.
 
 Produces editor-ready output files in the configured output root:
-  layer.parquet   — rasterized block columns (world_x, world_z, block_id, block_data)
+  layer.parquet          — rasterized block columns (world_x, world_z, block_id, block_data)
+  layer_segments.parquet — synthetic vertical segments at Y=0 for the editor side view
   islands.json    — island polygons with sketch metadata (name, mirrors)
   symmetry.json   — confirmed symmetry axis + center from Setup
   xml_data.json   — map identity from Overview
@@ -408,6 +409,35 @@ def _write_layer_parquet(blocks: set[tuple[int, int]], path: Path) -> None:
     logger.debug("sketch_export: wrote layer.parquet (%d blocks)", len(blocks))
 
 
+def _write_segments_parquet(blocks: set[tuple[int, int]], path: Path) -> None:
+    """Write a synthetic `layer_segments.parquet` for the editor's side view.
+
+    The exported world places every island block at Y=0, so each occupied column
+    is a single one-block-tall segment [0, 0]. Schema matches `SegmentsExtractor`
+    (`world_x, world_z, world_y_start, world_y_end`). Without this file the editor's
+    build-step side view shows "No segment data" (it would otherwise try to extract
+    from a `maps_folder` world that doesn't exist for a sketch export).
+    """
+    if blocks:
+        xs, zs = zip(*blocks)
+        n = len(blocks)
+        df = pd.DataFrame({
+            "world_x":       np.array(list(xs), dtype=np.int32),
+            "world_z":       np.array(list(zs), dtype=np.int32),
+            "world_y_start": np.zeros(n, dtype=np.int32),
+            "world_y_end":   np.zeros(n, dtype=np.int32),
+        })
+    else:
+        df = pd.DataFrame({
+            "world_x":       pd.array([], dtype="int32"),
+            "world_z":       pd.array([], dtype="int32"),
+            "world_y_start": pd.array([], dtype="int32"),
+            "world_y_end":   pd.array([], dtype="int32"),
+        })
+    df.to_parquet(path, index=False)
+    logger.debug("sketch_export: wrote layer_segments.parquet (%d columns)", len(blocks))
+
+
 def _island_entry(id_: int, poly, meta: dict | None) -> dict | None:
     """Build a single islands.json entry for a polygon. Returns None if empty.
 
@@ -484,8 +514,10 @@ def _write_xml_data_json(sketch: dict, path: Path) -> None:
         "teams":            [],
         "wools":            [],
         "kits":             [],
-        "filters":          [],
-        "regions":          [],
+        # regions and filters are id-keyed dicts in the contract, not lists —
+        # the editor's /regions/tree and category derivation iterate `.values()`.
+        "filters":          {},
+        "regions":          {},
         "max_build_height": 256,
         "sketch_session":   sketch.get("id", ""),
     }
@@ -548,6 +580,7 @@ def export_sketch(sketch_id: str) -> dict:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     _write_layer_parquet(all_blocks, out_dir / "layer.parquet")
+    _write_segments_parquet(all_blocks, out_dir / "layer_segments.parquet")
     _write_islands_json(island_polys, island_metas, setup, out_dir / "islands.json")
     _write_symmetry_json(setup, out_dir / "symmetry.json")
     _write_xml_data_json(data, out_dir / "xml_data.json")

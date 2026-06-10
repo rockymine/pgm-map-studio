@@ -64,12 +64,14 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   be top-level (fixed 8 maps). (b) `never`/`always` built-ins were seeded only when a `<filters>`
   block existed; the parser now always exposes the seeded filter registry (fixed kytriak_te).
   **Harness now 350 ok, 0 failed, 0 excluded.** Regression tests added.
-- [ ] **A11. Sketch export → editor compatibility (bug).** Exported sketches don't reliably open
-  in the editor — canvases show "Loading map…" / "No segment data", because the editor's required
-  `layer_*.parquet` (notably `layer_segments.parquet`, and `layer.parquet`/top-surface) aren't
-  produced by sketch export. Either have the export synthesise the layers the editor canvases need,
-  or make the editor degrade gracefully when they're absent. *Needs: investigation (doable now).*
-  *(From rockymine message §1.)*
+- [x] **A11. Sketch export → editor compatibility (bug).** Two reproduced root causes, both fixed
+  in `sketch_export.py`: (a) `xml_data.json` wrote `regions`/`filters` as `[]` **lists**, but the
+  contract/editor expect id-keyed **dicts** — `/regions/tree` (`encode_region_tree` → `.values()`)
+  crashed → canvas stuck on "Loading map…"; now written as `{}`. (b) `layer_segments.parquet` was
+  never produced (the side view can't fall back to a `maps_folder` world for a sketch) → "No segment
+  data"; export now writes a synthetic flat-Y=0 segments parquet (`_write_segments_parquet`).
+  Verified via the `/regions/tree` and `/segments` code paths + 2 regression tests (792 pass).
+  *Caveat: in-browser visual confirmation still pending rockymine.* *(rockymine §1.)*
 
 ## Workstream B — Typed data models (Phase 2 proper)
 
