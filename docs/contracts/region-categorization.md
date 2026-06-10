@@ -54,7 +54,7 @@ signals, never from the fact that a filter is applied to it.** Filter targeting 
 | `observer_spawn` | observer / `<default>` spawn | `observer_spawn.region` |
 | `wool_room` | wool storage / defense | `wool_room_region`; `enter=not-<team>` (defender excluded) |
 | `monument` | wool **delivery** objective | `wool.monuments[].monument_region` |
-| `wool_spawner` | wool regeneration zone | `spawner.spawn_region` / `player_region` |
+| `wool_spawner` | wool regeneration zone | `spawner.spawn_region` (the `player_region` is the wool **room**, → `wool_room`) |
 | `build` | buildable / traversable space (subtype `footprint` \| `traversal`) | void-structure (§5) |
 | `mechanic` | special mechanic (subtype `kit` \| `shop` \| `renewable` \| …) | spawner/renewable refs, names |
 | `other` | genuine uncategorized | — |
@@ -74,11 +74,22 @@ a residual `other`.
 
 Orthogonal flags/data attached to a region regardless of category:
 
-- **`rule_container`** — the region exists primarily as a filter target, not as gameplay
-  geometry. Always set for `negative`/`complement` regions, and for unions whose only
-  signal is being a block/void apply-rule target (e.g. `not-spawns`, `not-build-area`,
-  `void-area`, `no-bridges`). The editor should surface these under a "rule wiring" view,
-  not as primary spawn/wool/build geometry.
+- **`rule_container`** — the region has **no gameplay identity** and exists *only* as a filter
+  target (`category = other`). Always set for `negative`/`complement` wrappers (e.g. `not-spawns`,
+  `not-build-area`, `void-area`, `no-bridges`). The editor surfaces these under a "rule wiring"
+  view, not as primary spawn/wool/build geometry.
+- **`rule_group`** — the region **has** a gameplay category **and** is the union that batches a
+  rule over its **same-category peers**. Detection: a `union` with apply-rules attached whose
+  named, categorized descendants (reached through anonymous intermediate unions) are **all the same
+  category** and number ≥2. Clean example (`annealing_iv`): `woolrooms` (`wool_room`, batches a
+  break filter over the 4 team rooms). Counter-example: `spawns` is **not** a rule_group — it's
+  `union → complement(spawn-areas − the 12 monuments)`, geometry *sculpted* for the
+  `block_place=only-iron` rule by carving monuments out, so its descendants mix `spawn` and
+  `monument`; it keeps `category=spawn` and its rules in `roles`, but no `rule_group` flag (it's
+  rule-*shaped*, not a peer grouping). The editor lists rule_groups under their category but tags
+  them so the author knows editing membership re-scopes the attached rule; C9's templates use the
+  flag to offer "add the new region to this group so the rule covers it too", and ungroup can warn
+  that a rule is attached.
 - **`time_gated`** — the region's behavior is gated by an `after` / `time` / `pulse`
   filter; carries the resolved `duration`. This is how dynamic build extensions work
   (stalemate-breaker water lanes — see §5, §8). 21 corpus maps use time filters.

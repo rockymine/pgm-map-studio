@@ -86,7 +86,13 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   void-structure; `rule_container`/`time_gated` roles; constrained compound recursion). Validates
   current 23% categorized → ~91%. Back it with a hand-verified ground-truth fixture
   (annealing_iv, vertex, acapulco, icecream_sandwiched_ii). Keep categories derived; keep
-  `region_categories` as user-overrides only.
+  `region_categories` as user-overrides only. *Progress:* `annealing_iv` fixture **verified by
+  rockymine** (`tests/fixtures/region_categories/annealing_iv.json` + readable `.md`); added the
+  `rule_group` role (union batching a rule over same-category peers, e.g. `woolrooms`) to the model.
+  Derivation refinements the fixture pins: `spawner.player_region → wool_room` (not wool_spawner);
+  rule_group detection descends anonymous intermediate unions and requires uniform child category
+  (so `spawns`, a monument-sculpted complement, is correctly *not* a rule_group). Remaining: build
+  the derivation module to match this oracle, then add the other 3 fixtures.
 - [ ] **B6. Editor undo/redo (command model).** A real editor needs undo/redo of user actions.
   Pure create/delete inversion is insufficient — e.g. deleting a wool's monument keeps the wool
   but removes the monument (a PATCH today). Decide the model: command objects with inverse ops, or

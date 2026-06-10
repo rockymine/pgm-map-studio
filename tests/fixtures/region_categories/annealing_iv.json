@@ -151,6 +151,7 @@
   "woolrooms": {
     "category": "wool_room",
     "roles": [
+      "rule_group",
       "block_break=woolrooms-break-filter"
     ]
   },
@@ -161,9 +162,9 @@
   "not-build-area": {
     "category": "other",
     "roles": [
+      "rule_container",
       "block_break=block-break-void-filter",
-      "block_place=block-place-void-filter",
-      "rule_container"
+      "block_place=block-place-void-filter"
     ]
   },
   "blocks-filter-region": {
