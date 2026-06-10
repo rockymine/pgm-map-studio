@@ -4,8 +4,14 @@
 
 export function getRegionGroups(treeData, category = null) {
   const groups = treeData?.groups ?? [];
-  return category ? groups.filter(group => group.name === category) : groups;
+  if (!category) return groups;
+  const wanted = Array.isArray(category) ? new Set(category) : new Set([category]);
+  return groups.filter(group => wanted.has(group.name));
 }
+
+// The objective categories (wool room / monument / wool spawner) that together
+// make up the "wool" view in the Objectives activity.
+export const WOOL_CATEGORIES = ["wool_room", "monument", "wool_spawner"];
 
 export function registerRegionGroups(registry, groups) {
   for (const group of groups) {

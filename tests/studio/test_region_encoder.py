@@ -42,6 +42,30 @@ def test_mirror_resolves_source_id():
     assert min(xs) == 90 and max(xs) == 100
 
 
+def test_mirror_diagonal_normal_reflects_across_axis():
+    """A diagonal normal (-1,0,-1) reflects across the 45° axis (swapping x/z),
+    not a 180° point flip. Regression for vertex's red regions rendering rotated.
+    """
+    regions = {
+        "blue-spawn": {
+            "id": "blue-spawn", "type": "rectangle",
+            "bounds_2d": {"min": {"x": 263, "z": 340}, "max": {"x": 273, "z": 348}},
+        },
+        "red-spawn": {
+            "id": "red-spawn", "type": "mirror", "source_id": "blue-spawn",
+            "origin": {"x": 261, "y": 0, "z": 284}, "normal": {"x": -1, "y": 0, "z": -1},
+        },
+    }
+    bbox = {"min_x": 190, "min_z": 270, "max_x": 280, "max_z": 350}
+    nodes = [n for grp in encode_region_tree(regions, {}, bbox) for n in grp["regions"]]
+    poly = next(n for n in nodes if n["type"] == "mirror")["polygon_2d"]
+    xs = [p[0] for p in poly["exterior"]]
+    zs = [p[1] for p in poly["exterior"]]
+    # PGM reflection of (263..273, 340..348) across plane o=(261,284) n=(-1,-1)
+    assert (round(min(xs)), round(max(xs))) == (197, 205)
+    assert (round(min(zs)), round(max(zs))) == (272, 282)
+
+
 def test_single_region_goes_to_other_by_default():
     result = _tree({"r1": {"id": "r1", "type": "rectangle",
                            "min_x": 0, "min_z": 0, "max_x": 10, "max_z": 10}})
@@ -57,11 +81,11 @@ def test_category_assignment():
         "wr1": {"id": "wr1", "type": "rectangle",
                 "min_x": 5, "min_z": 5, "max_x": 15, "max_z": 15},
     }
-    cats = {"sp1": "spawn", "wr1": "wool"}
+    cats = {"sp1": "spawn", "wr1": "wool_room"}
     result = _tree(regions, cats)
     names = [g["name"] for g in result]
     assert "spawn" in names
-    assert "wool" in names
+    assert "wool_room" in names
     assert "other" not in names
 
 

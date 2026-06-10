@@ -1,0 +1,68 @@
+{
+  "blue-spawn-main": {
+    "category": "spawn",
+    "roles": []
+  },
+  "blue-spawn-door": {
+    "category": "spawn",
+    "roles": []
+  },
+  "blue-spawn": {
+    "category": "spawn",
+    "roles": [
+      "rule_group",
+      "enter=blue-team"
+    ]
+  },
+  "red-spawn": {
+    "category": "spawn",
+    "roles": [
+      "enter=red-team"
+    ]
+  },
+  "team-spawns": {
+    "category": "spawn",
+    "roles": [
+      "rule_group",
+      "block=never"
+    ]
+  },
+  "blue-wool": {
+    "category": "wool_room",
+    "roles": [
+      "block=all(deny-woolroom-blocks, red-team)",
+      "enter=red-team"
+    ]
+  },
+  "red-wool": {
+    "category": "wool_room",
+    "roles": [
+      "block=all(deny-woolroom-blocks, blue-team)",
+      "enter=blue-team"
+    ]
+  },
+  "wool-rooms": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "blue-wool-spawner": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "red-wool-spawner": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "blue-side": {
+    "category": "build",
+    "roles": []
+  },
+  "red-side": {
+    "category": "build",
+    "roles": []
+  },
+  "playable-area": {
+    "category": "build",
+    "roles": []
+  }
+}

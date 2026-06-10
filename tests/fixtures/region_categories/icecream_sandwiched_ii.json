@@ -1,0 +1,167 @@
+{
+  "blue-prot": {
+    "category": "spawn",
+    "roles": [
+      "enter=only-blue"
+    ]
+  },
+  "red-prot": {
+    "category": "spawn",
+    "roles": [
+      "enter=only-red"
+    ]
+  },
+  "spawn-protection": {
+    "category": "spawn",
+    "roles": [
+      "rule_group",
+      "block_break=only-iron",
+      "block_place=deny-players"
+    ]
+  },
+  "lime-wool-room": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "cyan-room": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "blue-wool-rooms": {
+    "category": "wool_room",
+    "roles": [
+      "rule_group",
+      "block=red-in-wr",
+      "enter=only-red"
+    ]
+  },
+  "orange-wool-room": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "yellow-wool-room": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "red-wool-rooms": {
+    "category": "wool_room",
+    "roles": [
+      "rule_group",
+      "block=blue-in-wr",
+      "enter=only-blue"
+    ]
+  },
+  "wool-rooms": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "gap-spawner-prot": {
+    "category": "mechanic",
+    "roles": [
+      "block=never"
+    ]
+  },
+  "gap-spawner-point": {
+    "category": "mechanic",
+    "roles": []
+  },
+  "gap-spawner-region": {
+    "category": "mechanic",
+    "roles": []
+  },
+  "gap-spawner": {
+    "category": "mechanic",
+    "roles": []
+  },
+  "middle": {
+    "category": "build",
+    "roles": []
+  },
+  "blue-mid-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "red-mid-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "blue-side": {
+    "category": "build",
+    "roles": []
+  },
+  "red-side": {
+    "category": "build",
+    "roles": []
+  },
+  "lanes": {
+    "category": "build",
+    "roles": []
+  },
+  "lime-water-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "cyan-water-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "blue-water-lanes": {
+    "category": "build",
+    "roles": []
+  },
+  "yellow-water-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "orange-water-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "red-water-lanes": {
+    "category": "build",
+    "roles": []
+  },
+  "water-lanes": {
+    "category": "build",
+    "roles": []
+  },
+  "lime-building-water-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "cyan-building-water-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "blue-building-water-lanes": {
+    "category": "build",
+    "roles": []
+  },
+  "yellow-building-water-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "orange-building-water-lane": {
+    "category": "build",
+    "roles": []
+  },
+  "red-building-water-lanes": {
+    "category": "build",
+    "roles": []
+  },
+  "building-water-lanes": {
+    "category": "build",
+    "roles": [
+      "rule_group",
+      "time_gated=30s",
+      "block=water-lane-building"
+    ]
+  },
+  "void-area": {
+    "category": "other",
+    "roles": [
+      "rule_container",
+      "block_place=deny(void)"
+    ]
+  }
+}

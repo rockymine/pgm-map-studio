@@ -1,0 +1,660 @@
+{
+  "name": "Vertex",
+  "version": "1.3.2",
+  "gamemode": "ctw",
+  "objective": "Capture the wool and return it to your victory monument",
+  "max_build_height": 20,
+  "authors": [
+    {
+      "uuid": "f690a591-348b-482e-a18d-7779d0c0a28c",
+      "role": "author"
+    }
+  ],
+  "kits": [
+    {
+      "id": "main-kit",
+      "items": [
+        {
+          "slot": 0,
+          "material": "stone sword",
+          "unbreakable": true
+        },
+        {
+          "slot": 1,
+          "material": "bow",
+          "unbreakable": true
+        },
+        {
+          "slot": 2,
+          "material": "stone pickaxe",
+          "unbreakable": true
+        },
+        {
+          "slot": 3,
+          "material": "stone axe",
+          "unbreakable": true
+        },
+        {
+          "slot": 4,
+          "material": "wood",
+          "amount": 48,
+          "damage": 1
+        },
+        {
+          "slot": 5,
+          "material": "stained glass",
+          "amount": 24,
+          "team_color": true
+        },
+        {
+          "slot": 8,
+          "material": "golden apple"
+        },
+        {
+          "slot": 28,
+          "material": "arrow",
+          "amount": 48
+        },
+        {
+          "slot": 30,
+          "material": "stone spade",
+          "unbreakable": true
+        }
+      ],
+      "armor": [
+        {
+          "slot_name": "helmet",
+          "material": "leather helmet",
+          "unbreakable": true,
+          "team_color": true
+        },
+        {
+          "slot_name": "chestplate",
+          "material": "chainmail chestplate",
+          "unbreakable": true
+        },
+        {
+          "slot_name": "leggings",
+          "material": "leather leggings",
+          "unbreakable": true,
+          "team_color": true
+        },
+        {
+          "slot_name": "boots",
+          "material": "iron boots",
+          "unbreakable": true
+        }
+      ]
+    }
+  ],
+  "teams": [
+    {
+      "id": "blue-team",
+      "name": "Blue",
+      "color": "blue",
+      "dye_color": "",
+      "max_players": 7,
+      "min_players": 0
+    },
+    {
+      "id": "red-team",
+      "name": "Red",
+      "color": "dark red",
+      "dye_color": "",
+      "max_players": 7,
+      "min_players": 0
+    }
+  ],
+  "spawns": [
+    {
+      "team": "blue-team",
+      "kit": "main-kit",
+      "yaw": 180.0,
+      "region": "__spawn_blue-team__anon_0"
+    },
+    {
+      "team": "red-team",
+      "kit": "main-kit",
+      "yaw": -90.0,
+      "region": "__spawn_red-team__anon_0"
+    }
+  ],
+  "observer_spawn": {
+    "team": "",
+    "kit": "",
+    "yaw": 0.0,
+    "region": "__observer_spawn__anon_0"
+  },
+  "wools": [
+    {
+      "id": "orange",
+      "color": "orange",
+      "location": {
+        "x": 200.0,
+        "y": 12.0,
+        "z": 277.0
+      },
+      "wool_room_region": null,
+      "monuments": [
+        {
+          "id": "orange-blue-team",
+          "team": "blue-team",
+          "location": {
+            "x": 268.0,
+            "y": 4.0,
+            "z": 346.0
+          },
+          "monument_region": null
+        }
+      ]
+    },
+    {
+      "id": "light_blue",
+      "color": "light blue",
+      "location": {
+        "x": 268.0,
+        "y": 12.0,
+        "z": 353.0
+      },
+      "wool_room_region": null,
+      "monuments": [
+        {
+          "id": "light_blue-red-team",
+          "team": "red-team",
+          "location": {
+            "x": 198.0,
+            "y": 4.0,
+            "z": 276.0
+          },
+          "monument_region": null
+        }
+      ]
+    }
+  ],
+  "spawners": [
+    {
+      "spawn_region": "blue-wool-spawner",
+      "player_region": "blue-wool",
+      "items": [
+        {
+          "material": "wool",
+          "damage": 3
+        }
+      ]
+    },
+    {
+      "spawn_region": "red-wool-spawner",
+      "player_region": "red-wool",
+      "items": [
+        {
+          "material": "wool",
+          "damage": 1
+        }
+      ]
+    }
+  ],
+  "renewables": [],
+  "block_drop_rules": [
+    {
+      "wrong_tool": true,
+      "items": [
+        {
+          "material": "gold ingot",
+          "amount": 9
+        }
+      ]
+    },
+    {
+      "items": [
+        {
+          "material": "stone",
+          "damage": 5
+        }
+      ]
+    }
+  ],
+  "filters": {
+    "never": {
+      "id": "never",
+      "type": "never"
+    },
+    "always": {
+      "id": "always",
+      "type": "always"
+    },
+    "deny-woolroom-blocks__anon_0__anon_0__anon_0__anon_0": {
+      "id": "deny-woolroom-blocks__anon_0__anon_0__anon_0__anon_0",
+      "type": "material",
+      "material": "air"
+    },
+    "deny-woolroom-blocks__anon_0__anon_0__anon_0__anon_1": {
+      "id": "deny-woolroom-blocks__anon_0__anon_0__anon_0__anon_1",
+      "type": "material",
+      "material": "web"
+    },
+    "deny-woolroom-blocks__anon_0__anon_0__anon_0": {
+      "id": "deny-woolroom-blocks__anon_0__anon_0__anon_0",
+      "type": "any",
+      "children": [
+        "deny-woolroom-blocks__anon_0__anon_0__anon_0__anon_0",
+        "deny-woolroom-blocks__anon_0__anon_0__anon_0__anon_1"
+      ]
+    },
+    "deny-woolroom-blocks__anon_0__anon_0": {
+      "id": "deny-woolroom-blocks__anon_0__anon_0",
+      "type": "not",
+      "child": "deny-woolroom-blocks__anon_0__anon_0__anon_0"
+    },
+    "deny-woolroom-blocks__anon_0": {
+      "id": "deny-woolroom-blocks__anon_0",
+      "type": "blocks",
+      "region": "wool-rooms",
+      "child": "deny-woolroom-blocks__anon_0__anon_0"
+    },
+    "deny-woolroom-blocks": {
+      "id": "deny-woolroom-blocks",
+      "type": "deny",
+      "child": "deny-woolroom-blocks__anon_0"
+    },
+    "deny-bottom-layer__anon_0__anon_1": {
+      "id": "deny-bottom-layer__anon_0__anon_1",
+      "type": "material",
+      "material": "stone:6"
+    },
+    "deny-bottom-layer__anon_0": {
+      "id": "deny-bottom-layer__anon_0",
+      "type": "all",
+      "children": [
+        "deny-bottom-layer__anon_0__anon_1"
+      ]
+    },
+    "deny-bottom-layer": {
+      "id": "deny-bottom-layer",
+      "type": "deny",
+      "child": "deny-bottom-layer__anon_0"
+    }
+  },
+  "regions": {
+    "__spawn_blue-team__anon_0": {
+      "id": "__spawn_blue-team__anon_0",
+      "type": "cylinder",
+      "bounds_2d": {
+        "min": {
+          "x": 266.5,
+          "z": 342.5
+        },
+        "max": {
+          "x": 269.5,
+          "z": 345.5
+        }
+      },
+      "base": {
+        "x": 268.0,
+        "y": 3.0,
+        "z": 344.0
+      },
+      "radius": 1.5,
+      "height": 1.0
+    },
+    "__spawn_red-team__anon_0": {
+      "id": "__spawn_red-team__anon_0",
+      "type": "cylinder",
+      "bounds_2d": {
+        "min": {
+          "x": 199.5,
+          "z": 275.5
+        },
+        "max": {
+          "x": 202.5,
+          "z": 278.5
+        }
+      },
+      "base": {
+        "x": 201.0,
+        "y": 3.0,
+        "z": 277.0
+      },
+      "radius": 1.5,
+      "height": 1.0
+    },
+    "__observer_spawn__anon_0": {
+      "id": "__observer_spawn__anon_0",
+      "type": "point",
+      "bounds_2d": {
+        "min": {
+          "x": 267.5,
+          "z": 345.5
+        },
+        "max": {
+          "x": 268.5,
+          "z": 346.5
+        }
+      },
+      "position": {
+        "x": 268.0,
+        "y": 18.0,
+        "z": 346.0
+      }
+    },
+    "blue-spawn-main": {
+      "id": "blue-spawn-main",
+      "type": "cuboid",
+      "bounds_2d": {
+        "min": {
+          "x": 263.0,
+          "z": 341.0
+        },
+        "max": {
+          "x": 273.0,
+          "z": 348.0
+        }
+      },
+      "min": {
+        "x": 263.0,
+        "y": 0.0,
+        "z": 341.0
+      },
+      "max": {
+        "x": 273.0,
+        "y": 8.0,
+        "z": 348.0
+      }
+    },
+    "blue-spawn-door": {
+      "id": "blue-spawn-door",
+      "type": "cuboid",
+      "bounds_2d": {
+        "min": {
+          "x": 265.0,
+          "z": 340.0
+        },
+        "max": {
+          "x": 271.0,
+          "z": 341.0
+        }
+      },
+      "min": {
+        "x": 265.0,
+        "y": 0.0,
+        "z": 340.0
+      },
+      "max": {
+        "x": 271.0,
+        "y": 7.0,
+        "z": 341.0
+      }
+    },
+    "blue-spawn": {
+      "id": "blue-spawn",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": 263.0,
+          "z": 340.0
+        },
+        "max": {
+          "x": 273.0,
+          "z": 348.0
+        }
+      },
+      "children": [
+        "blue-spawn-main",
+        "blue-spawn-door"
+      ]
+    },
+    "red-spawn": {
+      "id": "red-spawn",
+      "type": "mirror",
+      "bounds_2d": {
+        "min": {
+          "x": 197.0,
+          "z": 272.0
+        },
+        "max": {
+          "x": 205.0,
+          "z": 282.0
+        }
+      },
+      "source_id": "blue-spawn",
+      "origin": {
+        "x": 261.0,
+        "y": 0.0,
+        "z": 284.0
+      },
+      "normal": {
+        "x": -1.0,
+        "y": 0.0,
+        "z": -1.0
+      }
+    },
+    "team-spawns": {
+      "id": "team-spawns",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": 197.0,
+          "z": 272.0
+        },
+        "max": {
+          "x": 273.0,
+          "z": 348.0
+        }
+      },
+      "children": [
+        "blue-spawn",
+        "red-spawn"
+      ]
+    },
+    "blue-wool": {
+      "id": "blue-wool",
+      "type": "cuboid",
+      "bounds_2d": {
+        "min": {
+          "x": 264.0,
+          "z": 341.0
+        },
+        "max": {
+          "x": 272.0,
+          "z": 349.0
+        }
+      },
+      "min": {
+        "x": 264.0,
+        "y": 10.0,
+        "z": 341.0
+      },
+      "max": {
+        "x": 272.0,
+        "y": 21.0,
+        "z": 349.0
+      }
+    },
+    "red-wool": {
+      "id": "red-wool",
+      "type": "mirror",
+      "bounds_2d": {
+        "min": {
+          "x": 196.0,
+          "z": 273.0
+        },
+        "max": {
+          "x": 204.0,
+          "z": 281.0
+        }
+      },
+      "source_id": "blue-wool",
+      "origin": {
+        "x": 261.0,
+        "y": 0.0,
+        "z": 284.0
+      },
+      "normal": {
+        "x": -1.0,
+        "y": 0.0,
+        "z": -1.0
+      }
+    },
+    "wool-rooms": {
+      "id": "wool-rooms",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": 196.0,
+          "z": 273.0
+        },
+        "max": {
+          "x": 272.0,
+          "z": 349.0
+        }
+      },
+      "children": [
+        "blue-wool",
+        "red-wool"
+      ]
+    },
+    "blue-wool-spawner": {
+      "id": "blue-wool-spawner",
+      "type": "point",
+      "bounds_2d": {
+        "min": {
+          "x": 267.5,
+          "z": 344.5
+        },
+        "max": {
+          "x": 268.5,
+          "z": 345.5
+        }
+      },
+      "position": {
+        "x": 268.0,
+        "y": 13.0,
+        "z": 345.0
+      }
+    },
+    "red-wool-spawner": {
+      "id": "red-wool-spawner",
+      "type": "mirror",
+      "bounds_2d": {
+        "min": {
+          "x": 199.5,
+          "z": 276.5
+        },
+        "max": {
+          "x": 200.5,
+          "z": 277.5
+        }
+      },
+      "source_id": "blue-wool-spawner",
+      "origin": {
+        "x": 261.0,
+        "y": 0.0,
+        "z": 284.0
+      },
+      "normal": {
+        "x": -1.0,
+        "y": 0.0,
+        "z": -1.0
+      }
+    },
+    "blue-side": {
+      "id": "blue-side",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": 249.0,
+          "z": 264.0
+        },
+        "max": {
+          "x": 281.0,
+          "z": 349.0
+        }
+      }
+    },
+    "red-side": {
+      "id": "red-side",
+      "type": "mirror",
+      "bounds_2d": {
+        "min": {
+          "x": 196.0,
+          "z": 264.0
+        },
+        "max": {
+          "x": 281.0,
+          "z": 296.0
+        }
+      },
+      "source_id": "blue-side",
+      "origin": {
+        "x": 261.0,
+        "y": 0.0,
+        "z": 284.0
+      },
+      "normal": {
+        "x": -1.0,
+        "y": 0.0,
+        "z": -1.0
+      }
+    },
+    "playable-area": {
+      "id": "playable-area",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": 196.0,
+          "z": 264.0
+        },
+        "max": {
+          "x": 281.0,
+          "z": 349.0
+        }
+      },
+      "children": [
+        "blue-side",
+        "red-side"
+      ]
+    }
+  },
+  "apply_rules": [
+    {
+      "enter": "blue-team",
+      "region": "blue-spawn",
+      "message": "You may not enter the enemy's spawn!"
+    },
+    {
+      "enter": "red-team",
+      "region": "red-spawn",
+      "message": "You may not enter the enemy's spawn!"
+    },
+    {
+      "block": "never",
+      "region": "team-spawns",
+      "message": "You may not modify the spawn area!"
+    },
+    {
+      "enter": "red-team",
+      "region": "blue-wool",
+      "message": "You may not enter this wool room!"
+    },
+    {
+      "enter": "blue-team",
+      "region": "red-wool",
+      "message": "You may not enter this wool room!"
+    },
+    {
+      "block": "all(deny-woolroom-blocks, red-team)",
+      "use": "red-team",
+      "region": "blue-wool",
+      "message": "You may not modify that block!"
+    },
+    {
+      "block": "all(deny-woolroom-blocks, blue-team)",
+      "use": "blue-team",
+      "region": "red-wool",
+      "message": "You may not modify that block!"
+    },
+    {
+      "block_place": "playable-area",
+      "block_break": "deny-bottom-layer"
+    }
+  ]
+}

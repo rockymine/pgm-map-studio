@@ -1,0 +1,120 @@
+{
+  "blue-spawn-point": {
+    "category": "spawn",
+    "roles": []
+  },
+  "red-spawn-point": {
+    "category": "spawn",
+    "roles": []
+  },
+  "obs-spawn-point": {
+    "category": "observer_spawn",
+    "roles": []
+  },
+  "blue-team-light-blue-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "blue-team-cyan-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "red-team-magenta-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "red-team-purple-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "light-blue-wool-spawn": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "cyan-wool-spawn": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "purple-wool-spawn": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "magenta-wool-spawn": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "blue-spawn": {
+    "category": "spawn",
+    "roles": [
+      "enter=only-blue"
+    ]
+  },
+  "red-spawn": {
+    "category": "spawn",
+    "roles": [
+      "enter=only-red"
+    ]
+  },
+  "spawns": {
+    "category": "spawn",
+    "roles": [
+      "rule_group",
+      "block_break=only-iron",
+      "block_place=only-iron-cause-world"
+    ]
+  },
+  "not-spawns": {
+    "category": "other",
+    "roles": [
+      "rule_container"
+    ]
+  },
+  "magenta-woolroom": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "purple-woolroom": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "blues-woolrooms": {
+    "category": "wool_room",
+    "roles": [
+      "rule_group",
+      "block=blues-woolrooms-filter",
+      "enter=only-red"
+    ]
+  },
+  "cyan-woolroom": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "light-blue-woolroom": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "reds-woolrooms": {
+    "category": "wool_room",
+    "roles": [
+      "rule_group",
+      "block=reds-woolrooms-filter",
+      "enter=only-blue"
+    ]
+  },
+  "woolrooms": {
+    "category": "wool_room",
+    "roles": []
+  },
+  "build-area": {
+    "category": "build",
+    "roles": []
+  },
+  "not-build-area": {
+    "category": "other",
+    "roles": [
+      "rule_container",
+      "block_break=block-break-void-filter",
+      "block_place=block-place-void-filter"
+    ]
+  }
+}

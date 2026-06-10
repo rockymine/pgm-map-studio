@@ -6,6 +6,10 @@ from pathlib import Path
 from flask import Blueprint, abort, jsonify, request
 
 from pgm_map_studio.studio.services.config import get_output_root
+from pgm_map_studio.studio.services.region_categorizer import (
+    categorize_regions,
+    derive_region_facets,
+)
 from pgm_map_studio.studio.services.region_encoder import encode_region_tree
 from pgm_map_studio.studio.services.wool_editor import _ensure_grouped
 from pgm_map_studio.studio.services.xml_data import load_xml_data, save_xml_data
@@ -85,10 +89,10 @@ def patch_map_config(name: str):
 def get_regions(name: str):
     data, _ = load_xml_data(name)
     regions = data.get("regions", {})
-    categories = _compute_categories(regions, data)
     return jsonify({
         "regions":      regions,
-        "categories":   categories,
+        "categories":   categorize_regions(data),
+        "facets":       derive_region_facets(data),
         "bounding_box": _islands_bounding_box(get_output_root() / name / "islands.json"),
     })
 
@@ -98,7 +102,7 @@ def get_regions_tree(name: str):
     data, _ = load_xml_data(name)
     regions      = data.get("regions", {})
     bounding_box = _islands_bounding_box(get_output_root() / name / "islands.json")
-    categories   = _compute_categories(regions, data)
+    categories   = categorize_regions(data)
     groups       = encode_region_tree(regions, categories, bounding_box)
     return jsonify({"groups": groups, "bounding_box": bounding_box})
 
@@ -145,59 +149,3 @@ def _islands_bounding_box(islands_path: Path) -> dict | None:
     xs = [i["bounds"][0] for i in islands] + [i["bounds"][2] for i in islands]
     zs = [i["bounds"][1] for i in islands] + [i["bounds"][3] for i in islands]
     return {"min_x": min(xs), "min_z": min(zs), "max_x": max(xs), "max_z": max(zs)}
-
-
-def _compute_categories(regions: dict, data: dict) -> dict:
-    """Categorise regions by their role in the map data.
-
-    Precedence: actual spawn/wool references > stored region_categories hints > name heuristics.
-    The stored hints let newly drawn (not-yet-linked) regions appear in the correct category.
-    """
-    cats: dict[str, str] = {}
-
-    spawn_ids: set[str] = _region_id_set(data.get("spawns", []), "region")
-    obs = data.get("observer_spawn")
-    if obs:
-        rid = _extract_region_id(obs.get("region"))
-        if rid:
-            spawn_ids.add(rid)
-
-    wool_ids: set[str] = set()
-    for wool in data.get("wools", []):
-        if wool.get("wool_room_region"):
-            wool_ids.add(wool["wool_room_region"])
-    for spawner in data.get("spawners", []):
-        for field in ("spawn_region", "player_region"):
-            if spawner.get(field):
-                wool_ids.add(spawner[field])
-
-    hints: dict[str, str] = {}
-    for cat_name, ids in data.get("region_categories", {}).items():
-        for hint_id in ids:
-            hints[hint_id] = cat_name
-
-    for rid in regions:
-        if rid in spawn_ids:
-            cats[rid] = "spawn"
-        elif rid in wool_ids:
-            cats[rid] = "wool"
-        elif "build" in rid.lower():
-            cats[rid] = "build"
-        else:
-            cats[rid] = hints.get(rid, "other")
-
-    return cats
-
-
-def _extract_region_id(region) -> str:
-    """Return the region ID from either a string ID or an inline region dict."""
-    if isinstance(region, str):
-        return region
-    if isinstance(region, dict):
-        return region.get("id", "")
-    return ""
-
-
-def _region_id_set(items: list, field: str) -> set[str]:
-    """Collect region IDs from a list of objects that reference a region by field name."""
-    return {rid for item in items if (rid := _extract_region_id(item.get(field)))}

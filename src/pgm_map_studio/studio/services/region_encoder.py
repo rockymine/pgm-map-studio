@@ -8,12 +8,21 @@ No I/O, no Flask.  Called by the ``/api/map/<name>/regions/tree`` route.
 """
 from __future__ import annotations
 
-_CATEGORY_ORDER  = ["spawn", "wool", "build", "other"]
+# Display order + labels for the two-facet category taxonomy
+# (see services/region_categorizer.py and docs/contracts/region-categorization.md).
+_CATEGORY_ORDER  = [
+    "spawn", "observer_spawn", "wool_room", "monument", "wool_spawner",
+    "build", "mechanic", "other",
+]
 _CATEGORY_LABELS = {
-    "spawn": "Spawn",
-    "wool":  "Wool Rooms",
-    "build": "Build",
-    "other": "Other",
+    "spawn":          "Spawn",
+    "observer_spawn": "Observer Spawn",
+    "wool_room":      "Wool Rooms",
+    "monument":       "Monuments",
+    "wool_spawner":   "Wool Spawners",
+    "build":          "Build",
+    "mechanic":       "Mechanics",
+    "other":          "Other",
 }
 
 _POLYGON_TYPES = frozenset({
@@ -172,12 +181,34 @@ def _half_to_shapely(origin_x, origin_z, normal_x, normal_z, bounds):
     return Polygon(out)
 
 
+def _reflect_geom(geom, nx: float, nz: float, ox: float, oz: float):
+    """Reflect a Shapely geometry across the plane through (ox,oz) with normal (nx,nz).
+
+    PGM ``<mirror>`` semantics via the reflection matrix ``R = I − 2·n̂·n̂ᵀ`` about the
+    origin, so a diagonal normal (``-1,0,-1``) reflects across the 45° axis (swapping
+    x/z) instead of collapsing to a 180° point flip. Subsumes the axis-aligned case.
+    """
+    from shapely.affinity import affine_transform
+    n2 = nx * nx + nz * nz
+    if n2 == 0:
+        return geom
+    r00 = 1 - 2 * nx * nx / n2
+    r01 = -2 * nx * nz / n2
+    r11 = 1 - 2 * nz * nz / n2
+    # affine_transform matrix [a, b, d, e, xoff, yoff] applied about (ox, oz)
+    return affine_transform(geom, [
+        r00, r01, r01, r11,
+        ox - r00 * ox - r01 * oz,
+        oz - r01 * ox - r11 * oz,
+    ])
+
+
 def _dict_to_shapely(region: dict, bounds: tuple, registry: dict | None = None):
     """Convert a region dict to a Shapely 2D geometry.  bounds=(min_x,min_z,max_x,max_z)."""
     try:
         from shapely.geometry import box, Point
         from shapely.ops import unary_union
-        from shapely.affinity import scale, translate
+        from shapely.affinity import translate
     except ImportError:
         return None
 
@@ -291,11 +322,9 @@ def _dict_to_shapely(region: dict, bounds: tuple, registry: dict | None = None):
             return None
         origin = region.get("origin") or {}
         normal = region.get("normal") or {}
-        nx, nz = normal.get("x", 0), normal.get("z", 0)
-        ox, oz = origin.get("x", 0), origin.get("z", 0)
-        xfact = -1 if nx != 0 else 1
-        zfact = -1 if nz != 0 else 1
-        return scale(src_geom, xfact=xfact, yfact=zfact, origin=(ox, oz))
+        nx, nz = normal.get("x", 0) or 0, normal.get("z", 0) or 0
+        ox, oz = origin.get("x", 0) or 0, origin.get("z", 0) or 0
+        return _reflect_geom(src_geom, nx, nz, ox, oz)
 
     if t == "translate":
         source = _resolve_source(region, registry)

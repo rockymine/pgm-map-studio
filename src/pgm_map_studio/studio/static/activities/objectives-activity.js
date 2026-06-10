@@ -11,6 +11,7 @@ import {
   findRegionNode,
   getRegionGroups,
   registerRegionGroups,
+  WOOL_CATEGORIES,
 } from "../region/region-tree.js";
 import { ToolManager }       from "../shared/tool-manager.js";
 import * as api              from "../api.js";
@@ -153,7 +154,7 @@ export class ObjectivesActivity {
         api.fetchIslands(mapName).catch(() => null),
       ]);
       if (!treeData.bounding_box) return;
-      const groups = getRegionGroups(treeData, "wool");
+      const groups = getRegionGroups(treeData, WOOL_CATEGORIES);
       const nodes = groups.flatMap(group => group.regions);
       this.#canvas.render({
         bounding_box: treeData.bounding_box,
@@ -172,7 +173,7 @@ export class ObjectivesActivity {
   async #reloadRegions(selectId = null) {
     if (!selectId) this.#registry.deselect();
     const treeData = await api.fetchRegionsTree(this.#mapName);
-    const groups = getRegionGroups(treeData, "wool");
+    const groups = getRegionGroups(treeData, WOOL_CATEGORIES);
     const nodes = groups.flatMap(group => group.regions);
     this.#canvas.refreshRegions(groups);
     this.#registry.clear();
@@ -189,7 +190,7 @@ export class ObjectivesActivity {
     if (!this.#mapName) return;
     if (!["rectangle", "cuboid", "cylinder", "circle", "block", "point"].includes(drawResult.type)) return;
 
-    const payload = drawResultToPayload(drawResult, "wool");
+    const payload = drawResultToPayload(drawResult, "wool_room");
 
     try {
       const result = await api.createRegion(this.#mapName, payload);

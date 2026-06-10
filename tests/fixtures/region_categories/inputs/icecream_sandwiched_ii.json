@@ -1,0 +1,1131 @@
+{
+  "name": "Icecream Sandwiched II",
+  "version": "1.1.6",
+  "gamemode": "ctw",
+  "objective": "Capture both of the enemy team's wools!",
+  "max_build_height": 30,
+  "authors": [
+    {
+      "uuid": "6863869b-4b8c-4445-b778-a8e016775ae4",
+      "role": "author",
+      "contribution": "Layout, theming, XML"
+    },
+    {
+      "uuid": "97d1cc45-0f69-482b-9974-09351aef9dfa",
+      "role": "author",
+      "contribution": "Layout, aesthetics"
+    },
+    {
+      "uuid": "ec5ec930-5cf3-4f8a-ad9f-09056aeed71b",
+      "role": "author",
+      "contribution": "Layout, aesthetics"
+    }
+  ],
+  "kits": [
+    {
+      "id": "spawn-kit",
+      "items": [
+        {
+          "slot": 0,
+          "material": "iron sword",
+          "unbreakable": true
+        },
+        {
+          "slot": 1,
+          "material": "bow",
+          "unbreakable": true,
+          "enchantments": "infinity:1"
+        },
+        {
+          "slot": 2,
+          "material": "iron pickaxe",
+          "unbreakable": true,
+          "enchantments": "dig_speed:1"
+        },
+        {
+          "slot": 3,
+          "material": "iron axe",
+          "unbreakable": true,
+          "enchantments": "dig_speed:2"
+        },
+        {
+          "slot": 4,
+          "material": "stone spade",
+          "unbreakable": true
+        },
+        {
+          "slot": 5,
+          "material": "wood",
+          "amount": 64,
+          "damage": 2
+        },
+        {
+          "slot": 6,
+          "material": "glass",
+          "amount": 32
+        },
+        {
+          "slot": 7,
+          "material": "golden apple"
+        },
+        {
+          "slot": 8,
+          "material": "bucket"
+        },
+        {
+          "slot": 28,
+          "material": "arrow"
+        }
+      ],
+      "armor": [
+        {
+          "slot_name": "helmet",
+          "material": "leather helmet",
+          "unbreakable": true,
+          "team_color": true
+        },
+        {
+          "slot_name": "chestplate",
+          "material": "leather chestplate",
+          "unbreakable": true,
+          "team_color": true,
+          "enchantments": "protection_projectile:2"
+        },
+        {
+          "slot_name": "leggings",
+          "material": "chainmail leggings",
+          "unbreakable": true
+        },
+        {
+          "slot_name": "boots",
+          "material": "leather boots",
+          "unbreakable": true,
+          "team_color": true
+        }
+      ]
+    }
+  ],
+  "teams": [
+    {
+      "id": "blue",
+      "name": "Blue",
+      "color": "blue",
+      "dye_color": "",
+      "max_players": 24,
+      "min_players": 0
+    },
+    {
+      "id": "red",
+      "name": "Red",
+      "color": "dark red",
+      "dye_color": "",
+      "max_players": 24,
+      "min_players": 0
+    }
+  ],
+  "spawns": [
+    {
+      "team": "red",
+      "kit": "spawn-kit",
+      "yaw": 90.0,
+      "region": {
+        "id": "__spawn_red__anon_0",
+        "type": "point",
+        "bounds_2d": {
+          "min": {
+            "x": 140.0,
+            "z": 0.0
+          },
+          "max": {
+            "x": 141.0,
+            "z": 1.0
+          }
+        },
+        "position": {
+          "x": 140.5,
+          "y": 12.0,
+          "z": 0.5
+        }
+      }
+    },
+    {
+      "team": "blue",
+      "kit": "spawn-kit",
+      "yaw": -90.0,
+      "region": {
+        "id": "__spawn_blue__anon_0",
+        "type": "point",
+        "bounds_2d": {
+          "min": {
+            "x": -140.0,
+            "z": 0.0
+          },
+          "max": {
+            "x": -139.0,
+            "z": 1.0
+          }
+        },
+        "position": {
+          "x": -139.5,
+          "y": 12.0,
+          "z": 0.5
+        }
+      }
+    }
+  ],
+  "observer_spawn": {
+    "team": "",
+    "kit": "",
+    "yaw": 180.0,
+    "region": {
+      "id": "__observer_spawn__anon_0",
+      "type": "point",
+      "bounds_2d": {
+        "min": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "max": {
+          "x": 1.0,
+          "z": 1.0
+        }
+      },
+      "position": {
+        "x": 0.5,
+        "y": 53.0,
+        "z": 0.5
+      }
+    }
+  },
+  "wools": [
+    {
+      "id": "90a6ef72",
+      "color": "orange",
+      "location": {
+        "x": 65.5,
+        "y": 10.0,
+        "z": -53.5
+      },
+      "wool_room_region": null,
+      "monuments": [
+        {
+          "id": "337aa52f",
+          "team": "blue",
+          "location": {
+            "x": -133.0,
+            "y": 13.0,
+            "z": -2.0
+          },
+          "monument_region": null
+        }
+      ]
+    },
+    {
+      "id": "5f373371",
+      "color": "yellow",
+      "location": {
+        "x": 65.5,
+        "y": 10.0,
+        "z": 54.5
+      },
+      "wool_room_region": null,
+      "monuments": [
+        {
+          "id": "82afcb6a",
+          "team": "blue",
+          "location": {
+            "x": -133.0,
+            "y": 13.0,
+            "z": 2.0
+          },
+          "monument_region": null
+        }
+      ]
+    },
+    {
+      "id": "c0ff62d5",
+      "color": "lime",
+      "location": {
+        "x": -64.5,
+        "y": 10.0,
+        "z": -53.5
+      },
+      "wool_room_region": null,
+      "monuments": [
+        {
+          "id": "abf79a40",
+          "team": "red",
+          "location": {
+            "x": 133.0,
+            "y": 13.0,
+            "z": -2.0
+          },
+          "monument_region": null
+        }
+      ]
+    },
+    {
+      "id": "a01fd7e3",
+      "color": "cyan",
+      "location": {
+        "x": -64.5,
+        "y": 10.0,
+        "z": 54.5
+      },
+      "wool_room_region": null,
+      "monuments": [
+        {
+          "id": "e3e1183f",
+          "team": "red",
+          "location": {
+            "x": 133.0,
+            "y": 13.0,
+            "z": 2.0
+          },
+          "monument_region": null
+        }
+      ]
+    }
+  ],
+  "spawners": [
+    {
+      "spawn_region": "gap-spawner-point",
+      "player_region": "gap-spawner-region",
+      "delay": "8s",
+      "items": [
+        {
+          "material": "golden apple"
+        }
+      ]
+    }
+  ],
+  "renewables": [
+    {
+      "region_id": "spawn-protection",
+      "renew_filter": "only-iron"
+    }
+  ],
+  "block_drop_rules": [
+    {
+      "items": [
+        {
+          "material": "wood",
+          "chance": 0.0
+        }
+      ]
+    }
+  ],
+  "filters": {
+    "never": {
+      "id": "never",
+      "type": "never"
+    },
+    "always": {
+      "id": "always",
+      "type": "always"
+    },
+    "only-blue": {
+      "id": "only-blue",
+      "type": "team",
+      "team": "blue"
+    },
+    "blue-in-wr": {
+      "id": "blue-in-wr",
+      "type": "all",
+      "children": [
+        "only-blue",
+        "wr-filter"
+      ]
+    },
+    "only-red": {
+      "id": "only-red",
+      "type": "team",
+      "team": "red"
+    },
+    "red-in-wr": {
+      "id": "red-in-wr",
+      "type": "all",
+      "children": [
+        "only-red",
+        "wr-filter"
+      ]
+    },
+    "wr-filter__anon_0": {
+      "id": "wr-filter__anon_0",
+      "type": "material",
+      "material": "chest"
+    },
+    "wr-filter": {
+      "id": "wr-filter",
+      "type": "not",
+      "child": "wr-filter__anon_0"
+    },
+    "deny-players__anon_0": {
+      "id": "deny-players__anon_0",
+      "type": "participating"
+    },
+    "deny-players": {
+      "id": "deny-players",
+      "type": "deny",
+      "child": "deny-players__anon_0"
+    },
+    "only-iron": {
+      "id": "only-iron",
+      "type": "material",
+      "material": "iron block"
+    },
+    "only-air": {
+      "id": "only-air",
+      "type": "material",
+      "material": "air"
+    },
+    "add-water-lane": {
+      "id": "add-water-lane",
+      "type": "after",
+      "duration": "30s"
+    },
+    "water-lane-building__anon_1__anon_0": {
+      "id": "water-lane-building__anon_1__anon_0",
+      "type": "void"
+    },
+    "water-lane-building__anon_1": {
+      "id": "water-lane-building__anon_1",
+      "type": "not",
+      "child": "water-lane-building__anon_1__anon_0"
+    },
+    "water-lane-building": {
+      "id": "water-lane-building",
+      "type": "any",
+      "children": [
+        "add-water-lane",
+        "water-lane-building__anon_1"
+      ]
+    }
+  },
+  "regions": {
+    "__spawn_red__anon_0": {
+      "id": "__spawn_red__anon_0",
+      "type": "point",
+      "bounds_2d": {
+        "min": {
+          "x": 140.0,
+          "z": 0.0
+        },
+        "max": {
+          "x": 141.0,
+          "z": 1.0
+        }
+      },
+      "position": {
+        "x": 140.5,
+        "y": 12.0,
+        "z": 0.5
+      }
+    },
+    "__spawn_blue__anon_0": {
+      "id": "__spawn_blue__anon_0",
+      "type": "point",
+      "bounds_2d": {
+        "min": {
+          "x": -140.0,
+          "z": 0.0
+        },
+        "max": {
+          "x": -139.0,
+          "z": 1.0
+        }
+      },
+      "position": {
+        "x": -139.5,
+        "y": 12.0,
+        "z": 0.5
+      }
+    },
+    "__observer_spawn__anon_0": {
+      "id": "__observer_spawn__anon_0",
+      "type": "point",
+      "bounds_2d": {
+        "min": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "max": {
+          "x": 1.0,
+          "z": 1.0
+        }
+      },
+      "position": {
+        "x": 0.5,
+        "y": 53.0,
+        "z": 0.5
+      }
+    },
+    "blue-prot": {
+      "id": "blue-prot",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": -145.0,
+          "z": -7.0
+        },
+        "max": {
+          "x": -130.0,
+          "z": 8.0
+        }
+      }
+    },
+    "red-prot": {
+      "id": "red-prot",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": 131.0,
+          "z": -7.0
+        },
+        "max": {
+          "x": 146.0,
+          "z": 8.0
+        }
+      }
+    },
+    "spawn-protection": {
+      "id": "spawn-protection",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -145.0,
+          "z": -7.0
+        },
+        "max": {
+          "x": 146.0,
+          "z": 8.0
+        }
+      },
+      "children": [
+        "blue-prot",
+        "red-prot"
+      ]
+    },
+    "lime-wool-room": {
+      "id": "lime-wool-room",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": -79.0,
+          "z": -60.0
+        },
+        "max": {
+          "x": -61.0,
+          "z": -47.0
+        }
+      }
+    },
+    "cyan-room": {
+      "id": "cyan-room",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": -79.0,
+          "z": 48.0
+        },
+        "max": {
+          "x": -60.0,
+          "z": 61.0
+        }
+      }
+    },
+    "blue-wool-rooms": {
+      "id": "blue-wool-rooms",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -79.0,
+          "z": -60.0
+        },
+        "max": {
+          "x": -60.0,
+          "z": 61.0
+        }
+      },
+      "children": [
+        "lime-wool-room",
+        "cyan-room"
+      ]
+    },
+    "orange-wool-room": {
+      "id": "orange-wool-room",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": 61.0,
+          "z": -60.0
+        },
+        "max": {
+          "x": 80.0,
+          "z": -47.0
+        }
+      }
+    },
+    "yellow-wool-room": {
+      "id": "yellow-wool-room",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": 61.0,
+          "z": 48.0
+        },
+        "max": {
+          "x": 80.0,
+          "z": 61.0
+        }
+      }
+    },
+    "red-wool-rooms": {
+      "id": "red-wool-rooms",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": 61.0,
+          "z": -60.0
+        },
+        "max": {
+          "x": 80.0,
+          "z": 61.0
+        }
+      },
+      "children": [
+        "orange-wool-room",
+        "yellow-wool-room"
+      ]
+    },
+    "wool-rooms": {
+      "id": "wool-rooms",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -79.0,
+          "z": -60.0
+        },
+        "max": {
+          "x": 80.0,
+          "z": 61.0
+        }
+      },
+      "children": [
+        "blue-wool-rooms",
+        "red-wool-rooms"
+      ]
+    },
+    "gap-spawner-prot": {
+      "id": "gap-spawner-prot",
+      "type": "cuboid",
+      "bounds_2d": {
+        "min": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "max": {
+          "x": 1.0,
+          "z": 1.0
+        }
+      },
+      "min": {
+        "x": 1.0,
+        "y": 11.0,
+        "z": 1.0
+      },
+      "max": {
+        "x": 0.0,
+        "y": 9.0,
+        "z": 0.0
+      }
+    },
+    "gap-spawner-point": {
+      "id": "gap-spawner-point",
+      "type": "point",
+      "bounds_2d": {
+        "min": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "max": {
+          "x": 1.0,
+          "z": 1.0
+        }
+      },
+      "position": {
+        "x": 0.5,
+        "y": 10.0,
+        "z": 0.5
+      }
+    },
+    "gap-spawner-region": {
+      "id": "gap-spawner-region",
+      "type": "cylinder",
+      "bounds_2d": {
+        "min": {
+          "x": -3.5,
+          "z": -3.5
+        },
+        "max": {
+          "x": 4.5,
+          "z": 4.5
+        }
+      },
+      "base": {
+        "x": 0.5,
+        "y": 10.0,
+        "z": 0.5
+      },
+      "radius": 4.0,
+      "height": 3.0
+    },
+    "gap-spawner": {
+      "id": "gap-spawner",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -3.5,
+          "z": -3.5
+        },
+        "max": {
+          "x": 4.5,
+          "z": 4.5
+        }
+      },
+      "children": [
+        "gap-spawner-prot",
+        "gap-spawner-point",
+        "gap-spawner-region"
+      ]
+    },
+    "middle": {
+      "id": "middle",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": -24.0,
+          "z": -38.0
+        },
+        "max": {
+          "x": 25.0,
+          "z": 39.0
+        }
+      }
+    },
+    "blue-mid-lane": {
+      "id": "blue-mid-lane",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": -77.0,
+          "z": -17.0
+        },
+        "max": {
+          "x": -48.0,
+          "z": 18.0
+        }
+      }
+    },
+    "red-mid-lane": {
+      "id": "red-mid-lane",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": 49.0,
+          "z": -17.0
+        },
+        "max": {
+          "x": 78.0,
+          "z": 18.0
+        }
+      }
+    },
+    "blue-side": {
+      "id": "blue-side",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": -118.0,
+          "z": -24.0
+        },
+        "max": {
+          "x": -85.0,
+          "z": 25.0
+        }
+      }
+    },
+    "red-side": {
+      "id": "red-side",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": 86.0,
+          "z": -24.0
+        },
+        "max": {
+          "x": 119.0,
+          "z": 25.0
+        }
+      }
+    },
+    "lanes": {
+      "id": "lanes",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -118.0,
+          "z": -38.0
+        },
+        "max": {
+          "x": 119.0,
+          "z": 39.0
+        }
+      },
+      "children": [
+        "middle",
+        "blue-mid-lane",
+        "red-mid-lane",
+        "blue-side",
+        "red-side"
+      ]
+    },
+    "lime-water-lane": {
+      "id": "lime-water-lane",
+      "type": "cuboid",
+      "bounds_2d": {
+        "min": {
+          "x": -95.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": -80.0,
+          "z": -28.0
+        }
+      },
+      "min": {
+        "x": -80.0,
+        "y": 0.0,
+        "z": -28.0
+      },
+      "max": {
+        "x": -95.0,
+        "y": 1.0,
+        "z": -47.0
+      }
+    },
+    "cyan-water-lane": {
+      "id": "cyan-water-lane",
+      "type": "cuboid",
+      "bounds_2d": {
+        "min": {
+          "x": -95.0,
+          "z": 29.0
+        },
+        "max": {
+          "x": -80.0,
+          "z": 48.0
+        }
+      },
+      "min": {
+        "x": -80.0,
+        "y": 0.0,
+        "z": 29.0
+      },
+      "max": {
+        "x": -95.0,
+        "y": 1.0,
+        "z": 48.0
+      }
+    },
+    "blue-water-lanes": {
+      "id": "blue-water-lanes",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -95.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": -80.0,
+          "z": 48.0
+        }
+      },
+      "children": [
+        "lime-water-lane",
+        "cyan-water-lane"
+      ]
+    },
+    "yellow-water-lane": {
+      "id": "yellow-water-lane",
+      "type": "cuboid",
+      "bounds_2d": {
+        "min": {
+          "x": 81.0,
+          "z": 29.0
+        },
+        "max": {
+          "x": 96.0,
+          "z": 48.0
+        }
+      },
+      "min": {
+        "x": 81.0,
+        "y": 0.0,
+        "z": 29.0
+      },
+      "max": {
+        "x": 96.0,
+        "y": 1.0,
+        "z": 48.0
+      }
+    },
+    "orange-water-lane": {
+      "id": "orange-water-lane",
+      "type": "cuboid",
+      "bounds_2d": {
+        "min": {
+          "x": 81.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": 96.0,
+          "z": -28.0
+        }
+      },
+      "min": {
+        "x": 81.0,
+        "y": 0.0,
+        "z": -28.0
+      },
+      "max": {
+        "x": 96.0,
+        "y": 1.0,
+        "z": -47.0
+      }
+    },
+    "red-water-lanes": {
+      "id": "red-water-lanes",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": 81.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": 96.0,
+          "z": 48.0
+        }
+      },
+      "children": [
+        "yellow-water-lane",
+        "orange-water-lane"
+      ]
+    },
+    "water-lanes": {
+      "id": "water-lanes",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -95.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": 96.0,
+          "z": 48.0
+        }
+      },
+      "children": [
+        "blue-water-lanes",
+        "red-water-lanes"
+      ]
+    },
+    "lime-building-water-lane": {
+      "id": "lime-building-water-lane",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": -95.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": -80.0,
+          "z": -28.0
+        }
+      }
+    },
+    "cyan-building-water-lane": {
+      "id": "cyan-building-water-lane",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": -95.0,
+          "z": 29.0
+        },
+        "max": {
+          "x": -80.0,
+          "z": 48.0
+        }
+      }
+    },
+    "blue-building-water-lanes": {
+      "id": "blue-building-water-lanes",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -95.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": -80.0,
+          "z": 48.0
+        }
+      },
+      "children": [
+        "lime-building-water-lane",
+        "cyan-building-water-lane"
+      ]
+    },
+    "yellow-building-water-lane": {
+      "id": "yellow-building-water-lane",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": 81.0,
+          "z": 29.0
+        },
+        "max": {
+          "x": 96.0,
+          "z": 48.0
+        }
+      }
+    },
+    "orange-building-water-lane": {
+      "id": "orange-building-water-lane",
+      "type": "rectangle",
+      "bounds_2d": {
+        "min": {
+          "x": 81.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": 96.0,
+          "z": -28.0
+        }
+      }
+    },
+    "red-building-water-lanes": {
+      "id": "red-building-water-lanes",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": 81.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": 96.0,
+          "z": 48.0
+        }
+      },
+      "children": [
+        "yellow-building-water-lane",
+        "orange-building-water-lane"
+      ]
+    },
+    "building-water-lanes": {
+      "id": "building-water-lanes",
+      "type": "union",
+      "bounds_2d": {
+        "min": {
+          "x": -95.0,
+          "z": -47.0
+        },
+        "max": {
+          "x": 96.0,
+          "z": 48.0
+        }
+      },
+      "children": [
+        "blue-building-water-lanes",
+        "red-building-water-lanes"
+      ]
+    },
+    "void-area": {
+      "id": "void-area",
+      "type": "negative",
+      "bounds_2d": {
+        "min": {
+          "x": -145.0,
+          "z": -60.0
+        },
+        "max": {
+          "x": 146.0,
+          "z": 61.0
+        }
+      },
+      "children": [
+        "spawn-protection",
+        "wool-rooms",
+        "lanes",
+        "gap-spawner",
+        "water-lanes",
+        "building-water-lanes"
+      ]
+    }
+  },
+  "apply_rules": [
+    {
+      "enter": "only-blue",
+      "region": "blue-prot",
+      "message": "You may not enter the opponent's spawn!"
+    },
+    {
+      "enter": "only-red",
+      "region": "red-prot",
+      "message": "You may not enter the opponent's spawn!"
+    },
+    {
+      "enter": "only-blue",
+      "region": "red-wool-rooms",
+      "message": "You may not enter your own wool room!"
+    },
+    {
+      "enter": "only-red",
+      "region": "blue-wool-rooms",
+      "message": "You may not enter your own wool room!"
+    },
+    {
+      "block": "blue-in-wr",
+      "use": "only-blue",
+      "region": "red-wool-rooms",
+      "message": "You may not interact with this block!"
+    },
+    {
+      "block": "red-in-wr",
+      "use": "only-red",
+      "region": "blue-wool-rooms",
+      "message": "You may not interact with this block!"
+    },
+    {
+      "block": "water-lane-building",
+      "region": "building-water-lanes",
+      "message": "You may not build in the void area!"
+    },
+    {
+      "block_place": "deny-players",
+      "block_break": "only-iron",
+      "region": "spawn-protection",
+      "message": "You may not modify the spawns!"
+    },
+    {
+      "block": "never",
+      "region": "gap-spawner-prot",
+      "message": "You may not break the spawner"
+    },
+    {
+      "block_place": "deny(void)",
+      "region": "void-area",
+      "message": "You may not build in the void area!"
+    }
+  ]
+}
