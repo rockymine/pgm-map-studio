@@ -106,6 +106,45 @@ port becomes mechanical — a cheaper model (Sonnet) can largely drive it.
    since both the editor and sketch canvases depend on it.
 5. Retire the Jinja templates + old JS per activity as each is replaced.
 
+## Local dev & run experience
+
+Two different "users", two different answers:
+
+- **End user (a mapmaker)** — per the hosting vision (E1) they **run nothing**: a hosted URL, or
+  `/map-studio` on the build server returns an edit link. The switch makes this *easy to deliver*
+  because a React app builds to plain static files any server can host (no Node runtime — that's a
+  Next.js thing we avoid).
+- **Developer** — the day-to-day workflow improves, with one caveat.
+
+**Today:** one process — Flask serves both the API and the frontend, started by the bespoke per-OS
+wrappers `tools/studio-dev.sh` / `studio-dev.ps1` (16-line scripts that pick the Python + port and do
+start/stop/restart/status). No Mac script. The `/root/ctw-venv` path is hardcoded because the
+VirtualBox shared folder can't host a venv.
+
+**After the switch (development):** two processes — the **Flask API** (Python) and the **Vite dev
+server** (Node, React + HMR, proxies API calls to Flask). This nets out *better*:
+
+| | Today | After |
+|---|---|---|
+| Frontend start | bespoke `.sh` / `.ps1` | standard **`npm install` + `npm run dev`** |
+| Cross-platform | Linux + Windows, **no Mac** | identical on **Mac / Windows / Linux** |
+| One command | yes (one process) | yes — a root **`npm run dev`** can launch *both* via `concurrently` |
+| Reload | manual restart/reload | automatic (Vite HMR) |
+
+**After the switch (production / hosting):** `npm run build` → static bundle → Flask serves it →
+back to **one process**; end users run nothing.
+
+**Caveat the switch does *not* fix:** the `/root/ctw-venv` path quirk is a **VirtualBox-shared-folder**
+problem, not a framework one — and **`node_modules` hits the same wall** (it's already why the JS
+test runner lives outside the shared folder at `/root/pgm-studio-tests`). The clean fix is
+independent of the stack: **stop developing through the shared folder** (clone into the VM's native
+filesystem, or use WSL2, or develop on the host). The framework switch is a good moment to do this —
+then plain `npm run dev` / `python -m ...` work with no path-hacking wrapper at all.
+
+**Net:** `npm` becomes the familiar, cross-platform front door (Python still runs underneath as the
+API; a one-liner orchestrates both halves) — a real DX improvement *if* dev also moves off the shared
+folder; the switch alone won't erase the venv/`node_modules` path quirk.
+
 ## To decide at kickoff (not now)
 
 - **State/data layer:** plain React state + context vs. a small store (Zustand) vs. a server-cache
