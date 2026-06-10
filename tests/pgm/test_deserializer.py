@@ -1001,6 +1001,22 @@ def test_tumbleweed_full_roundtrip_wools():
     assert len(reparsed.wools) == len(orig.wools)
 
 
+@pytest.mark.skipif(not ANNEALING.exists(), reason="Annealing IV not available")
+def test_annealing_multi_monument_wool_roundtrip():
+    """4-team map: each color is captured by 3 teams (one monument per team).
+
+    Exercises the grouped<->flat wool bijection where one color groups several
+    monuments. Round-trip must preserve every (team, color) pair and count.
+    """
+    orig, reparsed = _full_roundtrip(str(ANNEALING))
+    assert len(reparsed.wools) == len(orig.wools)
+    assert {(w.team, w.color) for w in reparsed.wools} == {(w.team, w.color) for w in orig.wools}
+    # A color shared by multiple teams confirms the grouping path was used.
+    from collections import Counter
+    by_color = Counter(w.color for w in orig.wools)
+    assert max(by_color.values()) > 1
+
+
 @pytest.mark.skipif(not TUMBLEWEED.exists(), reason="Tumbleweed not available")
 def test_tumbleweed_full_roundtrip_filters():
     orig, reparsed = _full_roundtrip(str(TUMBLEWEED))

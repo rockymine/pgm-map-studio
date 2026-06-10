@@ -47,6 +47,10 @@ def from_dict(d: dict[str, Any]) -> MapXml:
     regions = {rid: _decode_region(r) for rid, r in d.get('regions', {}).items()}
     filters = {fid: _decode_filter(f) for fid, f in d.get('filters', {}).items()}
 
+    wools: list[Wool] = []
+    for w in d.get('wools', []):
+        wools.extend(_decode_wools_entry(w))
+
     obs_raw = d.get('observer_spawn')
     return MapXml(
         name=d.get('name', ''),
@@ -59,7 +63,7 @@ def from_dict(d: dict[str, Any]) -> MapXml:
         teams=[_decode_team(t) for t in d.get('teams', [])],
         spawns=[_decode_spawn(s, regions) for s in d.get('spawns', [])],
         observer_spawn=_decode_spawn(obs_raw, regions) if obs_raw else None,
-        wools=[_decode_wool(w) for w in d.get('wools', [])],
+        wools=wools,
         spawners=[_decode_spawner(s) for s in d.get('spawners', [])],
         renewables=[_decode_renewable(r) for r in d.get('renewables', [])],
         block_drop_rules=[_decode_block_drop_rule(r) for r in d.get('block_drop_rules', [])],
@@ -381,17 +385,46 @@ def _decode_spawn(d: dict[str, Any], regions: dict[str, Region]) -> Spawn:
     )
 
 
-def _decode_wool(d: dict[str, Any]) -> Wool:
-    loc = d['location']
-    mon = d['monument']
-    return Wool(
+def _xyz(d: Any) -> tuple[float, float, float]:
+    if not d:
+        return (0.0, 0.0, 0.0)
+    return (float(d['x']), float(d['y']), float(d['z']))
+
+
+def _decode_wools_entry(d: dict[str, Any]) -> list[Wool]:
+    """Decode one wool JSON entry into flat ``Wool`` domain objects.
+
+    Inverse of ``serializer._encode_wools_grouped``. A grouped entry (with a
+    ``monuments`` list) expands to one ``Wool`` per monument, sharing the group's
+    color / wool location / wool-room. A legacy flat entry (singular ``monument``)
+    yields a single ``Wool``. An entry with no monuments yields nothing.
+    """
+    if 'monuments' in d:
+        color    = d.get('color', '')
+        location = _xyz(d.get('location'))
+        room     = d.get('wool_room_region')
+        return [
+            Wool(
+                team=mon.get('team', ''),
+                color=color,
+                location=location,
+                monument=_xyz(mon.get('location')),
+                monument_region_id=mon.get('monument_region'),
+                wool_room_region=room,
+            )
+            for mon in d.get('monuments', [])
+        ]
+
+    # Legacy flat format: {team, color, location, monument:{x,y,z[,region_id]}}
+    mon = d.get('monument') or {}
+    return [Wool(
         team=d.get('team', ''),
         color=d.get('color', ''),
-        location=(float(loc['x']), float(loc['y']), float(loc['z'])),
-        monument=(float(mon['x']), float(mon['y']), float(mon['z'])),
+        location=_xyz(d.get('location')),
+        monument=_xyz(mon),
         monument_region_id=mon.get('region_id'),
         wool_room_region=d.get('wool_room_region'),
-    )
+    )]
 
 
 def _decode_spawner(d: dict[str, Any]) -> WoolSpawner:

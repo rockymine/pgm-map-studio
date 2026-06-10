@@ -243,26 +243,32 @@ def _encode_spawn(spawn: Spawn) -> dict[str, Any]:
     return result
 
 
+def _wool_slug(value: str) -> str:
+    """Normalize a wool color or team into a stable id slug."""
+    return str(value).strip().lower().replace(" ", "_")
+
+
 def _encode_wools_grouped(wools: list[Wool]) -> list[dict[str, Any]]:
     """Serialize wools grouped by color into the studio's canonical format:
     [{id, color, location, wool_room_region, monuments: [{id, team, location, monument_region}]}].
-    """
-    import uuid
-    def _id() -> str:
-        return uuid.uuid4().hex[:8]
 
+    IDs are deterministic from content so they stay stable across round-trips:
+    the wool group id is the color slug; a monument id is ``<color-slug>-<team-slug>``.
+    The inverse lives in ``deserializer._decode_wools_entry``.
+    """
     by_color: dict[str, dict[str, Any]] = {}
     for w in wools:
+        cslug = _wool_slug(w.color)
         if w.color not in by_color:
             by_color[w.color] = {
-                'id':               _id(),
+                'id':               cslug,
                 'color':            w.color,
                 'location':         {'x': w.location[0], 'y': w.location[1], 'z': w.location[2]},
                 'wool_room_region': w.wool_room_region,
                 'monuments':        [],
             }
         by_color[w.color]['monuments'].append({
-            'id':              _id(),
+            'id':              f"{cslug}-{_wool_slug(w.team)}",
             'team':            w.team,
             'location':        {'x': w.monument[0], 'y': w.monument[1], 'z': w.monument[2]},
             'monument_region': w.monument_region_id,
