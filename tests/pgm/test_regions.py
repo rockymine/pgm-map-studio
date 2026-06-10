@@ -49,6 +49,21 @@ def test_parse_coord_whitespace_stripped():
     assert parse_coord("  5.0  ") == 5.0
 
 
+def test_parse_coord_malformed_zeroed_with_warning(caplog):
+    # A8: a source typo like '5.185.5' (two decimal points) must not raise; it is
+    # zeroed with a warning so one bad value doesn't fail the whole map parse.
+    import logging
+    with caplog.at_level(logging.WARNING, logger="pgm_map_studio"):
+        assert parse_coord("5.185.5") == 0.0
+    assert any("Malformed coordinate" in r.message for r in caplog.records)
+
+
+def test_malformed_coord_keeps_region_buildable():
+    r = Rectangle(id="r", min_x=101.0, min_z=parse_coord("5.185.5"),
+                  max_x=156.5, max_z=185.5)
+    assert r.bounds_2d is not None and r.min_z == 0.0
+
+
 # ---------------------------------------------------------------------------
 # bounds_2d normalization
 # ---------------------------------------------------------------------------

@@ -40,9 +40,8 @@ DEFAULT_ROOTS = [
 ]
 
 # Maps excluded for known, documented reasons (not round-trip regressions).
-EXCLUSIONS: dict[str, str] = {
-    "segment": "malformed source coordinate '5.185.5' (segment/map.xml:79) — see plan A8",
-}
+# (segment's malformed coordinate is now handled by parse_coord flag-and-continue — A8.)
+EXCLUSIONS: dict[str, str] = {}
 
 
 def _semantic(m) -> dict:

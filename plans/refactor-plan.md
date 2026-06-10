@@ -48,9 +48,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   mirror/translate source with a single parent was referenced by name but never written top-level,
   so it vanished on re-parse; fixed in `xml_writer` (named sources forced top-level). Current
   baseline: **337 ok, 9 failed (tracked as A10), 1 excluded (`segment`, A8)**.
-- [ ] **A8. Robust coordinate parsing.** `parse_coord` hard-crashes a whole map on a malformed
-  value (`segment/map.xml:79` `5.185.5`). Flag-and-continue (skip/zero the bad coord, record a
-  warning) so one source typo doesn't lose the map. 1/345 today.
+- [x] **A8. Robust coordinate parsing.** `parse_coord` now zeroes a malformed literal (e.g.
+  `5.185.5`) with a warning instead of raising, so one source typo no longer fails the whole map.
+  `segment` parses and round-trips; removed from the harness exclusions (now 341 ok, 9 A10, 0
+  excluded). Tests added.
 - [ ] **A9. Populate `source_id` for inline-anonymous transform sources.** 50/137 corpus
   mirror/translate regions persist an empty `source_id` (their source was an inline anonymous
   region). The parser should set `source_id` to that source's synthetic registry id so the

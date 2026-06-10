@@ -8,8 +8,11 @@ Transform regions (Mirror, Translate) store a source_id string reference.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Optional
+
+logger = logging.getLogger("pgm_map_studio")
 
 
 # ---------------------------------------------------------------------------
@@ -22,6 +25,8 @@ def parse_coord(value: str) -> Optional[float]:
     - Template variable ``${variable_name}`` → ``None``
     - Infinity ``"oo"`` / ``"-oo"`` → ``float('inf')`` / ``float('-inf')``
     - Normal float or int literal → float
+    - Malformed literal (e.g. a source typo like ``"5.185.5"``) → ``0.0`` with a
+      warning, so one bad value flags-and-continues instead of failing the whole map.
     """
     value = value.strip()
     if '${' in value:
@@ -33,7 +38,11 @@ def parse_coord(value: str) -> Optional[float]:
         return float('inf')
     if lower == '-oo':
         return float('-inf')
-    return float(value)
+    try:
+        return float(value)
+    except ValueError:
+        logger.warning("Malformed coordinate %r — treating as 0.0 (flag-and-continue)", value)
+        return 0.0
 
 
 def _b2d(min_x: float, min_z: float, max_x: float, max_z: float) -> dict:
