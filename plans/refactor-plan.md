@@ -71,6 +71,12 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
 - [ ] **B3.** Type sketch models.
 - [ ] **B4.** Type the `/regions/tree` view-model node (§5) explicitly.
+- [ ] **B5. Region categorization derivation.** Replace the thin `_compute_categories` with the
+  two-facet model in `docs/contracts/region-categorization.md` (`category` + `roles`; build from
+  void-structure; `rule_container`/`time_gated` roles; constrained compound recursion). Validates
+  current 23% categorized → ~91%. Back it with a hand-verified ground-truth fixture
+  (annealing_iv, vertex, acapulco, icecream_sandwiched_ii). Keep categories derived; keep
+  `region_categories` as user-overrides only.
 
 ## Workstream C — API stabilization (Phase 3)
 

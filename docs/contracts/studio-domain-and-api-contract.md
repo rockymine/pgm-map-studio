@@ -358,8 +358,15 @@ required for v1, but the contract and round-trip carry them.
 Category is **not** a region field. `map_api._compute_categories` derives it with precedence:
 actual spawn/wool/spawner references → stored `region_categories` editor hints → name heuristics
 (`"build"` substring). `region_categories` is an editor hint store in `xml_data.json` that the
-serializer drops; it lets newly-drawn, not-yet-linked regions show in the right category. Values:
-`spawn`, `wool`, `build`, `other`.
+serializer drops; it lets newly-drawn, not-yet-linked regions show in the right category.
+
+The four-bucket model (`spawn`/`wool`/`build`/`other`) is **insufficient** — it leaves ~76% of
+named regions in `other`, misses monuments, and conflates region identity with filter targeting.
+The full model is specified in [`region-categorization.md`](region-categorization.md): a two-facet
+model (`category` ∈ {spawn, observer_spawn, wool_room, monument, wool_spawner, build, mechanic,
+other} + orthogonal `roles` incl. `rule_container`, `time_gated`), with build derived from the
+void-enforcement structure rather than naming. Categories remain **derived**; `region_categories`
+stays as a user-override store only.
 
 ---
 
