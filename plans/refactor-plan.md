@@ -173,8 +173,18 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
 - [ ] **C1.** Structured error envelope `{error:{code,message}}` across routes + `api.js`.
 - [ ] **C2.** Documented request/response schema per route family (`api-schemas.md`).
-- [ ] **C3.** Filters CRUD routes + service (author-in-v1).
-- [ ] **C4.** Apply-rules CRUD routes + service, incl. stable synthetic rule ids.
+- [x] **C3.** Filters CRUD routes + service (author-in-v1). *(Done 2026-06-10.)*
+  `services/filter_editor.py` + `routes/filters.py`: list (with a usage/reference map), create
+  (validates type ∈ known set + child/region refs exist via the pgm codec shapes), update, delete
+  (**reject-with-references** when used by an apply-rule / another filter / renewable / block-drop;
+  builtin `never`/`always` guarded). Backend only; flat `{"error": str}` envelope (C1 unifies later).
+- [x] **C4.** Apply-rules CRUD routes + service, incl. stable synthetic rule ids. *(Done 2026-06-10.)*
+  `services/apply_rule_editor.py` + `routes/apply_rules.py`: stable `rule_<n>` synthetic id
+  (editor-only, backfilled on access, **dropped on XML export** — round-trip harness untouched);
+  list/create/update/delete; create validates region + filter refs (accepts region-as-filter,
+  builtins, and inline descriptors like `deny(void)`). Tests: `test_filter_editor.py` +
+  `test_apply_rule_editor.py` (36 cases incl. export-drop). Signatures captured in
+  `docs/contracts/data-layer-api.md`. Manual curl flow on annealing_iv verified (201/409+refs/400/200).
 - [ ] **C5.** Wire region group/ungroup/restore/change-type into `api.js` (currently unwired).
 - [ ] **C6.** Unify bbox/center naming to `{min_x,min_z,max_x,max_z}` + `{cx,cz}` at the API
   boundary; migrate `symmetry.json` `center_x/center_z` → `cx/cz`.
@@ -195,7 +205,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   categorization doc) from `docs/filter-use-cases.md` + the full corpus; **mark
   `docs/requirements/editor-filters.md` as unstable** rather than rewriting it. *Needs: corpus
   analysis (doable) + the new doc, then routes/UI.* *(rockymine §1 "Filters, Regions and their
-  Relation".)*
+  Relation".)* *Progress: `docs/filter-use-cases.md` refreshed (2026-06-10) with an Appendix —
+  filter-type frequency, the **event×filter-type matrix** (what attaches where), composite-child
+  shapes, and the stackability/soft-warning stance — the vocabulary source for the suggestion UI.
+  `tests/studio/test_filter_use_cases.py` exercises the canonical shapes through the C3/C4 editors.*
 - [ ] **C10. Route consistency audit + CRUD conventions.** *Audited (autonomous session).*
   Inconsistencies to resolve: (1) **singular/plural** mixed — `/teams` + `/teams/:id` and
   `/wools` + `/wools/:id` (plural) vs `/regions` POST + `/region/:id` and `/spawns` POST +
