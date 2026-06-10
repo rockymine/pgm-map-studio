@@ -60,6 +60,10 @@ class MapXmlParser:
             data.regions, data.apply_rules = self._region_parser.parse_regions_elem(
                 regions_elem
             )
+        else:
+            # No <regions> block, but inline spawn regions may have been registered
+            # during _parse_spawns; expose them so every spawn region id resolves.
+            data.regions = self._region_parser.registry()
 
         # Resolve named spawn region references against the registry
         self._resolve_spawn_regions(data)

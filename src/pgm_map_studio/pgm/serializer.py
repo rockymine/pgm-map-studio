@@ -239,7 +239,11 @@ def _encode_spawn(spawn: Spawn) -> dict[str, Any]:
         'yaw': spawn.yaw,
     }
     if spawn.region is not None:
-        result['region'] = _encode_region(spawn.region)
+        # Reference the region by id into the flat registry — geometry lives once
+        # in `regions`, never duplicated inline on the spawn. The id is non-empty
+        # for every parsed spawn region (named or synthetic). An id-less anonymous
+        # region falls back to inline so geometry is never lost.
+        result['region'] = spawn.region.id if spawn.region.id else _encode_region(spawn.region)
     return result
 
 

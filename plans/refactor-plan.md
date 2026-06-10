@@ -32,9 +32,12 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   an editor-grouped union now round-trips through deserialize → `to_xml` (was impossible before).
   Also generalized `ungroup` (decision): dissolves any compound type, one level only, with a
   `warning` when dissolving an ordered compound (complement/negative). Contract §14 updated.
-- [ ] **A5. Spawn-as-reference in serializer.** Persist `spawn.region` as a string id into the
-  registry (not a duplicated inline region). Verify `xml_writer` ref-vs-inline via `_is_synthetic`
-  still round-trips; add a no-duplication test.
+- [x] **A5. Spawn-as-reference in serializer.** `_encode_spawn` now emits `region` as a string id
+  into the flat registry (id-less anonymous regions fall back to inline). Consumers were already
+  string-tolerant (`spawn_editor`, `teams-panel`). Also fixed a latent parser gap: a map with
+  inline `<spawn><region>` but no `<regions>` block now exposes those regions in `data.regions`
+  (added `region_parser.registry()`). Validated: 1175/1175 spawn regions serialize as resolved
+  string refs, zero duplication (was 270 duplicated); round-trip faithful.
 - [ ] **A6. Align `wool_editor` IDs to the deterministic scheme** (consistency with A2).
 - [ ] **A7. Corpus round-trip harness.** Tool/test that runs full `map.xml → json → map.xml`
   across CommunityMaps + PublicMaps and reports diffs (excluding known out-of-spec maps like
@@ -64,6 +67,11 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **C6.** Unify bbox/center naming to `{min_x,min_z,max_x,max_z}` + `{cx,cz}` at the API
   boundary; migrate `symmetry.json` `center_x/center_z` → `cx/cz`.
 - [ ] **C7.** CTW import-eligibility check (supported symmetric-CTW signal; flag AD/arcade/gimmick).
+- [ ] **C8. Symmetric compound creation.** Creation is union-only today; negative/complement/
+  intersect need the `group → change_region_type` dance, and `change_region_type` has **zero
+  tests**. Add an optional `type` to `group_regions` (default `union`) to create any compound
+  directly (set_base_child for complement ordering), and backfill `change_region_type` tests.
+  Makes create symmetric with the now-generalized ungroup. (Authoring, not round-trip.)
 
 ## Workstream D — UI migration (Phase 4)
 

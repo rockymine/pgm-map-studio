@@ -137,6 +137,18 @@ def test_teams_preserved(tmp_path):
     assert len(d['teams']) == 2
 
 
+def test_spawn_region_is_id_reference_not_inline(tmp_path):
+    # A5: spawns persist a string-id reference into the flat registry, not a
+    # duplicated inline region object. Geometry lives once, in `regions`.
+    data = MapXmlParser(_write_xml(tmp_path, FULL_XML)).parse()
+    d = serializer.to_dict(data)
+    for spawn in d['spawns']:
+        assert isinstance(spawn['region'], str), "spawn region must be an id reference"
+        assert spawn['region'] in d['regions'], "referenced region must exist in the registry"
+    assert isinstance(d['observer_spawn']['region'], str)
+    assert d['observer_spawn']['region'] in d['regions']
+
+
 def test_observer_spawn_present(tmp_path):
     data = MapXmlParser(_write_xml(tmp_path, FULL_XML)).parse()
     d = serializer.to_dict(data)

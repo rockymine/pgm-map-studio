@@ -67,6 +67,11 @@ class RegionParser:
         """Look up a named region by ID in the registry."""
         return self._registry.get(ref_id)
 
+    def registry(self) -> dict[str, Region]:
+        """The flat region registry — named regions plus synthetic/inline ones
+        (e.g. regions registered while parsing inline ``<spawn><region>`` blocks)."""
+        return self._registry
+
     # ------------------------------------------------------------------
     # Internal — coordinate helpers
     # ------------------------------------------------------------------
