@@ -38,7 +38,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   inline `<spawn><region>` but no `<regions>` block now exposes those regions in `data.regions`
   (added `region_parser.registry()`). Validated: 1175/1175 spawn regions serialize as resolved
   string refs, zero duplication (was 270 duplicated); round-trip faithful.
-- [ ] **A6. Align `wool_editor` IDs to the deterministic scheme** (consistency with A2).
+- [x] **A6. Align `wool_editor` IDs to the deterministic scheme** (consistency with A2). Wool id =
+  colour slug, monument id = `colour-team` (matches the serializer); no more `uuid4`. Ids are
+  re-keyed on colour/team rename (wool colour change cascades to monument ids), with a dup-colour
+  guard added to `update_wool` and a dup-team guard to `update_monument`. Tests added.
 - [ ] **A7. Corpus round-trip harness.** Tool/test that runs full `map.xml → json → map.xml`
   across CommunityMaps + PublicMaps and reports diffs (excluding known out-of-spec maps like
   `segment`'s malformed coord, arcade/AD maps).

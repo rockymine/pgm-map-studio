@@ -23,8 +23,24 @@ def _gen_id() -> str:
     return uuid.uuid4().hex[:8]
 
 
+def _slug(value: str) -> str:
+    return str(value).strip().lower().replace(" ", "_")
+
+
 def _normalize_color(raw: str) -> str:
-    return str(raw).strip().lower().replace(" ", "_")
+    return _slug(raw)
+
+
+# Deterministic, content-derived ids (matches pgm.serializer._encode_wools_grouped):
+# a wool's id is its colour slug (colour is the unique group key); a monument's id
+# is ``<colour-slug>-<team-slug>``. Stable across round-trips and serialize passes.
+
+def _wool_id(color: str) -> str:
+    return _slug(color)
+
+
+def _monument_id(color: str, team: str) -> str:
+    return f"{_slug(color)}-{_slug(team)}"
 
 
 # ── migration ─────────────────────────────────────────────────────────────────
@@ -43,7 +59,7 @@ def _migrate_to_grouped(wools: list) -> list:
         color = w.get("color", "")
         if color not in by_color:
             by_color[color] = {
-                "id":               _gen_id(),
+                "id":               _wool_id(color),
                 "color":            color,
                 "location":         w.get("location"),
                 "wool_room_region": w.get("wool_room_region"),
@@ -52,7 +68,7 @@ def _migrate_to_grouped(wools: list) -> list:
         mon_raw = w.get("monument")
         if mon_raw and isinstance(mon_raw, dict):
             by_color[color]["monuments"].append({
-                "id":              _gen_id(),
+                "id":              _monument_id(color, w.get("team", "")),
                 "team":            w.get("team", ""),
                 "location":        {k: mon_raw[k] for k in ("x", "y", "z") if k in mon_raw},
                 "monument_region": mon_raw.get("region_id"),
@@ -109,7 +125,7 @@ def add_wool(data: dict, payload: dict) -> dict:
     if any(w.get("color") == color for w in data.get("wools", [])):
         raise InvalidWoolPayload(f"wool color {color!r} already exists")
     wool: dict = {
-        "id":               _gen_id(),
+        "id":               _wool_id(color),
         "color":            color,
         "team":             None,
         "location":         None,
@@ -127,7 +143,15 @@ def update_wool(data: dict, wool_id: str, payload: dict) -> dict:
         color = _normalize_color(payload["color"])
         if color not in VALID_WOOL_COLORS:
             raise InvalidWoolPayload(f"invalid wool color {color!r}")
+        if color != wool.get("color") and any(
+            w.get("color") == color for w in data.get("wools", []) if w is not wool
+        ):
+            raise InvalidWoolPayload(f"wool color {color!r} already exists")
         wool["color"] = color
+        # Keep ids content-derived: re-key this wool and its monuments.
+        wool["id"] = _wool_id(color)
+        for mon in wool.get("monuments", []):
+            mon["id"] = _monument_id(color, mon.get("team", ""))
     if "team" in payload:
         wool["team"] = (payload["team"] or "").strip() or None
     if "location" in payload:
@@ -155,7 +179,7 @@ def add_monument(data: dict, wool_id: str, payload: dict) -> dict:
     if team and any(m.get("team") == team for m in wool.get("monuments", [])):
         raise InvalidWoolPayload(f"monument for team {team!r} already exists on this wool")
     mon: dict = {
-        "id":              _gen_id(),
+        "id":              _monument_id(wool.get("color", ""), team),
         "team":            team,
         "location":        payload.get("location") or None,
         "monument_region": (payload.get("monument_region") or "").strip() or None,
@@ -169,7 +193,13 @@ def update_monument(data: dict, wool_id: str, mon_id: str, payload: dict) -> dic
     wool = _find_wool(data, wool_id)
     mon  = _find_monument(wool, mon_id)
     if "team" in payload:
-        mon["team"] = str(payload["team"])
+        new_team = str(payload["team"])
+        if new_team != mon.get("team") and any(
+            m.get("team") == new_team for m in wool.get("monuments", []) if m is not mon
+        ):
+            raise InvalidWoolPayload(f"monument for team {new_team!r} already exists on this wool")
+        mon["team"] = new_team
+        mon["id"]   = _monument_id(wool.get("color", ""), new_team)
     if "location" in payload:
         mon["location"] = payload["location"] or None
     if "monument_region" in payload:

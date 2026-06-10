@@ -134,7 +134,7 @@ def test_add_wool_creates_grouped_entry():
     assert wool["location"] is None
     assert wool["wool_room_region"] is None
     assert wool["monuments"] == []
-    assert len(wool["id"]) == 8
+    assert wool["id"] == "red"  # deterministic: id = colour slug
     assert data["wools"] == [wool]
 
 
@@ -197,6 +197,32 @@ def test_update_wool_not_found():
         update_wool({}, "nonexistent", {"color": "red"})
 
 
+def test_update_wool_color_rekeys_id_and_monuments():
+    w = _wool("red", monuments=[_monument("blue")])
+    w["id"] = "red"
+    w["monuments"][0]["id"] = "red-blue"
+    data = _data(w)
+    update_wool(data, "red", {"color": "green"})
+    out = data["wools"][0]
+    assert out["id"] == "green"  # content-derived id tracks the colour
+    assert out["monuments"][0]["id"] == "green-blue"  # cascades to monuments
+
+
+def test_update_wool_color_rejects_collision_with_other_wool():
+    w1 = _wool("red"); w1["id"] = "red"
+    w2 = _wool("green"); w2["id"] = "green"
+    data = _data(w1, w2)
+    with pytest.raises(InvalidWoolPayload, match="already exists"):
+        update_wool(data, "red", {"color": "green"})
+
+
+def test_deterministic_ids_match_serializer_scheme():
+    # ids derived the same way pgm.serializer._encode_wools_grouped derives them
+    from pgm_map_studio.studio.services.wool_editor import _wool_id, _monument_id
+    assert _wool_id("Light Blue") == "light_blue"
+    assert _monument_id("Light Blue", "blue-team") == "light_blue-blue-team"
+
+
 # ── delete_wool ───────────────────────────────────────────────────────────────
 
 def test_delete_wool_removes_entry():
@@ -229,7 +255,7 @@ def test_add_monument_appends():
     assert mon["team"] == "blue"
     assert mon["location"] is None
     assert mon["monument_region"] is None
-    assert len(mon["id"]) == 8
+    assert mon["id"] == "red-blue"  # deterministic: <colour>-<team>
     assert data["wools"][0]["monuments"] == [mon]
 
 
@@ -269,6 +295,22 @@ def test_update_monument_team():
     data = _data(w)
     update_monument(data, w["id"], m["id"], {"team": "red"})
     assert data["wools"][0]["monuments"][0]["team"] == "red"
+
+
+def test_update_monument_team_rekeys_id():
+    m = _monument("blue"); m["id"] = "red-blue"
+    w = _wool("red", monuments=[m]); w["id"] = "red"
+    data = _data(w)
+    update_monument(data, "red", "red-blue", {"team": "green"})
+    assert data["wools"][0]["monuments"][0]["id"] == "red-green"
+
+
+def test_update_monument_team_rejects_duplicate():
+    m1, m2 = _monument("blue"), _monument("red")
+    w = _wool("red", monuments=[m1, m2])
+    data = _data(w)
+    with pytest.raises(InvalidWoolPayload, match="already exists"):
+        update_monument(data, w["id"], m1["id"], {"team": "red"})
 
 
 def test_update_monument_location():
