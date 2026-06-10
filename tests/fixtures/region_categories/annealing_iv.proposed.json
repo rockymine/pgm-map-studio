@@ -1,0 +1,173 @@
+{
+  "blue-spawn-point": {
+    "category": "spawn",
+    "roles": []
+  },
+  "red-spawn-point": {
+    "category": "spawn",
+    "roles": []
+  },
+  "green-spawn-point": {
+    "category": "spawn",
+    "roles": []
+  },
+  "yellow-spawn-point": {
+    "category": "spawn",
+    "roles": []
+  },
+  "obs-spawn-point": {
+    "category": "observer_spawn",
+    "roles": []
+  },
+  "blue-wool-spawn": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "red-wool-spawn": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "green-wool-spawn": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "yellow-wool-spawn": {
+    "category": "wool_spawner",
+    "roles": []
+  },
+  "blue-spawn": {
+    "category": "spawn",
+    "roles": [
+      "enter=only-blue"
+    ]
+  },
+  "red-spawn": {
+    "category": "spawn",
+    "roles": [
+      "enter=only-red"
+    ]
+  },
+  "green-spawn": {
+    "category": "spawn",
+    "roles": [
+      "enter=only-green"
+    ]
+  },
+  "yellow-spawn": {
+    "category": "spawn",
+    "roles": [
+      "enter=only-yellow"
+    ]
+  },
+  "blue-team-red-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "blue-team-green-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "blue-team-yellow-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "red-team-green-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "red-team-yellow-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "red-team-blue-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "green-team-yellow-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "green-team-blue-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "green-team-red-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "yellow-team-blue-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "yellow-team-red-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "yellow-team-green-wool": {
+    "category": "monument",
+    "roles": []
+  },
+  "spawns": {
+    "category": "spawn",
+    "roles": [
+      "block_break=only-iron",
+      "block_place=only-iron-cause-world"
+    ]
+  },
+  "not-spawns": {
+    "category": "other",
+    "roles": [
+      "rule_container"
+    ]
+  },
+  "blues-woolroom": {
+    "category": "wool_room",
+    "roles": [
+      "block=blues-woolrooms-filter",
+      "enter=not-blue"
+    ]
+  },
+  "reds-woolroom": {
+    "category": "wool_room",
+    "roles": [
+      "block=reds-woolrooms-filter",
+      "enter=not-red"
+    ]
+  },
+  "greens-woolroom": {
+    "category": "wool_room",
+    "roles": [
+      "block=greens-woolrooms-filter",
+      "enter=not-green"
+    ]
+  },
+  "yellows-woolroom": {
+    "category": "wool_room",
+    "roles": [
+      "block=yellows-woolrooms-filter",
+      "enter=not-yellow"
+    ]
+  },
+  "woolrooms": {
+    "category": "wool_room",
+    "roles": [
+      "block_break=woolrooms-break-filter"
+    ]
+  },
+  "build-area": {
+    "category": "build",
+    "roles": []
+  },
+  "not-build-area": {
+    "category": "other",
+    "roles": [
+      "block_break=block-break-void-filter",
+      "block_place=block-place-void-filter",
+      "rule_container"
+    ]
+  },
+  "blocks-filter-region": {
+    "category": "other",
+    "roles": []
+  }
+}
