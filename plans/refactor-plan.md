@@ -42,9 +42,12 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   colour slug, monument id = `colour-team` (matches the serializer); no more `uuid4`. Ids are
   re-keyed on colour/team rename (wool colour change cascades to monument ids), with a dup-colour
   guard added to `update_wool` and a dup-team guard to `update_monument`. Tests added.
-- [ ] **A7. Corpus round-trip harness.** Tool/test that runs full `map.xml → json → map.xml`
-  across CommunityMaps + PublicMaps and reports diffs (excluding known out-of-spec maps like
-  `segment`'s malformed coord, arcade/AD maps).
+- [x] **A7. Corpus round-trip harness.** `tools/roundtrip_check.py` runs the full round-trip over
+  both suites with two checks per map: JSON idempotence (canonical, derived `bounds_2d` excluded)
+  and an XML re-parse semantic compare. It immediately found a real round-trip bug — a named
+  mirror/translate source with a single parent was referenced by name but never written top-level,
+  so it vanished on re-parse; fixed in `xml_writer` (named sources forced top-level). Current
+  baseline: **337 ok, 9 failed (tracked as A10), 1 excluded (`segment`, A8)**.
 - [ ] **A8. Robust coordinate parsing.** `parse_coord` hard-crashes a whole map on a malformed
   value (`segment/map.xml:79` `5.185.5`). Flag-and-continue (skip/zero the bad coord, record a
   warning) so one source typo doesn't lose the map. 1/345 today.
@@ -52,6 +55,11 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   mirror/translate regions persist an empty `source_id` (their source was an inline anonymous
   region). The parser should set `source_id` to that source's synthetic registry id so the
   transform resolves. Encoder side is already correct (A3).
+- [ ] **A10. XML-writer round-trip fidelity (9 maps).** Surfaced by A7. Two known gaps: (a) named
+  single-parent inline children (primitives) lose their id on re-parse — incl. a region literally
+  named `regions` (abstract, abstract_remix, golden_drought_ii, hadron, kytriak, pinnacle,
+  rotten_slopes, twisted); (b) unused `never`/`always` filters are dropped on write (kytriak_te).
+  Make the harness green.
 
 ## Workstream B — Typed data models (Phase 2 proper)
 

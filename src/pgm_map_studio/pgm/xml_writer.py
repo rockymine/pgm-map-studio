@@ -609,6 +609,14 @@ def _write_regions_block(
         if count == 0 or count >= 2 or rid in external:
             top_level_ids.add(rid)
 
+    # A mirror/translate writes a named source as a region="<id>" reference, which
+    # only resolves if that source is also written top-level. A named source with a
+    # single parent would otherwise be inlined-by-reference and lost on re-parse.
+    for r in regions.values():
+        sid = getattr(r, 'source_id', '')
+        if sid and not _is_synthetic(sid) and sid in regions:
+            top_level_ids.add(sid)
+
     block = ET.SubElement(parent, 'regions')
 
     for rid in regions:
