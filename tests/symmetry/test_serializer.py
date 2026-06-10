@@ -38,7 +38,14 @@ def test_required_keys_present():
     assert 'status' in d
     assert 'modes' in d
     assert 'center' in d
+    assert 'center_cell' in d
     assert 'primary' in d
+
+
+def test_center_cell_serialized():
+    result = _result_with([], center={'center_x': 2.5, 'center_z': 0.0})
+    d = serializer.to_dict(result)
+    assert d['center_cell'] == '1x2'
 
 
 def test_intra_team_symmetry_absent():

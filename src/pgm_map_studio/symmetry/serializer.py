@@ -22,6 +22,7 @@ def to_dict(result: SymmetryResult) -> dict[str, Any]:
             for e in result.modes
         ],
         'center': result.center,
+        'center_cell': result.center_cell,
         'primary': result.primary,
     }
 

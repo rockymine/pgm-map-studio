@@ -134,7 +134,7 @@ def _classify_center(
 # Symmetry candidates
 # ---------------------------------------------------------------------------
 
-_CANDIDATES = ["mirror_x", "mirror_z", "rot_180", "rot_90"]
+_CANDIDATES = ["mirror_x", "mirror_z", "mirror_d1", "mirror_d2", "rot_180", "rot_90"]
 
 
 # ---------------------------------------------------------------------------
@@ -174,6 +174,19 @@ def _detect_pair_transform(
         transforms.append('mirror_z')
     if abs(2 * center_x - ax - bx) < tolerance and abs(2 * center_z - az - bz) < tolerance:
         transforms.append('rot_180')
+
+    # Diagonal reflections about the center. d1 is the main diagonal (line
+    # z - cz = x - cx), which swaps the centered coords (dx, dz) -> (dz, dx);
+    # d2 is the anti-diagonal (z - cz = -(x - cx)), (dx, dz) -> (-dz, -dx).
+    d1x = center_x + (az - center_z)
+    d1z = center_z + (ax - center_x)
+    if abs(d1x - bx) < tolerance and abs(d1z - bz) < tolerance:
+        transforms.append('mirror_d1')
+
+    d2x = center_x - (az - center_z)
+    d2z = center_z - (ax - center_x)
+    if abs(d2x - bx) < tolerance and abs(d2z - bz) < tolerance:
+        transforms.append('mirror_d2')
 
     r90x = center_x + (az - center_z)
     r90z = center_z - (ax - center_x)
@@ -235,6 +248,16 @@ def _transform_coords(
         else:
             pts[:, 0] = cx - dz
             pts[:, 1] = cz + dx
+    elif transform == 'mirror_d1':
+        dx = pts[:, 0] - cx
+        dz = pts[:, 1] - cz
+        pts[:, 0] = cx + dz
+        pts[:, 1] = cz + dx
+    elif transform == 'mirror_d2':
+        dx = pts[:, 0] - cx
+        dz = pts[:, 1] - cz
+        pts[:, 0] = cx - dz
+        pts[:, 1] = cz - dx
     return pts
 
 
@@ -302,6 +325,10 @@ def _apply_transform_center(
         return cx + (z - cz), cz - (x - cx)
     elif transform == 'rot_270':
         return cx - (z - cz), cz + (x - cx)
+    elif transform == 'mirror_d1':
+        return cx + (z - cz), cz + (x - cx)
+    elif transform == 'mirror_d2':
+        return cx - (z - cz), cz - (x - cx)
     return x, z
 
 

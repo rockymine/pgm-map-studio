@@ -13,6 +13,7 @@ from pgm_map_studio.symmetry.detection import (
     _detect_modes,
     _verify_polygon_symmetry,
     _geometric_pair_support,
+    _CANDIDATES,
 )
 from pgm_map_studio.symmetry.datatypes import SymmetryResult
 
@@ -71,6 +72,31 @@ def test_center_of_symmetric_map():
 
 
 # ---------------------------------------------------------------------------
+# Center-cell typology on detection output
+# ---------------------------------------------------------------------------
+
+def test_center_cell_even_span_is_2x2():
+    # extents [-10,10] on both axes -> integer center 0.0 -> 2-wide each
+    islands = [_make_island(1, -10, 10, -10, 10)]
+    result = detect_from_data(islands)
+    assert result.center_cell == '2x2'
+
+
+def test_center_cell_odd_span_is_1x1():
+    # extents [0,5] on both axes -> half-integer center 2.5 -> 1-wide each
+    islands = [_make_island(1, 0, 5, 0, 5)]
+    result = detect_from_data(islands)
+    assert result.center_cell == '1x1'
+
+
+def test_center_cell_mixed_span_is_2x1():
+    # X span even (center 0.0 -> 2), Z span odd (center 2.5 -> 1)
+    islands = [_make_island(1, -10, 10, 0, 5)]
+    result = detect_from_data(islands)
+    assert result.center_cell == '2x1'
+
+
+# ---------------------------------------------------------------------------
 # _detect_pair_transform
 # ---------------------------------------------------------------------------
 
@@ -102,6 +128,24 @@ def test_rot_90_pair():
     b = {'center': [3.0, -5.0]}
     transforms = _detect_pair_transform(a, b, 0.0, 0.0)
     assert 'rot_90' in transforms
+
+
+def test_mirror_d1_pair():
+    # main diagonal reflection about (0,0): (dx,dz) -> (dz,dx)
+    a = {'center': [5.0, 3.0]}
+    b = {'center': [3.0, 5.0]}
+    transforms = _detect_pair_transform(a, b, 0.0, 0.0)
+    assert 'mirror_d1' in transforms
+    assert 'mirror_d2' not in transforms
+
+
+def test_mirror_d2_pair():
+    # anti-diagonal reflection about (0,0): (dx,dz) -> (-dz,-dx)
+    a = {'center': [5.0, 3.0]}
+    b = {'center': [-3.0, -5.0]}
+    transforms = _detect_pair_transform(a, b, 0.0, 0.0)
+    assert 'mirror_d2' in transforms
+    assert 'mirror_d1' not in transforms
 
 
 def test_no_transform_pair():
@@ -229,6 +273,43 @@ def test_rot180_also_detected_on_rot90_map():
 
 
 # ---------------------------------------------------------------------------
+# Diagonal mirror symmetric map (Vertex-style)
+# ---------------------------------------------------------------------------
+
+def _build_mirror_d1_islands():
+    """Two-bar layout symmetric across the main diagonal (z = x) about (0,0).
+
+    An east bar and its diagonal image (a north bar with x/z swapped) — the
+    'L' arrangement of a diagonal-mirror map like Vertex.
+    """
+    return [
+        _make_island(1, 3, 9, 1, 3),   # east bar
+        _make_island(2, 1, 3, 3, 9),   # d1 image of the east bar
+    ]
+
+
+def test_mirror_d1_detected():
+    islands = _build_mirror_d1_islands()
+    result = detect_from_data(islands)
+    d1 = next(e for e in result.modes if e.type == 'mirror_d1')
+    assert d1.detected is True
+
+
+def test_mirror_d1_not_mirror_x():
+    islands = _build_mirror_d1_islands()
+    result = detect_from_data(islands)
+    mirror_x = next(e for e in result.modes if e.type == 'mirror_x')
+    assert mirror_x.detected is False
+
+
+def test_diagonal_candidates_present():
+    result = detect_from_data(_build_rot180_islands())
+    types = {e.type for e in result.modes}
+    assert 'mirror_d1' in types
+    assert 'mirror_d2' in types
+
+
+# ---------------------------------------------------------------------------
 # Asymmetric map — no symmetry detected
 # ---------------------------------------------------------------------------
 
@@ -290,7 +371,7 @@ def test_exclude_islands_changes_result():
     with_obs = detect_from_data(with_observer)
     # Just verify the exclusion path runs without error and returns valid result
     assert isinstance(without_obs, SymmetryResult)
-    assert len(without_obs.modes) == 4
+    assert len(without_obs.modes) == len(_CANDIDATES)
 
 
 def test_exclude_all_islands_returns_unconfirmed():
@@ -308,7 +389,7 @@ def test_exclude_all_islands_returns_unconfirmed():
 def test_empty_islands_returns_unconfirmed():
     result = detect_from_data([])
     assert result.status == 'unconfirmed'
-    assert len(result.modes) == 4
+    assert len(result.modes) == len(_CANDIDATES)
     assert result.primary is None
 
 

@@ -136,14 +136,32 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   snapshot/restore (a `restore_region`-style snapshot already exists for regions). Must span
   region/team/spawn/wool/monument/filter/apply edits. *Needs: design decision + clarification.*
   *(rockymine §1 "Undo/Redo".)*
-- [ ] **B7. Symmetry center typology + diagonal axis.** Model the center cell explicitly: a map
-  center can fall on a `1x1`, `1x2`, `2x1`, or `2x2` block cell (x/z parity). Add diagonal (45°)
-  rotation-axis support in the sketch tool so rot_90 layouts authored on a diagonal axis are
-  expressible. (Note: a diagonal-axis rot_90 and an axis-aligned rot_90 yield the **same** detected
-  symmetry class — order-4 rotation about the center; the axis angle changes only the authoring/
-  mirror-line convention, not the symmetry. So detection needn't change; authoring does.) Touches
-  symmetry datatypes + `cross-cutting.md` (model) and the sketch setup canvas (UI, see D-series).
-  *Needs: design + clarification.* *(rockymine §1 "Symmetry Axis and Center Point".)*
+- [x] **B7. Symmetry center typology + diagonal axis (model + contract).** *(Done 2026-06-10.)*
+  Locked contract §7 + `cross-cutting.md` §1; deferred the diagonal/secondary-axis **canvas UI** to
+  the D-series (per the clarification scope). Delivered:
+  - **Center cell typology** (`1x1`/`1x2`/`2x1`/`2x2`): **derived** from the center coordinate's
+    parity (half-integer → 1-wide, integer → 2-wide; `symmetry.datatypes.classify_center_cell`),
+    never stored twice; emitted as `symmetry.json.center_cell`. `rot_90` + diagonals require a
+    **square** cell (`1x1`/`2x2`); axis-aligned mirrors + `rot_180` accept any. A non-square cell
+    does **not** pin the mirror axis (mirror_x/mirror_z/rot_180 all fold one or both axes with the
+    other parity incidental) — it only **excludes** rot_90/diagonal (which swap X↔Z).
+  - **Diagonal mirror as a first-class class** (`mirror_d1`/`mirror_d2`): rockymine clarified
+    `vertex` is a *definitive* diagonal-mirror map (L-shaped equal legs, blue↔red across
+    `normal="-1,0,-1"`), **not** readable as rot_180; `golden_drought_ii` has two diagonal axes
+    **and** reads as rot_180. Added diagonal candidates to detection (`detection._CANDIDATES`,
+    `_detect_pair_transform`, `_transform_coords`, `_apply_transform_center`). Verified: vertex →
+    `mirror_d2` @ 1.0 (cell `1x1`); golden_drought_ii/ingwaz surface d1+d2+rot_180 for the user to
+    confirm. **Corrected the stale contract note**: diagonal reflection is now both renderable
+    (`_reflect_geom`, the `I−2n̂n̂ᵀ` matrix) **and** PGM-verified (vertex), so all four reflections
+    persist as native PGM `mirror`; only `rot_90`/`rot_270` bake (rotation, no PGM type).
+  - **Axes model** (primary always-on + optional perpendicular **secondary** axis, toggleable in
+    sketch authoring = intra-team symmetry, e.g. outback/last_overcastian/green_gem): specified in
+    contract §7 + `sketch.json.setup` shape. Imported-map **secondary-axis detection deferred**
+    (was excluded from the original port; low priority). Tests: `tests/symmetry/test_datatypes.py`
+    + diagonal/center-cell cases in `test_detection.py`/`test_serializer.py`. 913 py + 350 rt green.
+  - **Still open (D-series UI):** the diagonal + secondary-axis canvas controls in
+    `sketch-setup-canvas.js`; the JS `applySymmetry` diagonal branches; imported-map intra-team
+    detection. *(rockymine §1 "Symmetry Axis and Center Point".)*
 - [ ] **B8. Sketch–editor data-handling alignment.** *Investigated (autonomous session):* the two
   tools **already share the geometry format** — both import `canvas/transform.js`,
   `shared/converters.js`, `canvas-helpers.js`, `shape-render.js` (bbox object form per
@@ -272,15 +290,17 @@ deterministic ids, derived owner). Four of the six core entities are locked.
 
 Model-defining work → **lock B1–B4** → API polish → features → D1. The blunt readiness test: *when
 you can describe Region/Filter/ApplyRule/Symmetry/Wool/SketchShape without hand-waving, do B1–B4.*
-Today only **Symmetry** and **SketchShape** still hand-wave — so symmetry is the one real gate.
+**Symmetry is now described** (B7 model+contract locked 2026-06-10) — only **SketchShape** still
+hand-waves on the modeling side.
 
-1. **Close the symmetry model (the gate).** **B7** (center typology + diagonal axis, *needs-design*)
-   + lock the symmetry section of the contract: how counterparts persist (baked concrete regions +
-   provenance index; rot_90/270 are *not* mirror chains), the `symmetry.json` source+relation shape.
-   B1's persisted/domain/view split and **B3** (sketch symmetry) both block on this. Do **B11
-   validation/invariants at design level** here too (cheap; the typed models should encode them), and
-   finish **`docs/contracts/filter-region-wiring.md`** (its corpus basis is already in
-   `filter-use-cases.md`).
+1. **Close the symmetry model (the gate).** ✅ **B7 model+contract done** — center typology +
+   diagonal-mirror class + axes model locked in contract §7 / `cross-cutting.md`; counterpart
+   persistence corrected (all four reflections via native PGM mirror, only rot_90/270 bake). The
+   diagonal/secondary-axis **canvas UI** is deferred to D-series (it doesn't gate B1–B4). B1's
+   persisted/domain/view split and **B3** (sketch symmetry) are now unblocked on the symmetry side.
+   Still to do at this gate: **B11 validation/invariants at design level** (cheap; the typed models
+   should encode them — incl. the rot_90/diagonal ⇒ square-cell + ≥N-team invariants) and finish
+   **`docs/contracts/filter-region-wiring.md`** (its corpus basis is already in `filter-use-cases.md`).
 2. **Lock B1–B4 (the typed frame).** B1 persisted/domain/view split · B2 imported-map domain · B3
    sketch · B4 `/regions/tree` view node. **Fold C6** (canonical bbox/center wire naming) and the
    **B4a** tree-as-view *design* in here — both are shape decisions the framework switch consumes,

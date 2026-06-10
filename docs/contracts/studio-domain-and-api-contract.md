@@ -64,7 +64,8 @@ Canonical, per `docs/cross-cutting.md`:
 - **Bounding box** is the flat object `{ min_x, min_z, max_x, max_z }`, where `max_*` are
   **extent bounds** (+1 over the highest block index, applied exactly once). This is the wire
   and view-model shape everywhere.
-- **Symmetry / mirror center** is `{ cx, cz }`.
+- **Symmetry / mirror center** is `{ cx, cz }`. Its **cell typology** (`1x1`/`1x2`/`2x1`/`2x2`) is
+  **derived** from the coordinate parity, not stored separately (§7).
 
 Outliers to migrate onto the canonical shape:
 
@@ -73,8 +74,8 @@ Outliers to migrate onto the canonical shape:
   author input.
 - `symmetry.json` uses `center_x`/`center_z` → migrate to `cx`/`cz`.
 
-Symmetry-mode vocabulary is shared by both workflows: `mirror_x`, `mirror_z`, `rot_90`, `rot_180`.
-Transform formulas live in `cross-cutting.md` §2.
+Symmetry-mode vocabulary is shared by both workflows: `mirror_x`, `mirror_z`, `mirror_d1`,
+`mirror_d2` (diagonals), `rot_90`, `rot_180` (§7). Transform formulas live in `cross-cutting.md` §1.
 
 ---
 
@@ -165,10 +166,11 @@ Type-specific fields, exactly as emitted by `pgm.serializer._encode_region`:
 ### Known region bugs to fix (do not encode into the contract)
 
 - `region_editor.group_regions` stores inline child dicts → must store string ids.
-- `region_encoder` resolves mirror/translate via `source`/`ref_region_id`, but the persisted
-  field is **`source_id`** → the 71 corpus transform regions don't render in the editor preview.
-- `region_encoder` mirror does **axis-aligned reflection only** (`xfact/zfact` from non-zero
-  normal component); it cannot reflect across a diagonal normal (see §7).
+- ~~`region_encoder` resolves mirror/translate via `source`/`ref_region_id`, but the persisted
+  field is `source_id`~~ — **fixed** (A3); transforms resolve via `source_id`.
+- ~~`region_encoder` mirror does axis-aligned reflection only; it cannot reflect across a diagonal
+  normal~~ — **fixed**; `_reflect_geom` (the `I−2n̂n̂ᵀ` affine matrix) reflects across any normal,
+  including diagonals (`vertex` verified). See §7.
 
 ---
 
@@ -228,35 +230,100 @@ the **flat** form (§2). All editor activities consume this one node contract.
 
 ---
 
-## 7. Symmetry  **[decision: source + relation, map-level index]**
+## 7. Symmetry  **[decision: source + relation, map-level index — B7 locked 2026-06-10]**
 
 Symmetry is a first-class model, not configure-step output. Persisted locations: imported maps
-in `symmetry.json`; sketches in `sketch.json.setup.mirror_mode` + `setup.center`.
+in `symmetry.json`; sketches in `sketch.json.setup` (`mirror_mode` + `center` + secondary axis).
 
 ```json
 { "status": "unconfirmed|confirmed|none",
-  "modes": [],
-  "primary": { "type": "rot_180", "confidence": 1.0, "user_override": true },
-  "center": { "cx": 0, "cz": 0 } }
+  "modes": [ { "type": "mirror_d2", "detected": true, "confidence": 1.0 } ],
+  "primary": { "type": "mirror_d2", "confidence": 1.0, "user_override": true },
+  "center": { "center_x": 238.5, "center_z": 306.5 },
+  "center_cell": "1x1" }
 ```
 
-### Authoring contract **[decision]**
+(`center` still uses `center_x`/`center_z` on disk; C6 renames it to `cx`/`cz` at the wire
+boundary. `center_cell` is **derived** — see below — and emitted for convenience, never authored.)
+
+### Symmetry-mode vocabulary **[decision]**
+
+Six classes, shared by both workflows. All are taken **about the center** `(cx, cz)`:
+
+| Mode | Axis / operation | Group element | Native PGM `mirror`? |
+|---|---|---|---|
+| `mirror_x` | reflect X (vertical mirror line at `x=cx`) | reflection | yes (`normal="1,0,0"`) |
+| `mirror_z` | reflect Z (horizontal line at `z=cz`) | reflection | yes (`normal="0,0,1"`) |
+| `mirror_d1` | reflect across the **main diagonal** `z−cz = x−cx` | reflection | yes (diagonal `normal`) |
+| `mirror_d2` | reflect across the **anti-diagonal** `z−cz = −(x−cx)` | reflection | yes (diagonal `normal`) |
+| `rot_180` | half-turn about the center | rotation (order 2) | via two ⟂ mirrors |
+| `rot_90` | quarter-turn about the center (4 teams) | rotation (order 4) | **no — baked** |
+
+Formulas live in `cross-cutting.md` §1. The diagonals are new in B7: `mirror_d1`/`mirror_d2` are
+the **definitive diagonal-mirror class** (e.g. `vertex` — a 2-team map whose L-shaped equal-leg
+footprint reflects blue↔red across `normal="-1,0,-1"`, the anti-diagonal). Detection recovers
+them about the bbox center (Vertex: `mirror_d2` @ IoU 1.0); the PGM mirror `origin` need only lie
+on the same diagonal line.
+
+### Center cell typology **[decision]**
+
+A map's symmetry center falls on one of four cells — `1x1`, `1x2`, `2x1`, `2x2` (`{x-width}x{z-width}`
+in blocks). It is **derived from the center coordinate's parity**, not stored independently
+(the coordinate is the single source of truth):
+
+- Under the +1 extent convention, an **odd** block span gives a **half-integer** center (`.5`) that
+  runs through the middle of one column → **1-wide**; an **even** span gives an **integer** center
+  (`.0`) on the boundary between two columns → **2-wide**.
+- So `_axis_width(c) = 1 if frac(c)==.5 else 2`, and `center_cell = "{x}x{z}"`.
+  (`symmetry.datatypes.classify_center_cell`.)
+
+**Constraint:** `rot_90` and the diagonal mirrors (`mirror_d1`/`mirror_d2`) require a **square**
+center cell — X-parity must equal Z-parity, i.e. `1x1` or `2x2` (`is_square_center_cell`). A
+non-square cell cannot carry quarter-turn or diagonal symmetry; the sketch tool disables those
+modes (and falls back to `rot_180`) when the cell is `1x2`/`2x1`. `mirror_x`/`mirror_z`/`rot_180`
+accept any cell.
+
+### Axes: main (always on) + optional secondary **[decision — sketch authoring]**
+
+Authoring models symmetry as **reflection axes through the center**, not a single op:
+
+- A **primary axis** that is **always active** — it partitions the map into teams (the mode above).
+- An **optional secondary axis**, **toggleable on/off during editing**, that subdivides each
+  primary region — this is **intra-team symmetry** (a team's two wools set up as mirror images,
+  e.g. `outback_outback_edition`, `last_overcastian_mini`, `green_gem_ctw`). In essentially all
+  cases the secondary is **perpendicular** to the primary. Toggling it off lets the author
+  introduce deliberate intra-team variation; toggling it on regenerates the mirrored half.
+  - Axis-aligned pairing: `mirror_x` ⟂ `mirror_z` (their composition is `rot_180`).
+  - Diagonal pairing: `mirror_d1` ⟂ `mirror_d2` (composition is also `rot_180`;
+    e.g. `golden_drought_ii` reads as both two diagonal mirrors **and** `rot_180`).
+  - For `rot_90` (always a square layout) the four reflection lines are the two axis-aligned plus
+    the two 45° diagonals; either pair may serve as main vs optional.
+
+`sketch.json.setup` persists `{ center:{cx,cz}, center_cell (derived), mirror_mode (primary),
+secondary_axis:{ orientation, enabled } | null, bbox }`. **Imported-map detection of the secondary
+intra-team axis is deferred** (it was excluded from the original port and is low-priority per
+rockymine); `symmetry.json` carries only the primary detection. The model/field exist now so the
+sketch tool and the typed models (B1–B4) can consume them; the canvas UI for drawing/toggling the
+diagonal + secondary axes is **D-series** work.
+
+### Counterpart persistence **[decision — corrected]**
 
 - The author owns **one source entity**; counterparts derive from `(mode, center)`.
 - The **relation lives in a map-level symmetry index** (in `symmetry.json`): author-source →
-  generated-set + mode + center. **PGM regions stay pure** — no studio-only fields injected into
-  region entries.
-- **Reflection (`mirror_x`/`mirror_z`) and `rot_180`** are expressible with native PGM `mirror`
-  regions and **work in the studio engine today** (`rot_180` = two axis-aligned mirrors, verified
-  equal to true rotation). These may persist as `mirror` regions chained by `source_id`.
-- **`rot_90` / `rot_270` counterparts are baked to concrete regions.** A 90° rotation requires a
-  diagonal (45°) reflection plane; this is **not** renderable by the current axis-only mirror
-  engine and is **unverified in real PGM**. So rotational counterparts are expanded to concrete
-  geometry for both rendering and XML export, with provenance kept in the map-level index for
-  regeneration. (Math for the mirror decomposition is recorded should the engine + a real PGM
-  server test later justify it.) **[corrected — draft assumed mirror/translate covered rotation]**
+  generated-set + mode + center. **PGM regions stay pure** — no studio-only fields in region entries.
+- **All four reflections (`mirror_x`/`mirror_z`/`mirror_d1`/`mirror_d2`) and `rot_180` persist as
+  native PGM `mirror` regions** chained by `source_id`. Diagonal reflection is now both
+  **renderable in the studio engine** (`pgm.regions.reflect_point_2d`/`reflect_bounds_2d` +
+  `region_encoder._reflect_geom`, the affine matrix `I−2n̂n̂ᵀ`) **and verified in real PGM**
+  (`vertex` ships a native diagonal `<mirror>`). `rot_180` = two perpendicular mirrors.
+  **[corrected — the earlier draft claimed diagonal reflection was unrenderable/unverified and
+  conflated it with `rot_90`; both are now resolved.]**
+- **`rot_90` / `rot_270` counterparts are still baked to concrete regions** — not because diagonals
+  fail, but because a quarter-turn is a **rotation** and PGM has **no rotation region type**. They
+  are expanded to concrete geometry for rendering + XML export, with provenance kept in the
+  map-level index for regeneration.
 
-Prerequisite fix: `region_encoder` must resolve transforms via `source_id` (§4).
+Prerequisite fix (done): `region_encoder` resolves transforms via `source_id` (§4).
 
 ---
 
@@ -488,8 +555,13 @@ All Phase 1 open questions are resolved above:
   compound (`complement`/`negative`) discards base/subtrahend semantics, so the response carries a
   `warning`. `set_base_child` is complement-only; `remove_from_group` works on any region with
   children; `change_region_type` converts freely among the four compound types.
-- Symmetry counterparts: source + relation in a map-level index; reflection/`rot_180` via mirror
-  regions, `rot_90`/`rot_270` baked to concrete (§7).
+- Symmetry counterparts: source + relation in a map-level index; **all four reflections**
+  (`mirror_x`/`mirror_z`/`mirror_d1`/`mirror_d2`) and `rot_180` via native PGM mirror regions
+  (diagonal verified by `vertex`), `rot_90`/`rot_270` baked to concrete (no PGM rotation type) (§7).
+- Center cell: typology (`1x1`/`1x2`/`2x1`/`2x2`) derived from center parity; `rot_90` + diagonals
+  require a square cell (`1x1`/`2x2`) (§7).
+- Symmetry axes: primary always-on + optional perpendicular secondary (intra-team) axis,
+  toggleable in sketch authoring; imported-map secondary detection deferred (§7).
 - Kit: first-class resource, in scope (§8).
 - Multiple spawns per team: tolerated; spawn keyed by its region reference (§8).
 - Wool team: capturing team = `monuments[].team`; owner derived (§6).

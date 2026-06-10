@@ -76,8 +76,14 @@ All symmetry transforms pivot around a center point `(cx, cz)`. The formulas ope
 |---|---|---|
 | mirror_x | `(Δx, Δz) → (−Δx, Δz)` | `(x, z) → (2·cx − x, z)` |
 | mirror_z | `(Δx, Δz) → (Δx, −Δz)` | `(x, z) → (x, 2·cz − z)` |
+| mirror_d1 | `(Δx, Δz) → (Δz, Δx)` | `(x, z) → (cx + (z − cz), cz + (x − cx))` |
+| mirror_d2 | `(Δx, Δz) → (−Δz, −Δx)` | `(x, z) → (cx − (z − cz), cz − (x − cx))` |
 | rot_180 | `(Δx, Δz) → (−Δx, −Δz)` | `(x, z) → (2·cx − x, 2·cz − z)` |
 | rot_90 CCW | `(Δx, Δz) → (−Δz, Δx)` | `(x, z) → (cx − (z − cz), cz + (x − cx))` |
+
+`mirror_d1` reflects across the **main diagonal** (the line `z − cz = x − cx`, running NE–SW); it
+swaps the centered coordinates. `mirror_d2` reflects across the **anti-diagonal** (`z − cz = −(x − cx)`,
+running NW–SE); it swaps and negates them. These are the diagonal-mirror class (e.g. `vertex`).
 
 **Visual note:** Because `+z` is south (down), a 90° CCW rotation in mathematical terms appears clockwise on the rendered map.
 
@@ -87,8 +93,56 @@ All symmetry transforms pivot around a center point `(cx, cz)`. The formulas ope
 |---|---|---|
 | Mirror X | `mirror_z` — flip Z | z = cz (horizontal) |
 | Mirror Z | `mirror_x` — flip X | x = cx (vertical) |
+| Mirror ⟋ (anti-diagonal) | `mirror_d2` | z − cz = −(x − cx) |
+| Mirror ⟍ (main diagonal) | `mirror_d1` | z − cz = x − cx |
 | Rotate 180° | `rot_180` | — |
 | Rotate 90° | `rot_90 CCW` | — |
+
+(Diagonal UI labels are provisional — the diagonal/secondary-axis canvas controls are D-series work.
+The `mirror_d1`/`mirror_d2` **mode strings** above are settled and used by the detection model.)
+
+### Center cell typology
+
+A map's symmetry center lands on one of four cells — `1x1`, `1x2`, `2x1`, `2x2`
+(`{x-width}x{z-width}` in blocks). It is **derived from the center coordinate's parity**, never
+stored independently:
+
+- Under the +1 extent convention, an **odd** block span gives a **half-integer** center (`.5`) that
+  passes through the middle of a single column → **1-wide**; an **even** span gives an **integer**
+  center (`.0`) on the boundary between two columns → **2-wide**.
+- `axis_width(c) = 1 if frac(c) == .5 else 2`; `cell = "{x}x{z}"`.
+  (`pgm_map_studio.symmetry.datatypes.classify_center_cell` / `is_square_center_cell`.)
+
+**Which modes each cell allows:**
+
+| Mode | Folds | Center cell requirement |
+|---|---|---|
+| `mirror_x` | X (across `x=cx`) | any — only the **X** parity is meaningful (the folded axis); Z is incidental |
+| `mirror_z` | Z (across `z=cz`) | any — only the **Z** parity is meaningful; X is incidental |
+| `rot_180` | X and Z | any |
+| `rot_90` / `rot_270` | quarter-turn (X↔Z) | **square only** (`1x1` / `2x2`) |
+| `mirror_d1` / `mirror_d2` | diagonal (X↔Z) | **square only** (`1x1` / `2x2`) |
+
+The cell does **not** pin a single-axis mirror's axis: a `1x2` or `2x1` center is valid under
+`mirror_x`, `mirror_z`, **and** `rot_180` (each constrains only the axis it folds; the perpendicular
+dimension's parity is incidental). What a non-square cell *does* guarantee is that the map is
+**not** `rot_90` and **not** a diagonal mirror — those swap X↔Z and so require equal parity. The
+1-wide axis marks where a *shared central line* sits (a central column for `1x2`, a central row for
+`2x1`), which is a real symmetry feature only when that axis is the one being mirrored.
+
+### Symmetry axes — main + optional secondary
+
+Authoring treats symmetry as **reflection axes through the center**, not a single op:
+
+- A **primary axis** that is **always active** (partitions the map into teams = the chosen mode).
+- An **optional secondary axis**, **toggleable on/off during editing**, that subdivides each
+  primary region — *intra-team symmetry* (a team's two wools as mirror images). It is
+  **perpendicular** to the primary in essentially all cases. Axis-aligned: `mirror_x` ⟂ `mirror_z`
+  (compose to `rot_180`). Diagonal: `mirror_d1` ⟂ `mirror_d2` (also compose to `rot_180`). For
+  `rot_90` (always square) all four reflection lines exist; either pair can be main vs optional.
+
+The full axes model, persistence shape (`sketch.json.setup`), and counterpart-baking rules are in
+`docs/contracts/studio-domain-and-api-contract.md` §7. The canvas controls are D-series.
 
 ---
 
@@ -249,7 +303,7 @@ applySymmetry(x, z, axis, cx, cz)
   → [x', z']
 ```
 
-Where `axis` is one of `"mirror_x"`, `"mirror_z"`, `"rot_180"`, `"rot_90"`. Applies the formula from Section 1. This is the only place the symmetry math is implemented. Both the editor mirroring engine and the sketch live preview use this function.
+Where `axis` is one of `"mirror_x"`, `"mirror_z"`, `"rot_180"`, `"rot_90"` (and, once the diagonal/secondary-axis canvas work lands in the D-series, `"mirror_d1"`/`"mirror_d2"`). Applies the formula from Section 1. This is the only place the symmetry math is implemented. Both the editor mirroring engine and the sketch live preview use this function.
 
 ### Symmetry transform on extent bounds
 
@@ -348,8 +402,16 @@ All converters above require unit tests. The rotation formulas in COORDINATE_SYS
 - `applySymmetry(1, 0, "rot_90", 0, 0)` → `[0, 1]`  (unit vector on X maps to unit vector on Z)
 - `applySymmetry(0, 1, "rot_90", 0, 0)` → `[-1, 0]`
 
+**Symmetry — mirror_d1 (main diagonal, swaps Δx/Δz)**
+- `applySymmetry(10, 20, "mirror_d1", 0, 0)` → `[20, 10]`
+- `applySymmetry(10, 20, "mirror_d1", 5, 5)` → `[20, 10]`  (point and center both shift; result is the X↔Z swap about the center)
+
+**Symmetry — mirror_d2 (anti-diagonal, swaps and negates)**
+- `applySymmetry(10, 20, "mirror_d2", 0, 0)` → `[-20, -10]`
+- `applySymmetry(3, 1, "mirror_d2", 0, 0)` → `[-1, -3]`
+
 **Bounds symmetry round-trip**
-- `applySymmetryToBounds` applied twice with the same mirror axis should return the original bounds.
+- `applySymmetryToBounds` applied twice with the same mirror axis should return the original bounds (true for all four reflections `mirror_x`/`mirror_z`/`mirror_d1`/`mirror_d2`, which are involutions).
 
 **Rasterisation**
 - A 2×2 extent polygon `[[0,0],[2,0],[2,2],[0,2]]` should yield exactly 4 block indices: `(0,0), (1,0), (0,1), (1,1)`.
