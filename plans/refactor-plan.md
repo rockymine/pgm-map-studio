@@ -202,6 +202,42 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   `test_datatypes.py`. 920 py green. **Follow-ups:** enforcement (Workstream C), `rot_n` detection +
   sketch UI (D-series), traversability analysis (own feature). *(rockymine §1 "Validation Model
   while editing".)*
+- [ ] **B12. Extract a Python geometry module + unify the symmetry transforms.**
+  *Investigated 2026-06-10 (B7 follow-up).* There is **no geometry home in the Python tree** — pure
+  2D transform math is either scattered or misplaced. `pgm/` is the **XML-derived domain model**, not
+  a geometry library, yet `pgm/regions.py` holds `reflect_point_2d`/`reflect_bounds_2d` (pure math,
+  zero domain deps) purely because the parser was their first caller — a leak. And symmetry/rotation
+  math is **duplicated across three independent implementations**, none canonical:
+  1. **JS** `static/shared/converters.js::applySymmetry` (+ `sketch/geometry.js::computeMirrorPreview`/
+     `_transformRing`) — sketch **live preview**; knows `mirror_x/z`, `rot_180`, `rot_90` only.
+  2. **Py** `studio/services/sketch_export.py::_mirror_poly` (Shapely affine) — sketch **export
+     baking** (.mca); same four modes + `rot_270`.
+  3. **Py** `symmetry/detection.py::_apply_transform_center`/`_transform_coords` — imported-map
+     **detection** (IoU); has `mirror_d1/d2` (added in B7) + `rot_90/180/270`.
+
+  This already **violates the `cross-cutting.md` §1 "exactly one implementation per converter"
+  rule** for rotation. Two concrete problems fall out:
+  - **Latent direction bug:** `detection.py`'s `rot_90` rotates the **opposite way (CW)** from the
+    sketch (CCW) and the `cross-cutting.md` spec — effectively its `rot_90`/`rot_270` labels are
+    swapped. *Harmless for IoU detection today* (a rot_90-symmetric shape is also rot_270-symmetric),
+    but it will bite the moment detection feeds an authoring/baking path. Can be fixed independently.
+  - **Diagonal (B7) + `rot_n` for the sketch is not one change but several:** both `converters.js`
+    (preview) and `sketch_export.py` (baking) need the new modes, kept formula-identical.
+
+  **Plan:** create a new **`pgm_map_studio/geometry.py`** — a pure-math leaf (no domain deps), the
+  Python peer of the JS `transform.js`/`converters.js` layer and the single home for the
+  `cross-cutting.md` §1 "required converters". (1) **Move** `reflect_point_2d`/`reflect_bounds_2d`
+  there out of `pgm/regions.py`, updating the parser import. (2) **Add** canonical
+  `rotate_point_2d(px,pz,degrees,ox,oz)` + `rotate_ring_2d` (CCW, matching the spec + sketch). Note:
+  a bbox rotated by a non-90° angle is **not** a bbox (→ tilted quad) — so the primitive is
+  point/ring-based and `rotate_bounds_2d` stays 90°-multiples only (this is the mechanical reason
+  `rot_n` bakes). (3) **Consolidate** `detection.py` + `sketch_export.py` onto it (fixing the CW/270
+  inconsistency in passing); keep the round-trip harness + sketch-export tests green. (4) Leave
+  `converters.js` as the one *necessary* JS twin (language boundary) but add a **Vitest parity test**
+  asserting it matches the Python primitive for shared angles, so they cannot drift. (5) Point
+  `cross-cutting.md` §1 at `geometry.py` as the canonical Python converter home. Diagonal/`rot_n` in
+  the JS + export stay D-series, but then plug into one geometry module instead of three.
+  *Needs: none (mechanical refactor + tests).*
 
 ## Workstream C — API stabilization (Phase 3)
 
