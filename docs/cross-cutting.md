@@ -85,6 +85,12 @@ All symmetry transforms pivot around a center point `(cx, cz)`. The formulas ope
 swaps the centered coordinates. `mirror_d2` reflects across the **anti-diagonal** (`z − cz = −(x − cx)`,
 running NW–SE); it swaps and negates them. These are the diagonal-mirror class (e.g. `vertex`).
 
+A **general n-fold rotation** is `rot_<d>` with step `d = 360/n` (`rot_120`/`rot_72`/`rot_60` for
+3/5/6 teams) — full formula `(x, z) → (cx + Δx·cos θ − Δz·sin θ, cz + Δx·sin θ + Δz·cos θ)` with
+θ = d° (consistent with the `rot_90 CCW` row, which is θ = 90°; appears clockwise on screen because
++z is south). Only `rot_180`/`rot_90` are exact on the block grid; other `rot_n` are approximate and
+bake to concrete geometry (see contract §7 + `validation-invariants.md`).
+
 **Visual note:** Because `+z` is south (down), a 90° CCW rotation in mathematical terms appears clockwise on the rendered map.
 
 **Axis naming in the editor UI:** "Mirror X" means the mirror line runs in the X direction (a horizontal line at `z = cz`), so Z is flipped. "Mirror Z" means the mirror line runs in the Z direction (a vertical line at `x = cx`), so X is flipped. These match `mirror_z` and `mirror_x` in the formulas above respectively.

@@ -181,11 +181,27 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   both project types and the sketch→map promotion on export (pairs with A11's export-artifact bug).
   *Needs: data-model decision (contract §11 open Q16/Q17).* *(rockymine §1 "sketches … not promoted
   to 'maps'".)*
-- [ ] **B11. Editing validation model / invariants.** Prevent invalid states: a wool needs ≥1 team;
-  a monument needs its wool + team; a map needs ≥2 teams; rot_90 needs 4 teams; mirror supports 2+
-  (creative edge cases, e.g. `ruedigers_pentawool`). Model invariants centrally; surface as inline
-  guards (enforcement in C). *Needs: requirements pass + clarification.* *(rockymine §1 "Validation
-  Model while editing".)*
+- [x] **B11. Editing validation model / invariants (design pass).** *(Done 2026-06-10.)* Wrote
+  **`docs/contracts/validation-invariants.md`** — a corpus-grounded (345-map) catalog in 3 groups
+  with severities decided by rockymine. **Posture (Q1):** non-blocking inline WARN by default;
+  HARD only for referential integrity; the auto-mirror/scaffold engine treats the strict symmetry
+  coupling as a precondition (never blocks manual edits). **Group A structural** (HARD): team id
+  non-empty+unique (`kytriak_te` empty-id defect), wool colour unique 345/345, `monument.team`
+  resolves, refs resolve. **Group B completeness** (WARN): ≥2 teams (`easter_egg_hunt`=1 non-CTW),
+  ≥1 wool/team, wool has ≥1 monument (4 misses = parse-broken `segment`), team ≥1 spawn (7 misses),
+  supported-CTW 5c shape (332/345; arcade/gimmick the rest), **wool obtainable = C12**, and
+  **objective-chain traversability** (rockymine: spawn→enemy wool→return must be physically runnable
+  = island connectivity + build/void edges + C12 — heavy spatial analysis, own feature). **Group C
+  symmetry coupling (Q2 strict divisibility):** `team_count % team_orbit(mode) == 0`,
+  `wool_count % team_count == 0`, `rot_90`/diagonals need a square cell — surfaced as WARN +
+  engine-precondition. **rot_n modeled (Q3):** general n-fold rotation `rot_<360/n>` added to the
+  vocabulary (contract §7 + `cross-cutting.md`) — `tridente`/`pentawool`/`thunderbolt` = rot_120/72/60;
+  **crystallographic restriction**: only 2-/4-fold + reflections are lattice-exact, others bake
+  (`is_lattice_exact`). Helpers in `symmetry/datatypes.py` (`team_orbit`, `team_count_compatible`,
+  `wool_count_compatible`, `requires_square_cell`, `is_lattice_exact`, `rotation_degrees`); tests in
+  `test_datatypes.py`. 920 py green. **Follow-ups:** enforcement (Workstream C), `rot_n` detection +
+  sketch UI (D-series), traversability analysis (own feature). *(rockymine §1 "Validation Model
+  while editing".)*
 
 ## Workstream C — API stabilization (Phase 3)
 
@@ -298,9 +314,10 @@ hand-waves on the modeling side.
    persistence corrected (all four reflections via native PGM mirror, only rot_90/270 bake). The
    diagonal/secondary-axis **canvas UI** is deferred to D-series (it doesn't gate B1–B4). B1's
    persisted/domain/view split and **B3** (sketch symmetry) are now unblocked on the symmetry side.
-   Still to do at this gate: **B11 validation/invariants at design level** (cheap; the typed models
-   should encode them — incl. the rot_90/diagonal ⇒ square-cell + ≥N-team invariants) and finish
-   **`docs/contracts/filter-region-wiring.md`** (its corpus basis is already in `filter-use-cases.md`).
+   ✅ **B11 design done** — `validation-invariants.md` catalogs the invariants (incl. rot_90/diagonal
+   ⇒ square-cell + strict team/wool divisibility + rot_n) for the typed models to encode. Remaining
+   gate item: finish **`docs/contracts/filter-region-wiring.md`** (its corpus basis is already in
+   `filter-use-cases.md`).
 2. **Lock B1–B4 (the typed frame).** B1 persisted/domain/view split · B2 imported-map domain · B3
    sketch · B4 `/regions/tree` view node. **Fold C6** (canonical bbox/center wire naming) and the
    **B4a** tree-as-view *design* in here — both are shape decisions the framework switch consumes,

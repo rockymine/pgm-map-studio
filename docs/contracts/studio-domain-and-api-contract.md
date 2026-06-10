@@ -258,12 +258,25 @@ Six classes, shared by both workflows. All are taken **about the center** `(cx, 
 | `mirror_d2` | reflect across the **anti-diagonal** `z−cz = −(x−cx)` | reflection | yes (diagonal `normal`) |
 | `rot_180` | half-turn about the center | rotation (order 2) | via two ⟂ mirrors |
 | `rot_90` | quarter-turn about the center (4 teams) | rotation (order 4) | **no — baked** |
+| `rot_<d>` | general n-fold rotation, `d = 360/n` | rotation (order n) | **no — baked** |
 
 Formulas live in `cross-cutting.md` §1. The diagonals are new in B7: `mirror_d1`/`mirror_d2` are
 the **definitive diagonal-mirror class** (e.g. `vertex` — a 2-team map whose L-shaped equal-leg
 footprint reflects blue↔red across `normal="-1,0,-1"`, the anti-diagonal). Detection recovers
 them about the bbox center (Vertex: `mirror_d2` @ IoU 1.0); the PGM mirror `origin` need only lie
 on the same diagonal line.
+
+**General n-fold rotation (`rot_<d>`) — B11 decision.** The rotation vocabulary is **open**: a map
+with n-team rotational symmetry is `rot_<360/n>` — `rot_120` (3-fold, e.g. `tridente`,
+`war_of_the_acres`), `rot_72` (5-fold, `ruedigers_pentawool`), `rot_60` (6-fold, `thunderbolt`),
+`rot_45` (8-fold). `rot_180`/`rot_90` are the n=2 / n=4 cases. The **team orbit** = n, which drives
+the strict team/wool coupling (`symmetry.datatypes.team_orbit` / `team_count_compatible` /
+`wool_count_compatible`; see `validation-invariants.md`). **Crystallographic restriction:** only
+2- and 4-fold rotation (and reflections) are *exact* symmetries of the square block grid; `rot_3`,
+`rot_5`, `rot_6`, `rot_8` (`is_lattice_exact` → false) are necessarily **approximate** — hand-built,
+counterparts baked, no clean PGM mirror, no pixel-perfect guarantee. Detection currently covers only
+the lattice-exact subset (reflections + `rot_180`/`rot_90`); `rot_n` is **modeled and authorable**
+but n-fold detection + sketch authoring are follow-ups (the canvas is D-series).
 
 ### Center cell typology **[decision]**
 

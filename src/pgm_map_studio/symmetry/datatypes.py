@@ -52,6 +52,85 @@ def is_square_center_cell(cell: str) -> bool:
     return cell in SQUARE_CENTER_CELLS
 
 
+# ---------------------------------------------------------------------------
+# Symmetry-mode order / team-coupling (B7 + B11)
+# ---------------------------------------------------------------------------
+#
+# The vocabulary is open on the rotation side: a general n-fold rotation is
+# spelled ``rot_<degrees>`` where ``degrees = 360 // n`` (rot_180 = 2-fold,
+# rot_90 = 4-fold, rot_120 = 3-fold, rot_72 = 5-fold, rot_60 = 6-fold,
+# rot_45 = 8-fold). The four reflections are 2-element symmetries. Detection
+# currently covers only the lattice-exact subset (reflections + rot_180/rot_90);
+# rot_n for other n is modeled and authorable but not auto-detected yet.
+
+_REFLECTIONS = frozenset({'mirror_x', 'mirror_z', 'mirror_d1', 'mirror_d2'})
+
+# Modes that swap the X and Z axes and so require a square center cell.
+_SWAP_AXES = frozenset({'rot_90', 'mirror_d1', 'mirror_d2'})
+
+
+def rotation_degrees(mode: str) -> Optional[int]:
+    """Return the rotation step in degrees for a ``rot_<d>`` mode, else None."""
+    if not mode.startswith('rot_'):
+        return None
+    try:
+        return int(mode[4:])
+    except ValueError:
+        return None
+
+
+def team_orbit(mode: str) -> int:
+    """Team-orbit size of a symmetry mode (the team-count divisor).
+
+    Reflections partition the map into 2 mirror halves → orbit 2. An n-fold
+    rotation `rot_<d>` has orbit ``n = 360 // d`` (rot_180 → 2, rot_90 → 4,
+    rot_120 → 3, …). Unknown modes → 1 (no constraint). Note this differs from
+    :data:`_SYMMETRY_ORDER`, which is a *display strength rank* for tie-breaks.
+    """
+    if mode in _REFLECTIONS:
+        return 2
+    deg = rotation_degrees(mode)
+    if deg and 360 % deg == 0:
+        return 360 // deg
+    return 1
+
+
+def is_lattice_exact(mode: str) -> bool:
+    """True iff the mode is an *exact* symmetry of the square block grid.
+
+    By the crystallographic restriction, only 2- and 4-fold rotation (and
+    reflections) map the square lattice onto itself. `rot_120`/`rot_72`/`rot_60`/
+    `rot_45` (3-, 5-, 6-, 8-fold) are necessarily **approximate** — their
+    counterparts bake to concrete geometry; there is no clean PGM mirror and no
+    pixel-perfect guarantee.
+    """
+    if mode in _REFLECTIONS:
+        return True
+    return team_orbit(mode) in (2, 4) and rotation_degrees(mode) in (180, 90)
+
+
+def requires_square_cell(mode: str) -> bool:
+    """True iff the mode swaps X↔Z and so needs a square (1x1/2x2) center cell."""
+    return mode in _SWAP_AXES
+
+
+def team_count_compatible(mode: str, n_teams: int) -> bool:
+    """Strict team-count rule: ``n_teams`` is a positive multiple of the orbit.
+
+    rot_90 ⇒ multiple of 4 (and ≥4); reflections/rot_180 ⇒ multiple of 2; a
+    general `rot_<d>` ⇒ multiple of `n`. This is the *regular symmetric CTW*
+    definition (B11 Q2); deviations are surfaced as non-blocking warnings, never
+    hard-blocked during editing.
+    """
+    orbit = team_orbit(mode)
+    return n_teams >= orbit and n_teams % orbit == 0
+
+
+def wool_count_compatible(n_wools: int, n_teams: int) -> bool:
+    """Strict wool rule: each team owns ``k`` colors → ``n_wools = k · n_teams``."""
+    return n_teams > 0 and n_wools >= n_teams and n_wools % n_teams == 0
+
+
 @dataclass
 class GlobalSymmetryEntry:
     type: str
