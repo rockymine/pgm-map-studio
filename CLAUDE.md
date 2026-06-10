@@ -20,7 +20,7 @@ filters) before the larger framework/UI migration and hosting.
 
 **Done — Workstream A (round-trip repair):** `xml_data.json ↔ MapXml ↔ map.xml` is lossless again.
 The corpus harness `tools/roundtrip_check.py` is **green (350/350)**. The sketch-export→editor bug
-(A11) is fixed and browser-verified. Full Python suite passes (~792 tests).
+(A11) is fixed and browser-verified. Full Python suite passes (~893 tests).
 
 **Done — B5 (region categorization derivation):** `studio/services/region_categorizer.py`
 implements the two-facet model (`docs/contracts/region-categorization.md`): `category` ∈ {spawn,
@@ -31,12 +31,25 @@ the spawner dispenses wool (else `mechanic`); the author `apply message` text an
 material+deny-place pattern classify spawn/wool protection zones; renewables/velocity/kit →
 `mechanic`; a region used as a `block_place` filter → `build` (permissive placement). Reproduces the
 rockymine-verified `annealing_iv` oracle exactly (~23% → ~80% categorized corpus-wide). Tests in `tests/studio/test_region_categorizer.py`;
-fixtures + vendored inputs under `tests/fixtures/region_categories/` (annealing_iv verified, the other
-three **proposed — awaiting rockymine verification**, see that dir's README). Categories stay
-**derived**; `region_categories` is a **user-override store only**.
+fixtures + vendored inputs under `tests/fixtures/region_categories/` (all four — annealing_iv,
+acapulco, icecream, vertex — **rockymine-verified**). Categories stay **derived**;
+`region_categories` is a **user-override store only**.
 
-**Current task — pick up from `plans/refactor-plan.md`:** remaining Workstream B (B1–B4, B6–B11)
-and the C/D/E series. Several need rockymine's design input (tagged).
+**Done — C3/C4 (filters & apply-rules CRUD):** `studio/services/filter_editor.py` +
+`apply_rule_editor.py` + routes. Reject-with-references on delete; stable `rule_<n>` synthetic ids
+(dropped on XML export). Backend only. The codec + editor-service signatures are captured in
+`docs/contracts/data-layer-api.md`; the filter *vocabulary* + region-*geometry* matrices (what
+attaches where) in `docs/filter-use-cases.md` (Appendix). All four categorization fixtures are now
+rockymine-verified.
+
+**Current focus & sequencing — read `plans/refactor-plan.md` "## Current focus" first.** The goal is
+a solid typed frame to switch the framework (D1). Four core shapes are settled (Region, Filter,
+ApplyRule, Wool — see `data-layer-api.md`). The **one model-defining gate left is Symmetry**: do
+**B7** (center typology + diagonal axis) and lock the contract's symmetry section (how counterparts
+persist) — plus B11-as-design and finishing `filter-region-wiring.md` — **before** locking the typed
+models **B1–B4** (fold C6 + B4a-design in). Then API polish (C1/C2/C5/C10), then features + D1.
+**C8/C9 are not B1–B4 gates** (authoring/UX over already-settled shapes). The readiness test: when
+Symmetry and SketchShape are describable without hand-waving, do B1–B4.
 
 **Other queued work** (in `plans/refactor-plan.md`): B6–B11, C1–C12, D1–D2, E1. Several need
 rockymine's design input (tagged). `docs/requirements/editor-filters.md` is flagged **unstable** —

@@ -255,14 +255,44 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
 ## Current focus
 
-**Workstream A (A1–A10) is complete** — round-trip harness green (350/350). B6–B11, C9–C12, D2, E1
-were added from rockymine's message (`docs/contracts/a-message-from-rockymine.md`) and mostly need
-his clarification/design input.
+**Goal:** a ground-solid data/API frame so the frontend framework can be **switched (D1)** against
+typed, stable shapes — not polished endpoints.
 
-**Autonomous session (rockymine away):** doing only what needs no input — (1) this task writeup;
-(2) **A11** sketch-export→editor bug; (3) safe investigations that sharpen tasks (B8 shared
-geometry, C10 route audit); possibly (4) **C11** team id/colour defaults (well-specified). Holding
-all of B and the feature-heavy C/D/E items for rockymine.
+**Done:** Workstream A complete (round-trip harness green, 350/350) incl. A11. **B5** region
+categorization. **C3/C4** filters & apply-rules CRUD. Mirror geometry fixed. Suite ~893 + harness
+350/350 green.
 
-**Knock-down candidates (no input needed):** A11 (bug), C10 (audit), C11 (defaults), C8 (symmetric
-compound creation + `change_region_type` tests).
+**Canonical shapes already settled** (describable without hand-waving — see
+`docs/contracts/data-layer-api.md` + `region-categorization.md`): **Region** (id-keyed, string-id
+children, compound recursion, enforced round-trip core), **Filter** + **ApplyRule** (taxonomy
+complete, wiring = region+event→filter+actions, synthetic ids), **Wool** (grouped-by-colour,
+deterministic ids, derived owner). Four of the six core entities are locked.
+
+### Sequencing (the order to run B/C — assessment 2026-06-10)
+
+Model-defining work → **lock B1–B4** → API polish → features → D1. The blunt readiness test: *when
+you can describe Region/Filter/ApplyRule/Symmetry/Wool/SketchShape without hand-waving, do B1–B4.*
+Today only **Symmetry** and **SketchShape** still hand-wave — so symmetry is the one real gate.
+
+1. **Close the symmetry model (the gate).** **B7** (center typology + diagonal axis, *needs-design*)
+   + lock the symmetry section of the contract: how counterparts persist (baked concrete regions +
+   provenance index; rot_90/270 are *not* mirror chains), the `symmetry.json` source+relation shape.
+   B1's persisted/domain/view split and **B3** (sketch symmetry) both block on this. Do **B11
+   validation/invariants at design level** here too (cheap; the typed models should encode them), and
+   finish **`docs/contracts/filter-region-wiring.md`** (its corpus basis is already in
+   `filter-use-cases.md`).
+2. **Lock B1–B4 (the typed frame).** B1 persisted/domain/view split · B2 imported-map domain · B3
+   sketch · B4 `/regions/tree` view node. **Fold C6** (canonical bbox/center wire naming) and the
+   **B4a** tree-as-view *design* in here — both are shape decisions the framework switch consumes,
+   not polish.
+3. **API polish (cheap once typed, pointless before).** C1 error envelope · C2 schemas · C5 wire
+   region ops into `api.js` · C10 route consistency.
+4. **Features + framework switch.** C8, **C9** wiring UI/templates, B6 undo/redo, C7/C11/C12, then
+   **D1** (port the frontend onto the typed view-models + stable error contract), E1 hosting.
+
+**Not B1–B4 gates** (despite appearances): **C8** is authoring convenience (doesn't change the
+Region shape; does carry `change_region_type`-has-no-tests debt — do opportunistically) and **C9** is
+UI/templates over the already-settled wiring shape. Both come *after* typing.
+
+**The de-risker for D1 specifically:** B4 + B4a + C6 + C1 — the typed, consistently-named view-models
+and the error contract the new frontend builds against. Treat those four as the real "frame."
