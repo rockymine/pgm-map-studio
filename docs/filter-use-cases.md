@@ -1,8 +1,11 @@
 # CTW Filter & Apply Rule — Semantic Use Cases
 
-Analysis of 345 CTW maps (CommunityMaps + PublicMaps), 3 946 total apply rules.
+Analysis of 345 CTW maps (CommunityMaps + PublicMaps), 3 946 apply rules, 7 772 filters.
 This document maps gameplay design questions to the XML patterns that implement them,
-organised by cluster and ordered by map-level prevalence.
+organised by cluster and ordered by map-level prevalence. The Clusters cover *intent*; the
+**Appendix** (bottom) is the *vocabulary* — which filter types attach to which events, and how
+they compose — and is the reference for the C3/C4 editor and the C9 wiring UI.
+*(Corpus figures re-verified 2026-06-10.)*
 
 ---
 
@@ -532,3 +535,89 @@ showing strong convention around CTW XML authoring:
 | `<team>-woolrooms-filter` | `<all><team>...</team><filter id="woolrooms-filter"/></all>` |
 | `block-place-void-filter` + `block-break-void-filter` | Void boundary pair |
 | `deny-physics` / `deny-redstone` | `<deny><any><material>redstone wire</material>...</any></deny>` |
+
+---
+
+## Appendix — Filter Vocabulary & Event Matrix (what attaches to what)
+
+Reference for the editor (C3/C4) and the wiring UI (C9): the realistic filter vocabulary,
+which filter types attach to which apply events, and how composites are built. Counts are
+corpus-wide (345 maps, 7 772 filters, 3 946 apply rules) as of 2026-06-10.
+
+### A.1 Filter type frequency
+
+Leaf conditions dominate (`material` 2 751), then the composers (`all` 902, `any` 727, `not` 522,
+`deny` 365) and `team` 767. The long tail (`variable`, `time`, `carrying`, `blocks`, `region`,
+`offset`, `objective`, `after`/`pulse`, `class`, `kill-streak`, …) is the advanced surface.
+
+| tier | types (by count) |
+|---|---|
+| **core leaves** | `material` 2751 · `team` 767 · `never` 342 · `always` 340 · `cause` 217 · `void` 194 |
+| **composers** | `all` 902 · `any` 727 · `not` 522 · `deny` 365 · (`one`, `allow` rare) |
+| **conditional / advanced** | `variable` 174 · `time` 88 · `alive` 71 · `carrying` 55 · `blocks` 50 · `participating` 39 · `offset` 31 · `region` 30 · `objective` 30 · `wearing` 18 · `after` 13 · `completed` 12 · `pulse` 8 · `class`/`spawn`/`grounded`/`kill-streak`/… ≤6 |
+
+### A.2 Event × filter-type — *what is sensible where*
+
+Each apply event checks a different thing, so each pulls a different filter vocabulary. This is the
+crux of "filters that make sense": a `material` filter on `enter` is meaningless (it inspects the
+*block*, but `enter` inspects the *player*) — and indeed **never occurs** in 345 maps. Top resolved
+filter types per event (`deny()`/`not()` = inline descriptor; `region-or-id` = a region used as a
+filter or a builtin):
+
+| event (uses) | dominant filter types | reads |
+|---|---|---|
+| `enter` (1535) | **team** 1064 · region-or-id 163 · deny()/not 120/61 | who may walk in — **team-based** |
+| `use` (462) | **team** 208 · not 75 · deny 51 | right-click/containers — **team-based** |
+| `block` (1391) | **never** 430 · all 289 · deny 343 · not 106 | combined place+break — lockdown / composite |
+| `block_place` (532) | all 141 · **never** 103 · not 95 · deny 166 | placement restriction / void |
+| `block_break` (464) | **material** 185 · any 102 · deny 51 · all 49 | break-only-X (iron/gold spawn floor) |
+| `block_physics` (76) | **deny** 43 · never 17 | freeze water/lava/redstone |
+| `filter` (76, kit/velocity cond.) | **team** 45 · all 17 | conditional kit/jump pad |
+| `leave` (5) · `block_place_against` (3) | never/deny | rare (leave-spawn buff; anti-climb) |
+
+So the **sensible default vocabulary per event** is: `enter`/`use` → team (and team composites);
+`block*` → `never` / `material` / `all`/`any`/`deny`/`not` over those; `block_physics` → `deny`;
+`filter` (the kit/velocity condition) → team/`all`.
+
+### A.3 How composites are built
+
+Composers reference children by id; the children's types show the real shapes:
+
+| composer | common child types | typical meaning |
+|---|---|---|
+| `all` (AND) | team · any · material · not · cause · void | "this team **and** this material/condition" (wool-room edit filter) |
+| `any` (OR) | **material 2095** · team · all | "**any of** these block types" (editable-material whitelist) |
+| `deny` (= NOT-allow) | any · material · all · participating · team · void | invert a condition (deny chests, deny void, deny physics) |
+| `not` (NOT) | any · team · void · all · time · objective | "all **other** teams", "**not** void", time-gated negation |
+
+### A.4 On "nonsensical" filters & stackability
+
+Filters are **freely composable conditions** — there is no type that is inherently invalid, and the
+editor (C3/C4) deliberately does **not** forbid combinations: it only rejects *dangling references*
+(a child filter / region that doesn't exist). "Sense" is a function of **event + region + intent**,
+not the filter type alone, and stacking (`all`/`any`/`not`/`deny`) makes otherwise-odd leaves
+meaningful (e.g. `material` is meaningless on `enter`, but `all(material, team)` on `block` is the
+canonical wool-room rule). The matrix in A.2/A.3 is therefore a **suggestion/soft-warning** source
+for the C9 UI — surface the per-event vocabulary first, and *warn* (don't block) on pairings that
+never appear in the corpus — not a hard validator in the C3/C4 routes.
+
+### A.5 Event × *region geometry* — where rules attach
+
+The other half of "what makes sense": the **geometry type** of the region a rule targets
+(`tools/analyze_apply_targets.py`, 345 maps). Rules overwhelmingly target **unions** (2 238) and
+area primitives (`rectangle` 949, `cuboid` 333) and the void **`negative`/`complement`** wrappers;
+single `block` regions appear only 5× total and `point` **never**.
+
+| event family | targets (by count) | geometry rule |
+|---|---|---|
+| `enter` (1535), `use` (462) | rectangle · union · cuboid · complement · cylinder · circle | **player-position events → area or compound regions** |
+| `block` / `block_place` / `block_break` | union · negative · complement · cuboid · rectangle · `above` · (global) | edit events → areas, void wrappers, **and occasionally a single `block`** (protect one monument block) |
+| `block_physics` (76) | union (mostly) | area/compound |
+| `filter` (kit/velocity cond.) | union · negative · rectangle · cuboid | area/compound |
+
+**The decisive finding:** across 345 maps there is **exactly one** `enter`/`use` rule on a
+`block`/`point` region — and it's a *synthetic* auto-generated region, not authored. So **`enter`/
+`use` on a single block or point is effectively never valid** (you can't "enter" a 1-block region):
+the C9 UI should steer player-position events to area/compound geometry and warn on block/point.
+`block_*` events, by contrast, legitimately target single blocks, so block-on-block is fine.
+(`mirror`/`translate` targets resolve to their source geometry — an area — so they're area-like too.)
