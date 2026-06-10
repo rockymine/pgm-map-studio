@@ -64,6 +64,12 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   be top-level (fixed 8 maps). (b) `never`/`always` built-ins were seeded only when a `<filters>`
   block existed; the parser now always exposes the seeded filter registry (fixed kytriak_te).
   **Harness now 350 ok, 0 failed, 0 excluded.** Regression tests added.
+- [ ] **A11. Sketch export → editor compatibility (bug).** Exported sketches don't reliably open
+  in the editor — canvases show "Loading map…" / "No segment data", because the editor's required
+  `layer_*.parquet` (notably `layer_segments.parquet`, and `layer.parquet`/top-surface) aren't
+  produced by sketch export. Either have the export synthesise the layers the editor canvases need,
+  or make the editor degrade gracefully when they're absent. *Needs: investigation (doable now).*
+  *(From rockymine message §1.)*
 
 ## Workstream B — Typed data models (Phase 2 proper)
 
@@ -77,6 +83,41 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   current 23% categorized → ~91%. Back it with a hand-verified ground-truth fixture
   (annealing_iv, vertex, acapulco, icecream_sandwiched_ii). Keep categories derived; keep
   `region_categories` as user-overrides only.
+- [ ] **B6. Editor undo/redo (command model).** A real editor needs undo/redo of user actions.
+  Pure create/delete inversion is insufficient — e.g. deleting a wool's monument keeps the wool
+  but removes the monument (a PATCH today). Decide the model: command objects with inverse ops, or
+  snapshot/restore (a `restore_region`-style snapshot already exists for regions). Must span
+  region/team/spawn/wool/monument/filter/apply edits. *Needs: design decision + clarification.*
+  *(rockymine §1 "Undo/Redo".)*
+- [ ] **B7. Symmetry center typology + diagonal axis.** Model the center cell explicitly: a map
+  center can fall on a `1x1`, `1x2`, `2x1`, or `2x2` block cell (x/z parity). Add diagonal (45°)
+  rotation-axis support in the sketch tool so rot_90 layouts authored on a diagonal axis are
+  expressible. (Note: a diagonal-axis rot_90 and an axis-aligned rot_90 yield the **same** detected
+  symmetry class — order-4 rotation about the center; the axis angle changes only the authoring/
+  mirror-line convention, not the symmetry. So detection needn't change; authoring does.) Touches
+  symmetry datatypes + `cross-cutting.md` (model) and the sketch setup canvas (UI, see D-series).
+  *Needs: design + clarification.* *(rockymine §1 "Symmetry Axis and Center Point".)*
+- [ ] **B8. Shared geometry format / sketch–editor data-handling alignment.** The sketch tool edits
+  in-memory (instant); the editor round-trips every change through JSON + backend validation
+  (laggy). Confirm both share one geometry format (`cross-cutting.md` mandates a single
+  `transform.js` + bbox object form) and align data-handling — e.g. optimistic in-memory edits with
+  async persist/validate. *Needs: investigation (partly doable now) + design.* *(rockymine §1
+  "Performance and implementation drift".)*
+- [ ] **B9. Template-driven import scaffolding.** Optionally start from a known XML template
+  (`docs/xml_template.xml`, Ruediger_LP's) instead of blank. On import/load, ask — or infer from
+  symmetry + layer parquet — how many teams/wools the map has, then pre-scaffold teams/wools/regions
+  so editing is directed. *Needs: design + clarification.* *(rockymine §1 "working off of xml
+  templates".)*
+- [ ] **B10. Map vs Sketch project identity.** Exported sketches aren't promoted to genuine "maps";
+  the model doesn't cleanly distinguish a sketch project from an imported/real map project. Define
+  both project types and the sketch→map promotion on export (pairs with A11's export-artifact bug).
+  *Needs: data-model decision (contract §11 open Q16/Q17).* *(rockymine §1 "sketches … not promoted
+  to 'maps'".)*
+- [ ] **B11. Editing validation model / invariants.** Prevent invalid states: a wool needs ≥1 team;
+  a monument needs its wool + team; a map needs ≥2 teams; rot_90 needs 4 teams; mirror supports 2+
+  (creative edge cases, e.g. `ruedigers_pentawool`). Model invariants centrally; surface as inline
+  guards (enforcement in C). *Needs: requirements pass + clarification.* *(rockymine §1 "Validation
+  Model while editing".)*
 
 ## Workstream C — API stabilization (Phase 3)
 
@@ -93,14 +134,57 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   tests**. Add an optional `type` to `group_regions` (default `union`) to create any compound
   directly (set_base_child for complement ordering), and backfill `change_region_type` tests.
   Makes create symmetric with the now-generalized ungroup. (Authoring, not round-trip.)
+- [ ] **C9. Filter↔region wiring + intelligent templates.** Routes/UI to attach filters to
+  regions/unions, plus the tool *suggesting/questioning* filters from map setup. v1 must cover
+  (a) wiring the positive build regions with the correct void/never filter in the build step
+  (auto-group + apply, using `layer_y0.parquet`), and (b) apply-enter rules. Surface the most
+  common corpus filter usages as "intelligent templates". Start from `docs/filter-use-cases.md`,
+  extended across the full dataset; `docs/requirements/editor-filters.md` is **outdated** and needs
+  rewriting. *Needs: corpus analysis (partly doable) + heavy clarification.* *(rockymine §1
+  "Filters, Regions and their Relation".)*
+- [ ] **C10. Route consistency audit + CRUD conventions.** Audit existing add/update/delete routes
+  for consistent shapes, naming, and status codes so new features slot in cleanly (ties to C1
+  envelope + C2 schemas). *Needs: audit (doable now).* *(rockymine §3 "Routes concern".)*
+- [ ] **C11. Intelligent team/wool ID + colour defaults.** Teams currently default to id
+  `new-team-n`, name `New Team`, chat colour blue. Instead pick the next unused colour and derive
+  id `<colour>-team`, name `<Colour> Team` (mirrors the wool colour-as-key scheme). Cap at the
+  16-colour Minecraft limit; realistic cap 8 (corpus max team count = 8). Low-effort, well-specified
+  — **knock-down candidate, needs no input.** *(rockymine §1 "Intelligent ID and color defaults".)*
+- [ ] **C12. Wool availability validation.** A map is unplayable if no wool is obtainable.
+  Implement the availability check (`docs/requirements/editor-objectives.md` Sub-step 3); PGM
+  spawner / renewable / block-drop must be configurable as wool sources. *Needs: requirements pass.*
+  *(rockymine §1 "Wool existence validation".)*
 
 ## Workstream D — UI migration (Phase 4)
 
 - [ ] **D1.** Only after A–C are stable. Port/replace frontend; keep HTML/CSS patterns.
+- [ ] **D2. 2.5D/3D coordinate editing.** Positioning point/block (monuments) and cuboid Y-coords
+  is impractical in 2D today. Extend the build-step `layer_segments.parquet` side-depth view into a
+  3D/2.5D selection view, or integrate the `/map-studio` plugin to push WorldEdit selections
+  directly into the tool. *Needs: design + (plugin) hosting work (E1).* *(rockymine §4.)*
+
+## Workstream E — Hosting & deployment (Phase 5)
+
+- [ ] **E1. Hosting + import pipeline.** The tool is to be hosted (easy to install/maintain) and is
+  **not collaborative** — concurrent edits of the same map are isolated into independent per-session
+  copies (single author per XML in practice; account for the edge case). The current tool already
+  imports a map from an Overcast `//download` S3 zip link and opens it in the editor. Target: a Java
+  plugin (`/map-studio`) that downloads the world, ships it to the server, and returns an edit link.
+  The sketch→editor workflow stays separate and available. *Needs: stack selection + infra design
+  (contract §0 explicitly defers auth/hosting).* *(rockymine §2 "Stack selection".)*
 
 ---
 
 ## Current focus
 
-**A1 → A2** (grouped-wool round-trip + stable IDs). A3–A5 are the remaining round-trip bugs the
-contract enumerated; do them before B (typed models build on a correct round-trip).
+**Workstream A (A1–A10) is complete** — round-trip harness green (350/350). B6–B11, C9–C12, D2, E1
+were added from rockymine's message (`docs/contracts/a-message-from-rockymine.md`) and mostly need
+his clarification/design input.
+
+**Autonomous session (rockymine away):** doing only what needs no input — (1) this task writeup;
+(2) **A11** sketch-export→editor bug; (3) safe investigations that sharpen tasks (B8 shared
+geometry, C10 route audit); possibly (4) **C11** team id/colour defaults (well-specified). Holding
+all of B and the feature-heavy C/D/E items for rockymine.
+
+**Knock-down candidates (no input needed):** A11 (bug), C10 (audit), C11 (defaults), C8 (symmetric
+compound creation + `change_region_type` tests).
