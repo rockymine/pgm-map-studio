@@ -12,7 +12,8 @@ Mid **contract-first refactor** on branch `refactor/contract-first`: stabilize t
   **"## Current focus"** section. The active driver. Keep it current as work lands.
 - **`docs/contracts/`** — the contract (the *what*): `studio-domain-and-api-contract.md` (domain +
   API surface), `region-categorization.md`, `validation-invariants.md`, `data-layer-api.md` (codec +
-  editor-service signatures — keep in sync), `refactor-constraints-and-pitfalls.md`.
+  editor-service signatures — keep in sync), `frontend-stack-decision.md` (D1 target stack),
+  `refactor-constraints-and-pitfalls.md`.
 
 Status (A round-trip complete, harness 350/350; B5 categorization, C3/C4 CRUD, B7 symmetry, B11
 invariants done; ~920 py tests) lives in the plan + memory — **don't duplicate it here.**
