@@ -52,10 +52,11 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   `5.185.5`) with a warning instead of raising, so one source typo no longer fails the whole map.
   `segment` parses and round-trips; removed from the harness exclusions (now 341 ok, 9 A10, 0
   excluded). Tests added.
-- [ ] **A9. Populate `source_id` for inline-anonymous transform sources.** 50/137 corpus
-  mirror/translate regions persist an empty `source_id` (their source was an inline anonymous
-  region). The parser should set `source_id` to that source's synthetic registry id so the
-  transform resolves. Encoder side is already correct (A3).
+- [x] **A9. Populate `source_id` for inline transform sources.** Root cause was narrower than
+  thought: a transform whose inline source is a `<region id="X"/>` reference parsed it as a
+  `Reference` (blank id), leaving `source_id=""`. `_parse_mirror`/`_parse_translate` now resolve
+  the reference's `ref_id` (helper `_source_ref_id`). Result: empty `source_id` 50 → 0 across the
+  corpus; transform render resolution 62% → 96%. Test added.
 - [ ] **A10. XML-writer round-trip fidelity (9 maps).** Surfaced by A7. Two known gaps: (a) named
   single-parent inline children (primitives) lose their id on re-parse — incl. a region literally
   named `regions` (abstract, abstract_remix, golden_drought_ii, hadron, kytriak, pinnacle,

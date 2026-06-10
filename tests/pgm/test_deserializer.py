@@ -579,6 +579,28 @@ def test_decode_mirror():
     assert r.normal_x == 1.0
 
 
+def test_mirror_inline_region_ref_populates_source_id(tmp_path):
+    # A9: a transform whose inline source is a <region id="X"/> reference must
+    # record source_id="X" (not "") so it resolves in the registry and renders.
+    xml = """\
+        <?xml version="1.0"?>
+        <map proto="1.5.0">
+        <name>M</name><version>1.0</version><objective>x</objective>
+        <regions>
+            <rectangle id="red-thing" min="0,0" max="5,5"/>
+            <mirror id="blue-thing" normal="1,0,0" origin="10,0,0">
+                <region id="red-thing"/>
+            </mirror>
+            <translate id="green-thing" offset="0,0,20">
+                <region id="red-thing"/>
+            </translate>
+        </regions>
+        </map>"""
+    m = MapXmlParser(_write_xml(tmp_path, xml)).parse()
+    assert m.regions["blue-thing"].source_id == "red-thing"
+    assert m.regions["green-thing"].source_id == "red-thing"
+
+
 def test_decode_translate():
     r = deserializer._decode_region({
         'id': 't', 'type': 'translate',

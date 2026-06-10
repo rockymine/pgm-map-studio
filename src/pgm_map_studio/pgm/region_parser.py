@@ -20,6 +20,20 @@ from .regions import (
 from .datatypes import ApplyRule
 
 
+def _source_ref_id(child: Optional[Region]) -> str:
+    """Resolve the registry id a transform's inline source points at.
+
+    An inline ``<region id="X"/>`` source is parsed as a ``Reference`` whose own
+    ``id`` is blank (references aren't registered), so use its ``ref_id``. A real
+    inline region (named or synthetic) is registered, so use its ``id``.
+    """
+    if child is None:
+        return ""
+    if isinstance(child, Reference):
+        return child.ref_id
+    return child.id
+
+
 class RegionParser:
     """Stateful parser that builds a flat region registry from a <regions> element."""
 
@@ -296,7 +310,7 @@ class RegionParser:
                 f"{parent_id}__anon_{index}" if parent_id else ""
             )
             child = self._parse_region_element(elem, effective_parent, 0)
-            source_id = child.id if child else ""
+            source_id = _source_ref_id(child)
 
         mirror = Mirror(
             id=region_id, source_id=source_id,
@@ -319,7 +333,7 @@ class RegionParser:
                 f"{parent_id}__anon_{index}" if parent_id else ""
             )
             child = self._parse_region_element(elem, effective_parent, 0)
-            source_id = child.id if child else ""
+            source_id = _source_ref_id(child)
 
         translate = Translate(
             id=region_id, source_id=source_id,
