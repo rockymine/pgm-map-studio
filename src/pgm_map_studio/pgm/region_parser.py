@@ -15,7 +15,7 @@ from typing import Optional
 from .regions import (
     Region, Rectangle, Cuboid, Cylinder, Circle, Sphere, Block, Point,
     Union, Negative, Complement, Intersect, Mirror, Translate,
-    Half, Reference, Everywhere, Above, _b2d, parse_coord,
+    Half, Reference, Everywhere, Above, _b2d, parse_coord, reflect_bounds_2d,
 )
 from .datatypes import ApplyRule
 
@@ -394,15 +394,11 @@ class RegionParser:
         source = self._registry.get(source_id)
         if source is None or source.bounds_2d is None:
             return None
-        b = source.bounds_2d
-        min_x, min_z = b['min']['x'], b['min']['z']
-        max_x, max_z = b['max']['x'], b['max']['z']
-        ox, oz = mirror.origin_x, mirror.origin_z
-        if mirror.normal_x != 0:
-            min_x, max_x = 2 * ox - max_x, 2 * ox - min_x
-        if mirror.normal_z != 0:
-            min_z, max_z = 2 * oz - max_z, 2 * oz - min_z
-        return _b2d(min_x, min_z, max_x, max_z)
+        return reflect_bounds_2d(
+            source.bounds_2d,
+            mirror.normal_x, mirror.normal_z,
+            mirror.origin_x, mirror.origin_z,
+        )
 
     def _translate_bounds(self, source_id: str, translate: Translate) -> Optional[dict]:
         """Compute bounds_2d for a Translate region from its source's bounds."""

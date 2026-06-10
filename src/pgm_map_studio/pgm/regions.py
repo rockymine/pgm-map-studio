@@ -53,6 +53,39 @@ def _b2d(min_x: float, min_z: float, max_x: float, max_z: float) -> dict:
     }
 
 
+def reflect_point_2d(px: float, pz: float, nx: float, nz: float,
+                     ox: float, oz: float) -> tuple[float, float]:
+    """Reflect a point across the plane through (ox,oz) with horizontal normal (nx,nz).
+
+    This is PGM's ``<mirror>`` semantics (``result = p − n·(2·(p−o)·n / |n|²)``), so
+    it handles a **diagonal** normal (e.g. ``-1,0,-1``) correctly — that mirror swaps
+    the x/z axes, unlike an axis-aligned flip. An all-zero horizontal normal (a purely
+    vertical mirror) leaves the footprint unchanged.
+    """
+    n2 = nx * nx + nz * nz
+    if n2 == 0:
+        return px, pz
+    d = 2.0 * ((px - ox) * nx + (pz - oz) * nz) / n2
+    return px - nx * d, pz - nz * d
+
+
+def reflect_bounds_2d(bounds: dict, nx: float, nz: float,
+                      ox: float, oz: float) -> dict:
+    """Reflect a ``bounds_2d`` AABB across a mirror plane, returning a new AABB.
+
+    All four corners are reflected (a diagonal mirror rotates the box), then
+    re-bounded — exact for axis-aligned and 45° normals, a tight superset otherwise.
+    """
+    mn, mx = bounds['min'], bounds['max']
+    corners = [
+        reflect_point_2d(x, z, nx, nz, ox, oz)
+        for x in (mn['x'], mx['x']) for z in (mn['z'], mx['z'])
+    ]
+    xs = [c[0] for c in corners]
+    zs = [c[1] for c in corners]
+    return _b2d(min(xs), min(zs), max(xs), max(zs))
+
+
 # ---------------------------------------------------------------------------
 # Base region
 # ---------------------------------------------------------------------------
