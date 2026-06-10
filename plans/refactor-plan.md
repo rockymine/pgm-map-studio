@@ -70,8 +70,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   crashed → canvas stuck on "Loading map…"; now written as `{}`. (b) `layer_segments.parquet` was
   never produced (the side view can't fall back to a `maps_folder` world for a sketch) → "No segment
   data"; export now writes a synthetic flat-Y=0 segments parquet (`_write_segments_parquet`).
-  Verified via the `/regions/tree` and `/segments` code paths + 2 regression tests (792 pass).
-  *Caveat: in-browser visual confirmation still pending rockymine.* *(rockymine §1.)*
+  Verified via the `/regions/tree` and `/segments` code paths + 2 regression tests (792 pass), and
+  **confirmed in-browser** (exported `kleo-dcb85a8d`): editor canvas renders the map (no "Loading
+  map…"), Build Regions side view renders the Y=0 segment strip (no "No segment data"), zero console
+  errors on fresh load. *(rockymine §1.)*
 
 ## Workstream B — Typed data models (Phase 2 proper)
 
