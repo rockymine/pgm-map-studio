@@ -26,9 +26,12 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   geometry (`_dict_to_shapely`); `_encode_coords` emits `source_id`. Added a regression test.
   Validated: every transform with a non-empty `source_id` resolves (87/87 in registry); corpus
   transform polygons went 0% → 62% (remainder = empty-source_id, see A9).
-- [ ] **A4. Forbid inline-dict region children in `region_editor`.** `group_regions` must register
-  children/sources as registry entries and store **string ids**, not nested dicts. Update
-  group/ungroup/remove-from-group/set-base-child + tests.
+- [x] **A4. Forbid inline-dict region children in `region_editor`.** `group_regions` now stores
+  string-id children; `ungroup`/`remove_from_group`/`set_base_child` use the str|dict-tolerant
+  `_child_id` (they previously crashed on the corpus's string-id unions). Added tests. Verified:
+  an editor-grouped union now round-trips through deserialize → `to_xml` (was impossible before).
+  Also generalized `ungroup` (decision): dissolves any compound type, one level only, with a
+  `warning` when dissolving an ordered compound (complement/negative). Contract §14 updated.
 - [ ] **A5. Spawn-as-reference in serializer.** Persist `spawn.region` as a string id into the
   registry (not a duplicated inline region). Verify `xml_writer` ref-vs-inline via `_is_synthetic`
   still round-trips; add a no-duplication test.

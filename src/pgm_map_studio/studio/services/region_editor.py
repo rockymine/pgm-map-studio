@@ -15,6 +15,7 @@ from pgm_map_studio.studio.services.region_builder import (
     build_union_bounds,
 )
 from pgm_map_studio.studio.services.region_tree import (
+    _child_id,
     collect_region_subtree_ids,
     find_child_region,
     find_parent_of_child,
@@ -117,13 +118,15 @@ def group_regions(data: dict, payload: dict) -> dict:
     elif union_id in regions:
         raise RegionConflict(f"id {union_id!r} already in use")
 
-    children = [regions[cid] for cid in child_ids]
-    bounds_2d, min_x, min_z, max_x, max_z = build_union_bounds(children)
+    child_dicts = [regions[cid] for cid in child_ids]
+    bounds_2d, min_x, min_z, max_x, max_z = build_union_bounds(child_dicts)
 
     regions[union_id] = {
         "id": union_id,
         "type": "union",
-        "children": children,
+        # String-id references into the flat registry — never inline child dicts.
+        # The children remain top-level entries; the tree view excludes them as roots.
+        "children": list(child_ids),
         **({"bounds_2d": bounds_2d} if bounds_2d else {}),
     }
     data.setdefault("region_categories", {}).setdefault("other", []).append(union_id)
@@ -173,7 +176,7 @@ def remove_from_group(data: dict, region_id: str, payload: dict) -> dict:
     children = region.get("children")
     if children is None:
         raise InvalidRegionPayload(f"region {region_id!r} has no children")
-    idx = next((i for i, c in enumerate(children) if c.get("id") == child_id), None)
+    idx = next((i for i, c in enumerate(children) if _child_id(c) == child_id), None)
     if idx is None:
         raise RegionNotFound(f"child {child_id!r} not found in {region_id!r}")
     children.pop(idx)
@@ -199,7 +202,7 @@ def set_base_child(data: dict, region_id: str, payload: dict) -> dict:
     if region.get("type") != "complement":
         raise InvalidRegionPayload(f"region {region_id!r} is not a complement")
     children = region.get("children", [])
-    idx = next((i for i, c in enumerate(children) if c.get("id") == child_id), None)
+    idx = next((i for i, c in enumerate(children) if _child_id(c) == child_id), None)
     if idx is None:
         raise RegionNotFound(f"child {child_id!r} not found in complement {region_id!r}")
     if idx != 0:
@@ -207,10 +210,19 @@ def set_base_child(data: dict, region_id: str, payload: dict) -> dict:
     return {}
 
 
-def ungroup_region(data: dict, payload: dict) -> dict:
-    """Dissolve a union: remove it and expose its children as top-level regions.
+_ORDERED_COMPOUND_TYPES = frozenset({"complement", "negative"})
 
-    Returns {"child_ids": [...]}.
+
+def ungroup_region(data: dict, payload: dict) -> dict:
+    """Dissolve a compound region: remove it and expose its direct children as
+    top-level regions.
+
+    Works on any compound type (union/complement/intersect/negative). Dissolving
+    is one level only — nested compounds are promoted intact, not flattened.
+    Dissolving an ordered compound (complement/negative) discards its base/
+    subtrahend semantics, so a ``warning`` is returned in that case.
+
+    Returns {"child_ids": [...], "warning"?: str}.
     Raises InvalidRegionPayload, RegionNotFound.
     """
     region_id = str(payload.get("region_id", "")).strip()
@@ -221,23 +233,28 @@ def ungroup_region(data: dict, payload: dict) -> dict:
     if region_id not in regions:
         raise RegionNotFound(f"region {region_id!r} not found")
 
-    union = regions[region_id]
-    if union.get("type") != "union":
-        raise InvalidRegionPayload(f"region {region_id!r} is not a union")
+    compound  = regions[region_id]
+    comp_type = compound.get("type")
+    if comp_type not in _COMPOUND_TYPES:
+        raise InvalidRegionPayload(f"region {region_id!r} is not a compound region")
 
-    children = union.get("children", [])
+    children = compound.get("children", [])
     child_ids = []
     for child in children:
-        child_id = (child.get("id") or "").strip()
-        if not child_id:
-            i = 1
-            while f"region_{i}" in regions:
-                i += 1
-            child_id = f"region_{i}"
-            child["id"] = child_id
-        if child_id not in regions:
-            regions[child_id] = child
-        child_ids.append(child_id)
+        child_id = (_child_id(child) or "").strip()
+        if isinstance(child, dict):
+            # Legacy inline child: ensure it has an id and lives in the registry.
+            if not child_id:
+                i = 1
+                while f"region_{i}" in regions:
+                    i += 1
+                child_id = f"region_{i}"
+                child["id"] = child_id
+            if child_id not in regions:
+                regions[child_id] = child
+        # String-id children already live in the registry; nothing to lift.
+        if child_id:
+            child_ids.append(child_id)
 
     del regions[region_id]
     for cat_list in data.get("region_categories", {}).values():
@@ -245,7 +262,13 @@ def ungroup_region(data: dict, payload: dict) -> dict:
             cat_list.remove(region_id)
             break
 
-    return {"child_ids": child_ids}
+    result: dict = {"child_ids": child_ids}
+    if comp_type in _ORDERED_COMPOUND_TYPES:
+        result["warning"] = (
+            f"Dissolved {comp_type} region {region_id!r}; its base/subtrahend "
+            f"ordering was discarded."
+        )
+    return result
 
 
 def delete_region(data: dict, region_id: str) -> dict:

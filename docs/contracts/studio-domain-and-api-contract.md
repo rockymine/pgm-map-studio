@@ -475,7 +475,12 @@ All Phase 1 open questions are resolved above:
 - Inline children: forbidden in persistence; flat string-id registry only (§4).
 - Category: derived/editor-hint, not a region field (§10).
 - group/ungroup/restore: backend ops exist but are currently unwired in `api.js` (§12); they
-  remain editor operations over the registry.
+  remain editor operations over the registry. **[decision]** Ungroup dissolves **any** compound
+  type (union/complement/intersect/negative), promoting its **direct** children to top-level —
+  **one level only** (nested compounds are promoted intact, not flattened). Dissolving an ordered
+  compound (`complement`/`negative`) discards base/subtrahend semantics, so the response carries a
+  `warning`. `set_base_child` is complement-only; `remove_from_group` works on any region with
+  children; `change_region_type` converts freely among the four compound types.
 - Symmetry counterparts: source + relation in a map-level index; reflection/`rot_180` via mirror
   regions, `rot_90`/`rot_270` baked to concrete (§7).
 - Kit: first-class resource, in scope (§8).

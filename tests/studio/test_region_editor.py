@@ -9,7 +9,10 @@ from pgm_map_studio.studio.services.region_editor import (
     delete_region,
     group_regions,
     patch_region,
+    remove_from_group,
     restore_region,
+    set_base_child,
+    ungroup_region,
 )
 
 
@@ -144,6 +147,68 @@ class TestGroupRegions:
         self.data["regions"]["union_1"] = _rect("union_1")
         with pytest.raises(RegionConflict):
             group_regions(self.data, {"child_ids": ["r1", "r2"], "id": "union_1"})
+
+    def test_children_stored_as_string_ids(self):
+        # Contract A4: compound children are string-id references, never inline dicts.
+        group_regions(self.data, {"child_ids": ["r1", "r2"], "id": "u"})
+        assert self.data["regions"]["u"]["children"] == ["r1", "r2"]
+        # Children remain top-level registry entries.
+        assert "r1" in self.data["regions"] and "r2" in self.data["regions"]
+
+
+# ── ungroup / remove-from-group / set-base-child (string-id children) ──────────
+
+class TestCompoundChildOps:
+    def setup_method(self):
+        self.data = {"regions": {"r1": _rect("r1"), "r2": _rect("r2"), "r3": _rect("r3")}}
+        group_regions(self.data, {"child_ids": ["r1", "r2", "r3"], "id": "u"})
+
+    def test_ungroup_string_children(self):
+        result = ungroup_region(self.data, {"region_id": "u"})
+        assert set(result["child_ids"]) == {"r1", "r2", "r3"}
+        assert "u" not in self.data["regions"]
+        assert {"r1", "r2", "r3"} <= set(self.data["regions"])
+
+    def test_remove_from_group_string_child(self):
+        remove_from_group(self.data, "u", {"child_id": "r2"})
+        assert self.data["regions"]["u"]["children"] == ["r1", "r3"]
+        # Removed child still exists as a top-level region.
+        assert "r2" in self.data["regions"]
+
+    def test_remove_unknown_child_raises(self):
+        with pytest.raises(RegionNotFound):
+            remove_from_group(self.data, "u", {"child_id": "ghost"})
+
+    def test_set_base_child_moves_string_child_to_front(self):
+        self.data["regions"]["u"]["type"] = "complement"
+        set_base_child(self.data, "u", {"child_id": "r3"})
+        assert self.data["regions"]["u"]["children"][0] == "r3"
+
+    def test_ungroup_complement_warns_about_lost_ordering(self):
+        self.data["regions"]["u"]["type"] = "complement"
+        result = ungroup_region(self.data, {"region_id": "u"})
+        assert set(result["child_ids"]) == {"r1", "r2", "r3"}
+        assert "u" not in self.data["regions"]
+        assert "warning" in result and "complement" in result["warning"]
+
+    def test_ungroup_intersect_no_warning(self):
+        self.data["regions"]["u"]["type"] = "intersect"
+        result = ungroup_region(self.data, {"region_id": "u"})
+        assert "warning" not in result  # intersect is commutative, no ordering lost
+
+    def test_ungroup_non_compound_rejected(self):
+        with pytest.raises(InvalidRegionPayload):
+            ungroup_region(self.data, {"region_id": "r1"})  # a rectangle
+
+    def test_ungroup_one_level_leaves_nested_compound_intact(self):
+        # u = union(r1, r2, r3); nest u inside an outer union, then ungroup the outer.
+        group_regions(self.data, {"child_ids": ["u", "r1"], "id": "outer"})
+        # 'r1' is now referenced by both u and outer; ungroup only outer.
+        result = ungroup_region(self.data, {"region_id": "outer"})
+        assert "outer" not in self.data["regions"]
+        assert self.data["regions"]["u"]["type"] == "union"
+        assert self.data["regions"]["u"]["children"] == ["r1", "r2", "r3"]
+        assert set(result["child_ids"]) == {"u", "r1"}
 
 
 # ── delete_region ─────────────────────────────────────────────────────────────
