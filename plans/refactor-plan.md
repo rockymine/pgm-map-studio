@@ -99,12 +99,15 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   mirror-line convention, not the symmetry. So detection needn't change; authoring does.) Touches
   symmetry datatypes + `cross-cutting.md` (model) and the sketch setup canvas (UI, see D-series).
   *Needs: design + clarification.* *(rockymine §1 "Symmetry Axis and Center Point".)*
-- [ ] **B8. Shared geometry format / sketch–editor data-handling alignment.** The sketch tool edits
-  in-memory (instant); the editor round-trips every change through JSON + backend validation
-  (laggy). Confirm both share one geometry format (`cross-cutting.md` mandates a single
-  `transform.js` + bbox object form) and align data-handling — e.g. optimistic in-memory edits with
-  async persist/validate. *Needs: investigation (partly doable now) + design.* *(rockymine §1
-  "Performance and implementation drift".)*
+- [ ] **B8. Sketch–editor data-handling alignment.** *Investigated (autonomous session):* the two
+  tools **already share the geometry format** — both import `canvas/transform.js`,
+  `shared/converters.js`, `canvas-helpers.js`, `shape-render.js` (bbox object form per
+  `cross-cutting.md`). So the lag isn't a geometry-format divergence; it's the **edit/persistence
+  model**: the editor PATCHes each change to the backend and awaits the response before updating,
+  while the sketch mutates an in-memory shapes array and debounce-saves. Fix = give the editor an
+  optimistic in-memory model with async persist/validate (don't block the canvas on the round-trip).
+  *Needs: design (the diagnosis is settled).* *(rockymine §1 "Performance and implementation
+  drift".)*
 - [ ] **B9. Template-driven import scaffolding.** Optionally start from a known XML template
   (`docs/xml_template.xml`, Ruediger_LP's) instead of blank. On import/load, ask — or infer from
   symmetry + layer parquet — how many teams/wools the map has, then pre-scaffold teams/wools/regions
@@ -144,14 +147,25 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   extended across the full dataset; `docs/requirements/editor-filters.md` is **outdated** and needs
   rewriting. *Needs: corpus analysis (partly doable) + heavy clarification.* *(rockymine §1
   "Filters, Regions and their Relation".)*
-- [ ] **C10. Route consistency audit + CRUD conventions.** Audit existing add/update/delete routes
-  for consistent shapes, naming, and status codes so new features slot in cleanly (ties to C1
-  envelope + C2 schemas). *Needs: audit (doable now).* *(rockymine §3 "Routes concern".)*
+- [ ] **C10. Route consistency audit + CRUD conventions.** *Audited (autonomous session).*
+  Inconsistencies to resolve: (1) **singular/plural** mixed — `/teams` + `/teams/:id` and
+  `/wools` + `/wools/:id` (plural) vs `/regions` POST + `/region/:id` and `/spawns` POST +
+  `/spawn/:region_id` (plural-create, singular-item); (2) **success envelope** mixed — most
+  mutations return `{ok:true, ...result}`, spawns return bare `{ok:true}`, sketch PATCH `{ok:true}`,
+  sketch GET/POST and config GET return raw data; (3) **error envelope** flat `{"error":"..."}`
+  string (C1 fixes); (4) **REST vs RPC** mixed — collection POST for create, but action URLs for
+  region ops (`/regions/group`, `/region/:id/change-type`, `/set-base-child`); (5) spawn is keyed
+  by its linked `region_id`, not a spawn id. Standardize naming + envelopes; decide REST vs RPC for
+  compound ops. *(rockymine §3 "Routes concern".)*
 - [ ] **C11. Intelligent team/wool ID + colour defaults.** Teams currently default to id
   `new-team-n`, name `New Team`, chat colour blue. Instead pick the next unused colour and derive
   id `<colour>-team`, name `<Colour> Team` (mirrors the wool colour-as-key scheme). Cap at the
-  16-colour Minecraft limit; realistic cap 8 (corpus max team count = 8). Low-effort, well-specified
-  — **knock-down candidate, needs no input.** *(rockymine §1 "Intelligent ID and color defaults".)*
+  16-colour Minecraft limit; realistic cap 8 (corpus max team count = 8). *Investigated:* the
+  current defaults are set **client-side** in `panels/teams-panel.js:447` (`new-team[-n]` / `New
+  Team` / `blue`), posting to `add_team` (which only requires an `id`). So this is a **frontend**
+  change (next-unused-colour picker + id/name derivation), needing in-browser verification — **not**
+  a backend-only knock-down; deferred until rockymine can verify. *(rockymine §1 "Intelligent ID and
+  color defaults".)*
 - [ ] **C12. Wool availability validation.** A map is unplayable if no wool is obtainable.
   Implement the availability check (`docs/requirements/editor-objectives.md` Sub-step 3); PGM
   spawner / renewable / block-drop must be configurable as wool sources. *Needs: requirements pass.*
