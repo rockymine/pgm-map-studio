@@ -617,6 +617,20 @@ def _write_regions_block(
         if sid and not _is_synthetic(sid) and sid in regions:
             top_level_ids.add(sid)
 
+    # Synthetic regions (apply-rule / spawn inline regions) are emitted inline and
+    # reference their children/source by id, so any named region they point at must
+    # be written top-level for that reference to resolve on re-parse.
+    for rid, r in regions.items():
+        if not _is_synthetic(rid):
+            continue
+        refs = list(getattr(r, 'children', []) or [])
+        src = getattr(r, 'source_id', '')
+        if src:
+            refs.append(src)
+        for ref in refs:
+            if not _is_synthetic(ref) and ref in regions:
+                top_level_ids.add(ref)
+
     block = ET.SubElement(parent, 'regions')
 
     for rid in regions:

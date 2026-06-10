@@ -845,3 +845,45 @@ def test_annealing_no_synthetic_ids():
     xml_str = to_xml(data)
     assert '__anon_' not in xml_str
     assert '__spawn_' not in xml_str
+
+
+# ---------------------------------------------------------------------------
+# A10 — round-trip fidelity regressions
+# ---------------------------------------------------------------------------
+
+def test_named_region_referenced_by_apply_inline_survives(tmp_path):
+    """A named region referenced only by an apply rule's inline region must be
+    written top-level so the reference resolves on re-parse (A10)."""
+    xml = """\
+        <?xml version="1.0"?>
+        <map proto="1.5.0">
+        <name>M</name><version>1.0</version><objective>x</objective>
+        <regions>
+            <cylinder id="green-spawn-house" base="-10,16,-68" radius="7" height="10"/>
+            <cylinder id="purple-spawn-house" base="-71,16,-89" radius="7" height="10"/>
+            <apply block="never" message="no">
+                <region>
+                    <union>
+                        <region id="green-spawn-house"/>
+                        <region id="purple-spawn-house"/>
+                    </union>
+                </region>
+            </apply>
+        </regions>
+        </map>"""
+    orig, reparsed = _roundtrip(_write_xml(tmp_path, xml))
+    assert "green-spawn-house" in reparsed.regions
+    assert "purple-spawn-house" in reparsed.regions
+
+
+def test_builtin_filters_present_without_filters_block(tmp_path):
+    """never/always are PGM built-ins; they must be available (and survive a
+    round-trip) even when the map has no <filters> block (A10)."""
+    xml = """\
+        <?xml version="1.0"?>
+        <map proto="1.5.0">
+        <name>M</name><version>1.0</version><objective>x</objective>
+        </map>"""
+    orig, reparsed = _roundtrip(_write_xml(tmp_path, xml))
+    assert "never" in orig.filters and "always" in orig.filters
+    assert "never" in reparsed.filters and "always" in reparsed.filters

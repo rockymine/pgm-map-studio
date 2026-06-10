@@ -53,6 +53,10 @@ class MapXmlParser:
         filters_elem = self.root.find('filters')
         if filters_elem is not None:
             data.filters = self._filter_parser.parse_filters_elem(filters_elem)
+        else:
+            # No <filters> block, but the PGM built-ins (never/always) are always
+            # available; expose the pre-seeded registry so they survive round-trips.
+            data.filters = self._filter_parser.registry()
 
         # Regions and apply rules — must come before wools (monument ref lookup)
         regions_elem = self.root.find('regions')

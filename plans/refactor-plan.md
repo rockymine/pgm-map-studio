@@ -57,11 +57,13 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   `Reference` (blank id), leaving `source_id=""`. `_parse_mirror`/`_parse_translate` now resolve
   the reference's `ref_id` (helper `_source_ref_id`). Result: empty `source_id` 50 → 0 across the
   corpus; transform render resolution 62% → 96%. Test added.
-- [ ] **A10. XML-writer round-trip fidelity (9 maps).** Surfaced by A7. Two known gaps: (a) named
-  single-parent inline children (primitives) lose their id on re-parse — incl. a region literally
-  named `regions` (abstract, abstract_remix, golden_drought_ii, hadron, kytriak, pinnacle,
-  rotten_slopes, twisted); (b) unused `never`/`always` filters are dropped on write (kytriak_te).
-  Make the harness green.
+- [x] **A10. XML-writer round-trip fidelity (9 maps).** Surfaced by A7. (a) A named region
+  referenced from a *synthetic* region (apply-rule/spawn inline region) was emitted as a bare
+  `<region id=.../>` reference but never written top-level (`_region_elem_inline` uses a single-
+  region dict); now `_write_regions_block` forces any named child/source of a synthetic region to
+  be top-level (fixed 8 maps). (b) `never`/`always` built-ins were seeded only when a `<filters>`
+  block existed; the parser now always exposes the seeded filter registry (fixed kytriak_te).
+  **Harness now 350 ok, 0 failed, 0 excluded.** Regression tests added.
 
 ## Workstream B — Typed data models (Phase 2 proper)
 

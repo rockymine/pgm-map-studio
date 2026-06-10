@@ -60,6 +60,11 @@ class FilterParser:
                 self._registry.setdefault(f.id, f)
         return self._registry
 
+    def registry(self) -> dict[str, Filter]:
+        """The flat filter registry, pre-seeded with the PGM built-ins
+        (``never``/``always``) even when the map has no ``<filters>`` block."""
+        return self._registry
+
     # ------------------------------------------------------------------
     # Core dispatch
     # ------------------------------------------------------------------
