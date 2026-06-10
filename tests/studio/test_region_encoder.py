@@ -13,6 +13,35 @@ def test_empty_regions_returns_empty():
     assert _tree({}) == []
 
 
+def test_mirror_resolves_source_id():
+    """A mirror/translate persists its source as `source_id` into the flat registry.
+
+    Regression for the encoder previously reading `source`/`ref_region_id` only,
+    which left every corpus transform region unresolved (no source node, no polygon).
+    """
+    regions = {
+        "red-spawn": {
+            "id": "red-spawn", "type": "rectangle",
+            "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 10, "z": 10}},
+        },
+        "blue-spawn": {
+            "id": "blue-spawn", "type": "mirror", "source_id": "red-spawn",
+            "origin": {"x": 50, "y": 0, "z": 0}, "normal": {"x": 1, "y": 0, "z": 0},
+            "bounds_2d": {"min": {"x": 90, "z": 0}, "max": {"x": 100, "z": 10}},
+        },
+    }
+    bbox = {"min_x": -10, "min_z": -10, "max_x": 110, "max_z": 110}
+    nodes = [n for grp in encode_region_tree(regions, {}, bbox) for n in grp["regions"]]
+    mirror = next(n for n in nodes if n["type"] == "mirror")
+    assert mirror["source"] is not None and mirror["source"]["id"] == "red-spawn"
+    assert mirror["coords"]["source_id"] == "red-spawn"
+    # source_id resolved -> reflected geometry computed (rect mirrored across x=50)
+    poly = mirror.get("polygon_2d")
+    assert poly is not None
+    xs = [p[0] for p in poly["exterior"]]
+    assert min(xs) == 90 and max(xs) == 100
+
+
 def test_single_region_goes_to_other_by_default():
     result = _tree({"r1": {"id": "r1", "type": "rectangle",
                            "min_x": 0, "min_z": 0, "max_x": 10, "max_z": 10}})

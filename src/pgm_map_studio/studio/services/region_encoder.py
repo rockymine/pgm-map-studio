@@ -22,6 +22,31 @@ _POLYGON_TYPES = frozenset({
 })
 
 
+# ── reference resolution ──────────────────────────────────────────────────────
+# Compound children and transform sources are persisted as string ids into the
+# flat registry (the editor may also use inline dicts). Resolve either form.
+
+def _resolve_ref(ref, registry: dict | None) -> dict | None:
+    """Resolve a child/source reference (string id or inline dict) to a region dict."""
+    if isinstance(ref, str):
+        return registry.get(ref) if registry else None
+    if isinstance(ref, dict):
+        return ref
+    return None
+
+
+def _resolve_source(region: dict, registry: dict | None) -> dict | None:
+    """Resolve a mirror/translate source: inline ``source`` dict or ``source_id`` ref.
+
+    Accepts the legacy ``ref_region_id`` key as a fallback.
+    """
+    src = region.get("source")
+    if src is None:
+        sid = region.get("source_id") or region.get("ref_region_id") or ""
+        src = registry.get(sid) if (sid and registry) else None
+    return src
+
+
 # ── bounds / coords encoding ──────────────────────────────────────────────────
 
 def _encode_bounds(region: dict) -> dict | None:
@@ -92,7 +117,7 @@ def _encode_coords(region: dict) -> dict | None:
         origin = region.get("origin") or {}
         normal = region.get("normal") or {}
         return {
-            "ref_region_id": region.get("ref_region_id", "") or "",
+            "source_id": region.get("source_id", "") or region.get("ref_region_id", "") or "",
             "origin_x": origin.get("x"), "origin_y": origin.get("y"),
             "origin_z": origin.get("z"),
             "normal_x": normal.get("x"), "normal_y": normal.get("y"),
@@ -101,7 +126,7 @@ def _encode_coords(region: dict) -> dict | None:
     if t == "translate":
         offset = region.get("offset") or {}
         return {
-            "ref_region_id": region.get("ref_region_id", "") or "",
+            "source_id": region.get("source_id", "") or region.get("ref_region_id", "") or "",
             "offset_x": offset.get("x"), "offset_y": offset.get("y"),
             "offset_z": offset.get("z"),
         }
@@ -154,6 +179,9 @@ def _dict_to_shapely(region: dict, bounds: tuple, registry: dict | None = None):
         from shapely.ops import unary_union
         from shapely.affinity import scale, translate
     except ImportError:
+        return None
+
+    if not isinstance(region, dict):
         return None
 
     t = region.get("type")
@@ -214,7 +242,9 @@ def _dict_to_shapely(region: dict, bounds: tuple, registry: dict | None = None):
 
     if t in ("complement", "union", "intersect", "negative"):
         children = region.get("children", [])
-        child_geoms = [_dict_to_shapely(c, bounds, registry) for c in children]
+        child_geoms = [
+            _dict_to_shapely(_resolve_ref(c, registry), bounds, registry) for c in children
+        ]
 
         if t == "union":
             valid = [g for g in child_geoms if g is not None and not g.is_empty]
@@ -253,11 +283,7 @@ def _dict_to_shapely(region: dict, bounds: tuple, registry: dict | None = None):
             return result if not result.is_empty else None
 
     if t == "mirror":
-        source = region.get("source")
-        if source is None:
-            ref_id = region.get("ref_region_id", "")
-            if ref_id and registry:
-                source = registry.get(ref_id)
+        source = _resolve_source(region, registry)
         if source is None:
             return None
         src_geom = _dict_to_shapely(source, bounds, registry)
@@ -272,11 +298,7 @@ def _dict_to_shapely(region: dict, bounds: tuple, registry: dict | None = None):
         return scale(src_geom, xfact=xfact, yfact=zfact, origin=(ox, oz))
 
     if t == "translate":
-        source = region.get("source")
-        if source is None:
-            ref_id = region.get("ref_region_id", "")
-            if ref_id and registry:
-                source = registry.get(ref_id)
+        source = _resolve_source(region, registry)
         if source is None:
             return None
         src_geom = _dict_to_shapely(source, bounds, registry)
@@ -352,7 +374,7 @@ def _encode_node(region: dict, bounds: tuple | None = None,
                 children.append(_encode_node(registry[child], bounds=bounds, registry=registry))
         elif isinstance(child, dict):
             children.append(_encode_node(child, bounds=bounds, registry=registry))
-    raw_source  = region.get("source")
+    raw_source  = _resolve_source(region, registry)
     source_node = _encode_node(raw_source, bounds=bounds, registry=registry) if raw_source else None
 
     node: dict = {

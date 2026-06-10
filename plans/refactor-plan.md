@@ -21,9 +21,11 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   malformed-coord source defect fails).
 - [x] **A2. Deterministic wool/monument IDs in serializer.** `_encode_wools_grouped` now derives
   IDs from content (wool = color slug; monument = `color-team`); no more per-serialize `uuid4`.
-- [ ] **A3. Region `source_id` resolution in `region_encoder`.** Mirror/translate currently read
-  `source`/`ref_region_id`; persisted field is `source_id`. Fix so the 71 corpus transform
-  regions render. Add a test.
+- [x] **A3. Region `source_id` resolution in `region_encoder`.** Mirror/translate (and compound
+  string-id children) now resolve via `source_id`/registry in both the node builder and the
+  geometry (`_dict_to_shapely`); `_encode_coords` emits `source_id`. Added a regression test.
+  Validated: every transform with a non-empty `source_id` resolves (87/87 in registry); corpus
+  transform polygons went 0% → 62% (remainder = empty-source_id, see A9).
 - [ ] **A4. Forbid inline-dict region children in `region_editor`.** `group_regions` must register
   children/sources as registry entries and store **string ids**, not nested dicts. Update
   group/ungroup/remove-from-group/set-base-child + tests.
@@ -37,6 +39,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **A8. Robust coordinate parsing.** `parse_coord` hard-crashes a whole map on a malformed
   value (`segment/map.xml:79` `5.185.5`). Flag-and-continue (skip/zero the bad coord, record a
   warning) so one source typo doesn't lose the map. 1/345 today.
+- [ ] **A9. Populate `source_id` for inline-anonymous transform sources.** 50/137 corpus
+  mirror/translate regions persist an empty `source_id` (their source was an inline anonymous
+  region). The parser should set `source_id` to that source's synthetic registry id so the
+  transform resolves. Encoder side is already correct (A3).
 
 ## Workstream B — Typed data models (Phase 2 proper)
 
