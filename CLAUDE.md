@@ -22,18 +22,21 @@ filters) before the larger framework/UI migration and hosting.
 The corpus harness `tools/roundtrip_check.py` is **green (350/350)**. The sketch-export→editor bug
 (A11) is fixed and browser-verified. Full Python suite passes (~792 tests).
 
-**Current task — B5 (region categorization derivation):**
-- Model: `docs/contracts/region-categorization.md` — two facets: `category` ∈ {spawn,
-  observer_spawn, wool_room, monument, wool_spawner, build, mechanic, other} + orthogonal `roles`
-  (`rule_container`, `rule_group`, `time_gated`, `rules`). Build is derived from the
-  void-enforcement *structure*, not naming.
-- **Verified oracle:** `tests/fixtures/region_categories/annealing_iv.json` (rockymine-signed-off;
-  readable `.md` alongside). Build the derivation module to satisfy it, then add fixtures for
-  `vertex`, `acapulco`, `icecream_sandwiched_ii`.
-- Refinements the oracle pins: `spawner.player_region → wool_room` (only `spawn_region` is
-  `wool_spawner`); `rule_group` detection descends anonymous intermediate unions and requires a
-  uniform child category. Categories stay **derived**; `region_categories` in `xml_data.json` is a
-  **user-override store only**, never canonical.
+**Done — B5 (region categorization derivation):** `studio/services/region_categorizer.py`
+implements the two-facet model (`docs/contracts/region-categorization.md`): `category` ∈ {spawn,
+observer_spawn, wool_room, monument, wool_spawner, build, mechanic, other} + orthogonal `roles`
+(`rule_container`, `rule_group`, `time_gated`, plus `<event>=<filter_id>` wiring). Build is derived
+from void-enforcement *structure*, never naming. Other signals: spawner regions are wool only when
+the spawner dispenses wool (else `mechanic`); the author `apply message` text and the break-floor-
+material+deny-place pattern classify spawn/wool protection zones; renewables/velocity/kit →
+`mechanic`; a region used as a `block_place` filter → `build` (permissive placement). Reproduces the
+rockymine-verified `annealing_iv` oracle exactly (~23% → ~80% categorized corpus-wide). Tests in `tests/studio/test_region_categorizer.py`;
+fixtures + vendored inputs under `tests/fixtures/region_categories/` (annealing_iv verified, the other
+three **proposed — awaiting rockymine verification**, see that dir's README). Categories stay
+**derived**; `region_categories` is a **user-override store only**.
+
+**Current task — pick up from `plans/refactor-plan.md`:** remaining Workstream B (B1–B4, B6–B11)
+and the C/D/E series. Several need rockymine's design input (tagged).
 
 **Other queued work** (in `plans/refactor-plan.md`): B6–B11, C1–C12, D1–D2, E1. Several need
 rockymine's design input (tagged). `docs/requirements/editor-filters.md` is flagged **unstable** —

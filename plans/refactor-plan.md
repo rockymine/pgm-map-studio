@@ -81,18 +81,55 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
 - [ ] **B3.** Type sketch models.
 - [ ] **B4.** Type the `/regions/tree` view-model node (§5) explicitly.
-- [ ] **B5. Region categorization derivation.** Replace the thin `_compute_categories` with the
-  two-facet model in `docs/contracts/region-categorization.md` (`category` + `roles`; build from
-  void-structure; `rule_container`/`time_gated` roles; constrained compound recursion). Validates
-  current 23% categorized → ~91%. Back it with a hand-verified ground-truth fixture
-  (annealing_iv, vertex, acapulco, icecream_sandwiched_ii). Keep categories derived; keep
-  `region_categories` as user-overrides only. *Progress:* `annealing_iv` fixture **verified by
-  rockymine** (`tests/fixtures/region_categories/annealing_iv.json` + readable `.md`); added the
-  `rule_group` role (union batching a rule over same-category peers, e.g. `woolrooms`) to the model.
-  Derivation refinements the fixture pins: `spawner.player_region → wool_room` (not wool_spawner);
-  rule_group detection descends anonymous intermediate unions and requires uniform child category
-  (so `spawns`, a monument-sculpted complement, is correctly *not* a rule_group). Remaining: build
-  the derivation module to match this oracle, then add the other 3 fixtures.
+- [ ] **B4a. Region tree = view, not model (de-clutter).** *(rockymine 2026-06-10; deferred — design.)*
+  Today `/regions/tree` renders the **raw PGM compound tree** verbatim: anonymous
+  `union`/`complement`/`negative` scaffolding, voidmatchers, wrappers, and every synthetic
+  `__anon` child are shown as-is, so on structurally heavy maps (golden_drought_ii, hydrolock_ii)
+  the tree is unreadable — it's the *model*, not a *view*. The fix is a **view-model that breaks
+  the literal tree**: present regions grouped by their derived `category`/`roles` (B5 facets),
+  promote the meaningful named regions, and **collapse or hide pure rule-wiring/synthetic compounds**
+  (rule_container wrappers, anonymous intermediates) behind an "advanced/raw" toggle rather than
+  inline. This is the UI face of the **persisted-vs-view model split** (B1) and the "individual
+  region child" policy: the canonical model keeps the full compound graph for round-trip; the editor
+  shows a curated, category-first tree. Touches `region_encoder.encode_region_tree` (or a new
+  view-builder) + `region/region-tree.js` + the regions/objectives/build panels. *Needs: design.*
+- [x] **B5. Region categorization derivation.** *(Done 2026-06-10.)* Replaced the thin
+  `_compute_categories` with `studio/services/region_categorizer.py` implementing the two-facet
+  model (`category` + `roles`; build from void-structure; `rule_container`/`rule_group`/`time_gated`
+  roles; constrained compound recursion). Categorized **23% → ~76%** of named regions across the
+  350-map corpus (conservative by design — build only from void structure, never `lane`/`bridge`
+  names, for near-zero false positives). `/regions` now also returns `facets`; `/regions/tree`,
+  the encoder taxonomy, and the Objectives activity (`WOOL_CATEGORIES`) consume the new categories.
+  Categories stay derived; `region_categories` is a user-override store layered on the flat map
+  only. **`annealing_iv` oracle (rockymine-verified) reproduced exactly** (35/35 named); added
+  `tests/studio/test_region_categorizer.py` (32 synthetic unit tests + 4 oracle fixtures) and
+  vendored input `xml_data.json` per fixture for hermetic tests. Derivation refinements pinned:
+  `spawner.player_region → wool_room`; `rule_group` descends only anonymous intermediate unions
+  and needs ≥2 uniform non-`other` peers (so `spawns` is *not* a rule_group); `rule_container` is
+  `negative`-only (a `complement` carries its base identity); build also handles `complement`
+  wrappers + inline `void` descriptors and excludes name-recognisable objectives. Contract doc
+  updated to match. **Remaining for rockymine:** verify the 3 *proposed* fixtures (vertex,
+  acapulco, icecream) — see `tests/fixtures/region_categories/README.md` open questions; and decide
+  whether the Objectives panel should include `monument` regions (now does) and whether `roles`
+  should surface in the editor UI (data is there, no UI yet).
+  *Round 2 (rockymine review 2026-06-10):* (a) `wool_spawner`/`wool_room` now gated on the spawner
+  actually dispensing **wool** — golden-apple/other spawners → `mechanic`; (b) added the **apply-
+  message** signal (author `message` text names spawn/wool_room/mechanic; clean across 3204 corpus
+  messages) + the **spawn-floor pattern** (break-only-material[iron|gold] + deny-place → spawn);
+  `rule_group` detection decoupled into its own structural pass so message/signal pre-categorised
+  unions still get the flag. Corpus categorized ~76% → ~79%. Acapulco verified. **Mirror geometry
+  bug fixed** (separate from categorization): diagonal `<mirror normal="-1,0,-1">` was computed as a
+  180° point-flip in both `region_parser._mirror_bounds` and `region_encoder`; replaced with PGM's
+  reflection (`pgm.regions.reflect_point_2d`/`reflect_bounds_2d` + encoder `_reflect_geom` via
+  affine matrix `I−2n̂n̂ᵀ`). Vertex red regions now flush with the footprint — browser-verified.
+  *Round 3 (rockymine review 2026-06-10):* added **mechanic** signals — `renewables[].region_id`,
+  apply `velocity`/`kit`/`lend_kit` actions (regen/portal/jump mechanics; applied as a *fallback*
+  after compound resolution so a wool-room-with-regen stays a wool_room) — and a **permissive-
+  placement build** signal: a region used as a `block_place` *filter* is the buildable floor
+  (vertex `playable-area`, resolving the open question). Spawner gating refined per rockymine: only
+  the non-wool `spawn_region` (item drop point) → mechanic; the `player_region` (detection region =
+  the room players stand in) keeps its own identity. Corpus categorized ~79% → **~80.5%** (mechanic
+  378→471, wool rooms no longer stolen). vertex/icecream/acapulco fixtures all verified.
 - [ ] **B6. Editor undo/redo (command model).** A real editor needs undo/redo of user actions.
   Pure create/delete inversion is insufficient — e.g. deleting a wool's monument keeps the wool
   but removes the monument (a PATCH today). Decide the model: command objects with inverse ops, or
