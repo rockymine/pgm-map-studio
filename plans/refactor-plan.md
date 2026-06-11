@@ -41,8 +41,13 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   `schemas/` (pydantic): `schemas/persisted.py` (xml_data/sketch shapes), `schemas/view.py`
   (RegionTreeNode + route payloads). `studio` routes return these; `tools/` generates the TS.
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
-- [ ] **B3.** Type sketch models.
-- [ ] **B4.** Type the `/regions/tree` view-model node (§5) explicitly.
+- [ ] **B3.** Type sketch models (persisted `sketch.json` + sketch view) in `schemas/`.
+- [x] **B4. `/regions/tree` view-model typed** — `schemas/view.py` (pydantic `RegionTreeNode`/
+  `RegionGroup`/`RegionTreeResponse`, code-first match to `region_encoder`) + the **TS pipeline**:
+  `tools/generate_ts_contract.py` → `frontend/src/contract.ts`, with a conformance test (encoder
+  output validates) and a no-drift test (checked-in TS == generator). This is the schemas/TS
+  foundation B1/B3 build on. *(Still: wire the route to validate/serialize via the model; fold C6
+  naming; persisted shapes = B1.)*
 - [ ] **B4a. Region tree = view, not model (de-clutter).**
   Today `/regions/tree` renders the **raw PGM compound tree** verbatim: anonymous
   `union`/`complement`/`negative` scaffolding, voidmatchers, wrappers, and every synthetic
