@@ -37,47 +37,11 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 > `openapi-typescript`) into `frontend/`. Adds a `pydantic` dependency (boundary only). This is the
 > D1 de-risker.
 
-- [~] **B1. Persisted `xml_data.json` typed** — `schemas/persisted.py` (pydantic `MapProject` +
-  all entities), **validated against all 345 corpus maps** (`tools/validate_schemas.py`; caught the
-  `"oo"` infinity-coord literal, inline-region spawn refs, `None` template coords → `Coord =
-  float|str|None`). Generated into the TS contract; `tests/schemas/test_persisted.py`. *Remaining:
-  the sketch `sketch.json` shape (overlaps B3), and wiring `studio` routes to return/validate via the
-  models.* The view side (B4) already carries the canonical flat `{min_x..}`/`{cx,cz}` naming (C6);
-  persisted keeps the on-disk nested `bounds_2d` (the C6 on-disk migration is separate).
-- [x] **B2. Imported-map domain typed** — already realized by the `pgm` dataclasses (kept as
-  dataclasses, not pydantic, per the B-note): `datatypes.py` (`MapXml` + 14 entities), `regions.py`
-  (`Region` + 17 types), `filters.py` (`Filter` + 36 types). Verified complete + aligned across
-  layers and **locked with a drift-guard** (`tests/pgm/test_codec_type_coverage.py`): the codec
-  round-trips every region/filter type back to its own class (adding a type without wiring
-  encode+decode now fails). One escape hatch left intentionally: `Region.bounds_2d: Optional[dict]`
-  (derived cache; typed at the persisted boundary as `Bounds2d`). Wools stay **native-flat** in the
-  domain (one per `<wool>`) and are grouped-by-colour with `monuments[].team` only at the persisted
-  boundary (`serializer._encode_wools_grouped` ↔ `deserializer._decode_wools_entry`) — the canonical
-  contract shape, owner-team derived.
-- [x] **B3. Sketch `sketch.json` typed** — `schemas/sketch.py` (`SketchProject` + setup/layout/
-  shape/island). **Cubic-Bézier model kept in lock-step with `geometry.js`/`sketch_export.py`:**
-  `controls` = dict keyed by stringified vertex index, `{in?,out?}` handles; `in` aliased
-  (Python keyword) and round-trips by-alias. `mirror_mode` is a strict `Literal`. Forced three TS-
-  generator gains (alias emission, typed `Record<string,V>` — also retyped `regions`/`filters` —
-  `Literal` unions). Validated against 26 real local sketches (`tools/validate_schemas.py`, incl. 7
-  with bezier data); `tests/schemas/test_sketch.py`. *Remaining: a sketch **view** model is deferred
-  until the sketch SPA needs one (the persisted shape is what `/api/sketch` returns today).*
-- [x] **B4. `/regions/tree` view-model typed** — `schemas/view.py` (pydantic `RegionTreeNode`/
-  `RegionGroup`/`RegionTreeResponse`, code-first match to `region_encoder`) + the **TS pipeline**:
-  `tools/generate_ts_contract.py` → `frontend/src/contract.ts`, with a conformance test (encoder
-  output validates) and a no-drift test (checked-in TS == generator). This is the schemas/TS
-  foundation B1/B3 build on. **Live routes are schema-load-bearing both ways**: GET
-  `/api/map/<name>/regions/tree` → `RegionTreeResponse` and `/api/sketch/<sid>` → `SketchProject`
-  serialize *through* the schemas (dumped `by_alias=True` so the bezier `in` key survives); the sketch
-  **write** routes (`PATCH setup/layout/overview`) now **validate input** against `SketchSetup`/
-  `SketchLayout`/`SketchProject` → 400 on malformed bodies (gate only — the original partial payload
-  is persisted). Verified no real sketch sub-shape 400s. `tests/studio/test_schema_wired_routes.py`.
-  The **map-editing write routes** (teams/spawns/wools/filters/apply-rules/regions) are now **robust to
-  hostile input** — a non-object body or wrong-typed field is a clean **4xx, never a 500** (editor-layer
-  guards `services/_payload.py::require_dict`/`coerce_int`/`coerce_float` raising the editors' own
-  `Invalid*Payload`; missing `except` clauses on `update_team`/`update_spawn`/`create_counterpart`
-  fixed). `tests/studio/test_write_route_robustness.py`. *(Still: fold C6 naming; B4a view de-clutter.
-  Optional: pydantic request-models for these routes — the robustness gap is closed, so now a nicety.)*
+- [x] **B1. Persisted `xml_data.json` typed** — `schemas/persisted.py` (`MapProject`), corpus-validated.
+- [x] **B2. Imported-map domain typed** — `pgm` dataclasses, codec drift-guarded.
+- [x] **B3. Sketch `sketch.json` typed** — `schemas/sketch.py` (`SketchProject`), bezier-faithful.
+- [x] **B4. `/regions/tree` view-model + TS pipeline** — `schemas/view.py` → generated `contract.ts`;
+  routes wired through the schemas (GET serialize, write validate/reject-4xx).
 - [ ] **B4a. Region tree = view, not model (de-clutter).**
   Today `/regions/tree` renders the **raw PGM compound tree** verbatim: anonymous
   `union`/`complement`/`negative` scaffolding, voidmatchers, wrappers, and every synthetic
@@ -118,11 +82,8 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   *Needs: data-model decision (contract §11 open Q16/Q17).*
 - [x] **B11. Editing validation model / invariants (design pass)** — `docs/contracts/validation-invariants.md`.
   *(Enforcement is Workstream C; traversability analysis is its own future feature.)*
-- [x] **B12. Python geometry module + unified symmetry transforms.** `pgm_map_studio/geometry.py`
-  (pure-math leaf) owns `reflect_*` (moved from `pgm/regions.py`) + `rotate_*` (CCW, 90°-exact).
-  `detection.py` + `sketch_export.py` (via `region_geometry.transform_geom`) consolidated onto it —
-  detection's CW `rot_90`/`rot_270` swap fixed. JS `converters.js` keeps its necessary twin with a
-  Vitest **parity** block. One implementation per converter (`geometry.md` §6).
+- [x] **B12. Python geometry module + unified symmetry transforms** — `geometry.py` (CCW, 90°-exact);
+  detection/sketch consolidated; JS parity test. See `geometry.md` §6.
 
 ## Workstream C — API stabilization (Phase 3)
 
@@ -131,13 +92,8 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [x] **C3. Filters CRUD routes + service** (author-in-v1; reject-with-references on delete).
 - [x] **C4. Apply-rules CRUD routes + service** (stable `rule_<n>` synthetic ids, dropped on XML export).
 - [ ] **C5.** Wire region group/ungroup/restore/change-type into `api.js` (currently unwired).
-- [x] **C6. bbox/center wire naming unified** to `{min_x,min_z,max_x,max_z}` + `{cx,cz}`. bbox was
-  already flat everywhere; the work was the **symmetry center** `center_x/center_z` → `cx/cz` (hard
-  cut, no fallback): writers (`symmetry/detection` `SymmetryResult.center`, `datatypes.center_cell`,
-  `pipeline` cache-reconstruct, `sketch_export._write_symmetry_json`) + readers (`configure`/`regions`
-  routes, `configure-activity`/`configure-renderer`/`overview-renderer` JS). Migrated the 30 live
-  `symmetry.json` in place (key rename preserves detected centers). *Out of scope: `Circle.center_x/
-  center_z` is a region's geometric center, a different concept — untouched.* py 1104 + js 143 green.
+- [x] **C6. bbox/center wire naming unified** to `{min_x,min_z,max_x,max_z}` + `{cx,cz}` — symmetry
+  center migrated `center_x/center_z`→`cx/cz` (hard cut).
 - [ ] **C7.** CTW import-eligibility check (supported symmetric-CTW signal; flag AD/arcade/gimmick).
 - [x] **C8. Symmetric compound creation** — `group_regions` takes `type` (union/complement/intersect/negative);
   `change_region_type` test-backfilled.
