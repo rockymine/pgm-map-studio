@@ -124,7 +124,7 @@ runner at `/root/pgm-studio-tests/` (see `docs/testing.md`).
 ## Requirements
 
 Per-activity requirements live in `docs/requirements/` — editor workflow (`editor*.md`; note
-`editor-filters.md` is **UNSTABLE**, superseded by the forthcoming
+`editor-filters.md` is **UNSTABLE**, superseded by
 `docs/contracts/filter-region-wiring.md`) and sketch workflow (`sketch*.md`). For a brief tool
 overview, see `src/pgm_map_studio/studio/EDITOR.md` + `SKETCH.md`. File format + derivation rules are
 documented in the requirements files themselves.

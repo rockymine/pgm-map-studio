@@ -129,25 +129,17 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **C6.** Unify bbox/center naming to `{min_x,min_z,max_x,max_z}` + `{cx,cz}` at the API
   boundary; migrate `symmetry.json` `center_x/center_z` → `cx/cz`.
 - [ ] **C7.** CTW import-eligibility check (supported symmetric-CTW signal; flag AD/arcade/gimmick).
-- [ ] **C8. Symmetric compound creation.** Creation is union-only today; negative/complement/
-  intersect need the `group → change_region_type` dance, and `change_region_type` has **zero
-  tests**. Add an optional `type` to `group_regions` (default `union`) to create any compound
-  directly (set_base_child for complement ordering), and backfill `change_region_type` tests.
-  Makes create symmetric with the now-generalized ungroup. (Authoring, not round-trip.)
-- [ ] **C9. Filter↔region wiring + intelligent templates.** Routes/UI to attach filters to
-  regions/unions, plus the tool *suggesting/questioning* filters from map setup. *Decisions:*
-  build-step void-enforcement wiring is **suggest + confirm** (detect positive build
-  regions → propose "auto-group + apply void filter to the complement?" → user confirms/adjusts,
-  using `layer_y0.parquet`). **v1 template set (all four):** (1) void/never build enforcement,
-  (2) spawn protection `enter=only-team`, (3) wool-room defense `enter=not-owner`, (4) wool-room
-  build/break filters. Templates are surfaced as suggestions grounded in the corpus's most common
-  filter shapes. **Doc:** write a **new** `docs/contracts/filter-region-wiring.md` (like the
-  categorization doc) from `docs/filter-use-cases.md` + the full corpus; **mark
-  `docs/requirements/editor-filters.md` as unstable** rather than rewriting it. *Needs: corpus
-  analysis (doable) + the new doc, then routes/UI. *Progress: `docs/filter-use-cases.md` refreshed 
-  (2026-06-10) with an Appendix — filter-type frequency, the **event×filter-type matrix** (what attaches where), 
-  composite-child shapes, and the stackability/soft-warning stance — the vocabulary source for the suggestion UI.
-  `tests/studio/test_filter_use_cases.py` exercises the canonical shapes through the C3/C4 editors.*
+- [x] **C8. Symmetric compound creation** — `group_regions` takes `type` (union/complement/intersect/negative);
+  `change_region_type` test-backfilled.
+- [~] **C9. Filter↔region wiring + intelligent templates.** **Doc + backend done; UI (D-series)
+  remaining.** Design: `docs/contracts/filter-region-wiring.md` (supersedes the unstable
+  `editor-filters.md`). Backend: `studio/services/filter_wiring.py` + `routes/wiring.py` —
+  `GET /wiring/suggestions` (scans spawns/wools/build facets, proposes wirings, suggest+confirm) and
+  `POST /wiring/apply` (executes a template, composing C8 `group_regions` + C3 `create_filter` + C4
+  `create_apply_rule`). All four v1 templates: spawn protection (`enter=only-team`), wool-room
+  defense (`enter=not-owner`), wool-room edit (`block=not-owner`), build/void enforcement
+  (group build → `negative` → `block_place=deny(void)`). `tests/studio/test_filter_wiring.py` (15).
+  *Remaining: the suggest/confirm **UI** — D-series, builds on these routes.*
 - [ ] **C10. Route consistency audit + CRUD conventions.** *Audited (autonomous session).*
   Inconsistencies to resolve: (1) **singular/plural** mixed — `/teams` + `/teams/:id` and
   `/wools` + `/wools/:id` (plural) vs `/regions` POST + `/region/:id` and `/spawns` POST +
@@ -227,9 +219,10 @@ hand-waves on the modeling side.
    diagonal/secondary-axis **canvas UI** is deferred to D-series (it doesn't gate B1–B4). B1's
    persisted/domain/view split and **B3** (sketch symmetry) are now unblocked on the symmetry side.
    ✅ **B11 design done** — `validation-invariants.md` catalogs the invariants (incl. rot_90/diagonal
-   ⇒ square-cell + strict team/wool divisibility + rot_n) for the typed models to encode. Remaining
-   gate item: finish **`docs/contracts/filter-region-wiring.md`** (its corpus basis is already in
-   `filter-use-cases.md`).
+   ⇒ square-cell + strict team/wool divisibility + rot_n) for the typed models to encode.
+   ✅ **Filter↔region wiring design done** — `docs/contracts/filter-region-wiring.md` settles the
+   wiring relationship + the v1 templates and confirms it adds **no new typed shape** (wiring =
+   apply_rules + filters over regions, surfaced as `roles`). **The B1–B4 gate is now closed.**
 2. **Lock B1–B4 (the typed frame).** B1 persisted/domain/view split · B2 imported-map domain · B3
    sketch · B4 `/regions/tree` view node. **Fold C6** (canonical bbox/center wire naming) and the
    **B4a** tree-as-view *design* in here — both are shape decisions the framework switch consumes,

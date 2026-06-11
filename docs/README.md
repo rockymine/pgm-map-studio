@@ -24,6 +24,7 @@ disagree, **the code wins**.
 | `contracts/geometry.md` | Coordinate system, the +1 rule, transform formulas, the required canvas/geometry **converters** (one implementation each). |
 | `contracts/region-categorization.md` | How a region's `category` + `roles` are **derived** (two-facet model). |
 | `contracts/validation-invariants.md` | Editing invariants (severity, the symmetry↔team coupling, traversability). |
+| `contracts/filter-region-wiring.md` | How filters attach to regions (the wiring relationship) + the v1 suggestion templates. |
 | `filter-use-cases.md` | The filter **vocabulary** + event×filter-type matrices. *(Its corpus statistics are research — Rationale — bundled in an appendix.)* |
 | `contracts/ui-conventions.md` | CSS/UI conventions; the `/design` page is the live visual reference. |
 
@@ -36,7 +37,7 @@ Brief goal + activity structure for each workflow live **code-adjacent**:
 
 `requirements/` — one file per activity. Editor workflow: `editor.md` (index) + `editor-*.md`.
 Sketch workflow: `sketch.md` (index) + `sketch-*.md`. (`editor-filters.md` is **unstable** —
-superseded by the planned `filter-region-wiring.md`, C9.)
+superseded by `filter-region-wiring.md`, C9.)
 
 ## Process — tracking / decisions / history (history lives here, not in specs)
 
@@ -49,7 +50,7 @@ superseded by the planned `filter-region-wiring.md`, C9.)
 
 ## Planned docs (tracked, not yet written)
 
-`api-schemas.md` (C2) · `filter-region-wiring.md` (C9) · `project-storage.md` (B10/E1). See the plan.
+`api-schemas.md` (C2) · `project-storage.md` (B10/E1). See the plan.
 
 ## When adding a doc
 

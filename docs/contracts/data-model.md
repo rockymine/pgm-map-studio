@@ -321,9 +321,10 @@ PATCH|DELETE /api/map/:name/observer-spawn
 POST /api/map/:name/wools ; PATCH|DELETE /api/map/:name/wools/:wool_id
 POST /api/map/:name/wools/:wool_id/monuments ; PATCH|DELETE /api/map/:name/wools/:wool_id/monuments/:mon_id
 
-# filters / apply-rules (CRUD)
+# filters / apply-rules (CRUD) + filter↔region wiring (C9)
 POST /api/map/:name/filters ; PATCH|DELETE /api/map/:name/filters/:filter_id
 POST /api/map/:name/apply-rules ; PATCH|DELETE /api/map/:name/apply-rules/:rule_id
+GET  /api/map/:name/wiring/suggestions ; POST /api/map/:name/wiring/apply
 
 # sketch
 GET/POST /api/sketch ; GET /api/sketch/:sid
