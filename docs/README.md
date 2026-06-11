@@ -52,13 +52,6 @@ superseded by the planned `filter-region-wiring.md`, C9.)
 | `ui/ui-system-consolidation.md` | UI system consolidation notes. |
 | `testing.md` | How to run the Python + JS test suites. |
 
-## Reference / fixtures
-
-The rockymine-verified categorization oracle lives with the tests:
-`tests/fixtures/region_categories/` (`annealing_iv`/`acapulco`/`vertex`/`icecream_sandwiched_ii`
-+ `README.md`) — a regression lock, not prose documentation.
-
----
 
 ## Planned docs (tracked, not yet written)
 
