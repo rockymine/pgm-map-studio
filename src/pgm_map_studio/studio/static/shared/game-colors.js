@@ -53,3 +53,24 @@ export function dyeColorLabel(name) {
   return MINECRAFT_DYE_COLORS.find(c => c.value === _normDye(name))?.label
     ?? name.replace(/_/g, " ");
 }
+
+// ── Team colour assignment ──────────────────────────────────────────────────
+
+// Preferred order for auto-assigning a new team's colour: the bright, readily
+// distinguishable colours first (typical CTW uses red/blue, then green/yellow…).
+export const TEAM_COLOR_PRIORITY = [
+  "red", "blue", "green", "yellow", "aqua", "gold", "light purple", "dark purple",
+  "dark aqua", "dark green", "dark red", "dark blue", "gray", "dark gray", "white", "black",
+];
+
+const _normChat = name => (name ?? "").replace(/_/g, " ").toLowerCase();
+
+/** Pick the next unused team colour in priority order, or null when all 16 are
+ *  taken. `usedColors` is the existing teams' colour values (any case / `_`-form). */
+export function nextTeamColor(usedColors = []) {
+  const used = new Set([...usedColors].map(_normChat));
+  for (const value of TEAM_COLOR_PRIORITY) {
+    if (!used.has(value)) return PGM_CHAT_COLORS.find(c => c.value === value);
+  }
+  return null;
+}

@@ -114,14 +114,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   GET raw resource; error envelope (C1); **item routes pluralized** (`/regions/:id`, `/spawns/:id` —
   Werkzeug resolves static `/regions/group` ahead of the dynamic item route); RPC action-URLs for
   compound region ops; spawn keyed by `region_id`.
-- [ ] **C11. Intelligent team/wool ID + colour defaults.** Teams currently default to id
-  `new-team-n`, name `New Team`, chat colour blue. Instead pick the next unused colour and derive
-  id `<colour>-team`, name `<Colour> Team` (mirrors the wool colour-as-key scheme). Cap at the
-  16-colour Minecraft limit; realistic cap 8 (corpus max team count = 8). *Investigated:* the
-  current defaults are set **client-side** in `panels/teams-panel.js:447` (`new-team[-n]` / `New
-  Team` / `blue`), posting to `add_team` (which only requires an `id`). So this is a **frontend**
-  change (next-unused-colour picker + id/name derivation), needing in-browser verification — **not**
-  a backend-only knock-down;
+- [x] **C11. Intelligent team ID + colour defaults** — "+ Add team" now derives the next unused
+  colour (`game-colors.js::nextTeamColor`, priority red/blue/green/yellow…) → id `<colour>-team`,
+  name `<Colour> Team`, colour set; falls back to `new-team` when all 16 are used. `panels/teams-panel.js`
+  + `tests/js/game-colors.test.js`. Browser-verified (red→blue→green, persisted correctly).
 - [ ] **C12. Wool availability validation.** A map is unplayable if no wool is obtainable.
   Implement the availability check (`docs/requirements/editor-objectives.md` Sub-step 3); PGM
   spawner / renewable / block-drop must be configurable as wool sources. *Needs: requirements pass.*

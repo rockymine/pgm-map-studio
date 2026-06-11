@@ -15,7 +15,7 @@ function _obsRegionId(observerSpawn) {
 }
 import {
   PGM_CHAT_COLORS, MINECRAFT_DYE_COLORS,
-  chatColorHex, dyeColorHex,
+  chatColorHex, dyeColorHex, nextTeamColor,
 } from "../shared/game-colors.js";
 import { showToast } from "../shared/ui-helpers.js";
 import { typeIcon } from "../region/region-types.js";
@@ -444,11 +444,22 @@ export class TeamsPanel {
     this._addTeamBtn.addEventListener("click", async () => {
       if (!this._mapName) return;
       const usedIds = new Set(this._teams.map(t => t.id));
-      let slug = "new-team";
+      // Derive defaults from the next unused colour: id `<colour>-team`,
+      // name `<Colour> Team`, colour = that colour (mirrors the wool scheme).
+      const pick = nextTeamColor(this._teams.map(t => t.color));
+      let baseId, name, color;
+      if (pick) {
+        color  = pick.value;
+        baseId = `${pick.value.replace(/ /g, "-")}-team`;
+        name   = `${pick.label} Team`;
+      } else {
+        color = "blue"; name = "New Team"; baseId = "new-team";  // all 16 colours used
+      }
+      let slug = baseId;
       let n = 2;
-      while (usedIds.has(slug)) { slug = `new-team-${n++}`; }
+      while (usedIds.has(slug)) { slug = `${baseId}-${n++}`; }
       try {
-        await api.addTeam(this._mapName, { id: slug, name: "New Team", color: "blue", max_players: 20, min_players: 0 });
+        await api.addTeam(this._mapName, { id: slug, name, color, max_players: 20, min_players: 0 });
         const data = await api.fetchMapData(this._mapName);
         this._teams  = data.teams  ?? [];
         this._spawns = data.spawns ?? [];
