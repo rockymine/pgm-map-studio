@@ -34,6 +34,8 @@ def update_spawn(name: str, region_id: str):
     data, path = load_xml_data(name)
     try:
         spawn_editor.update_spawn_link(data, region_id, body)
+    except InvalidSpawnPayload as exc:
+        return jsonify({"error": str(exc)}), 400
     except SpawnNotFound as exc:
         return jsonify({"error": str(exc)}), 404
     save_xml_data(data, path)

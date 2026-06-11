@@ -63,6 +63,8 @@ def ungroup_region(name: str):
 @bp.route("/<name>/regions/restore", methods=["POST"])
 def restore_region(name: str):
     body     = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        return jsonify({"error": "request body must be a JSON object"}), 400
     snapshot = body.get("snapshot")
     if not snapshot:
         return jsonify({"error": "snapshot required"}), 400
@@ -156,10 +158,12 @@ def create_counterpart(name: str, region_id: str):
     omitted it falls back to the confirmed center in ``symmetry.json``.
     """
     body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        return jsonify({"error": "request body must be a JSON object"}), 400
     mode = str(body.get("mode", "")).strip()
     data, path = load_xml_data(name)
 
-    center = body.get("center") or {}
+    center = body.get("center") if isinstance(body.get("center"), dict) else {}
     cx, cz = center.get("cx"), center.get("cz")
     if cx is None or cz is None:
         sym_path = path.parent / "symmetry.json"
@@ -169,9 +173,13 @@ def create_counterpart(name: str, region_id: str):
             cz = sym_center.get("cz", sym_center.get("center_z"))
     if cx is None or cz is None:
         return jsonify({"error": "center {cx,cz} required (absent from body and symmetry.json)"}), 400
+    try:
+        cx, cz = float(cx), float(cz)
+    except (TypeError, ValueError):
+        return jsonify({"error": "center cx/cz must be numbers"}), 400
 
     try:
-        result = symmetry_authoring.create_counterpart(data, region_id, mode, float(cx), float(cz))
+        result = symmetry_authoring.create_counterpart(data, region_id, mode, cx, cz)
     except CounterpartError as exc:
         return jsonify({"error": str(exc)}), 400
     save_xml_data(data, path)

@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import re
 
+from pgm_map_studio.studio.services._payload import require_dict
+
 _RULE_FILTER_KEYS = (
     "enter", "leave", "block", "block_place", "block_break",
     "block_physics", "block_place_against", "use", "filter",
@@ -61,6 +63,7 @@ def _is_simple_ref(value: str) -> bool:
 
 
 def _validate(data: dict, payload: dict) -> None:
+    require_dict(payload, InvalidApplyRulePayload)
     if not any(payload.get(k) for k in (*_RULE_FILTER_KEYS, *_ACTION_KEYS, "region")):
         raise InvalidApplyRulePayload("apply-rule has no region, filter, or action")
     regions = data.get("regions", {})

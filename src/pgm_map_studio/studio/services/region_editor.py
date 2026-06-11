@@ -9,6 +9,7 @@ categories dynamically from spawn/wool references.
 """
 from __future__ import annotations
 
+from pgm_map_studio.studio.services._payload import require_dict
 from pgm_map_studio.studio.services.region_builder import (
     apply_coord_update,
     build_region_dict,
@@ -66,6 +67,7 @@ def create_region(data: dict, payload: dict) -> dict:
     Returns {"id": region_id}.
     Raises InvalidRegionPayload on bad input, RegionConflict on ID clash.
     """
+    require_dict(payload, InvalidRegionPayload)
     region_type = payload.get("type", "rectangle")
     if region_type not in SUPPORTED_CREATE_TYPES:
         raise InvalidRegionPayload(f"unsupported type {region_type!r}")
@@ -109,6 +111,7 @@ def group_regions(data: dict, payload: dict) -> dict:
     Returns {"id": compound_id, "bounds": {min_x, min_z, max_x, max_z}}.
     Raises InvalidRegionPayload, RegionNotFound, RegionConflict.
     """
+    require_dict(payload, InvalidRegionPayload)
     comp_type = (str(payload.get("type", "union")).strip() or "union")
     if comp_type not in _COMPOUND_TYPES:
         raise InvalidRegionPayload(f"{comp_type!r} is not a compound type")
@@ -159,6 +162,7 @@ def change_region_type(data: dict, region_id: str, payload: dict) -> dict:
     Returns {}.
     Raises InvalidRegionPayload, RegionNotFound.
     """
+    require_dict(payload, InvalidRegionPayload)
     new_type = str(payload.get("type", "")).strip()
     if not new_type:
         raise InvalidRegionPayload("type required")
@@ -180,6 +184,7 @@ def remove_from_group(data: dict, region_id: str, payload: dict) -> dict:
     Returns {}.
     Raises InvalidRegionPayload, RegionNotFound.
     """
+    require_dict(payload, InvalidRegionPayload)
     child_id = str(payload.get("child_id", "")).strip()
     if not child_id:
         raise InvalidRegionPayload("child_id required")
@@ -206,6 +211,7 @@ def set_base_child(data: dict, region_id: str, payload: dict) -> dict:
     Returns {}.
     Raises InvalidRegionPayload, RegionNotFound.
     """
+    require_dict(payload, InvalidRegionPayload)
     child_id = str(payload.get("child_id", "")).strip()
     if not child_id:
         raise InvalidRegionPayload("child_id required")
@@ -239,6 +245,7 @@ def ungroup_region(data: dict, payload: dict) -> dict:
     Returns {"child_ids": [...], "warning"?: str}.
     Raises InvalidRegionPayload, RegionNotFound.
     """
+    require_dict(payload, InvalidRegionPayload)
     region_id = str(payload.get("region_id", "")).strip()
     if not region_id:
         raise InvalidRegionPayload("region_id required")
@@ -378,6 +385,7 @@ def patch_region(data: dict, region_id: str, payload: dict) -> dict:
     changed, otherwise {}.
     Raises InvalidRegionPayload, RegionNotFound, RegionConflict.
     """
+    require_dict(payload, InvalidRegionPayload)
     bounds = payload.get("bounds") if isinstance(payload.get("bounds"), dict) else None
     coords = payload.get("coords") if isinstance(payload.get("coords"), dict) else None
     if not payload.get("id") and bounds is None and coords is None:

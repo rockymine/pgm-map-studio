@@ -29,6 +29,8 @@ def update_team(name: str, team_id: str):
     data, path = load_xml_data(name)
     try:
         result = team_editor.update_team(data, team_id, body)
+    except InvalidTeamPayload as exc:
+        return jsonify({"error": str(exc)}), 400
     except TeamNotFound as exc:
         return jsonify({"error": str(exc)}), 404
     except TeamConflict as exc:

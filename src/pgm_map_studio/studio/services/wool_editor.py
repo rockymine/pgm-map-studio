@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import uuid
 
+from pgm_map_studio.studio.services._payload import require_dict
+
 VALID_WOOL_COLORS = {
     "white", "orange", "magenta", "light_blue", "yellow", "lime",
     "pink", "gray", "silver", "cyan", "purple", "blue", "brown",
@@ -118,6 +120,7 @@ def _find_monument(wool: dict, mon_id: str) -> dict:
 # ── wool CRUD ─────────────────────────────────────────────────────────────────
 
 def add_wool(data: dict, payload: dict) -> dict:
+    require_dict(payload, InvalidWoolPayload)
     _ensure_grouped(data)
     color = _normalize_color(payload.get("color") or "white")
     if color not in VALID_WOOL_COLORS:
@@ -137,6 +140,7 @@ def add_wool(data: dict, payload: dict) -> dict:
 
 
 def update_wool(data: dict, wool_id: str, payload: dict) -> dict:
+    require_dict(payload, InvalidWoolPayload)
     _ensure_grouped(data)
     wool = _find_wool(data, wool_id)
     if "color" in payload:
@@ -173,6 +177,7 @@ def delete_wool(data: dict, wool_id: str) -> dict:
 # ── monument CRUD ─────────────────────────────────────────────────────────────
 
 def add_monument(data: dict, wool_id: str, payload: dict) -> dict:
+    require_dict(payload, InvalidWoolPayload)
     _ensure_grouped(data)
     wool = _find_wool(data, wool_id)
     team = str(payload.get("team") or "")
@@ -189,6 +194,7 @@ def add_monument(data: dict, wool_id: str, payload: dict) -> dict:
 
 
 def update_monument(data: dict, wool_id: str, mon_id: str, payload: dict) -> dict:
+    require_dict(payload, InvalidWoolPayload)
     _ensure_grouped(data)
     wool = _find_wool(data, wool_id)
     mon  = _find_monument(wool, mon_id)

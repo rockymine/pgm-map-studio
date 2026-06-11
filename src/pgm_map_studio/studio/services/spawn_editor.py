@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pgm_map_studio.studio.services._payload import coerce_float, require_dict
 from pgm_map_studio.studio.services.region_editor import _regions_dict
 
 
@@ -27,6 +28,7 @@ def _spawn_region_id(spawn: dict) -> str:
 
 
 def add_spawn_link(data: dict, payload: dict) -> dict:
+    require_dict(payload, InvalidSpawnPayload)
     region_id = (payload.get("region_id") or "").strip()
     if not region_id:
         raise InvalidSpawnPayload("region_id is required")
@@ -42,13 +44,14 @@ def add_spawn_link(data: dict, payload: dict) -> dict:
     spawns.append({
         "team":   str(payload.get("team", "")),
         "kit":    str(payload.get("kit", "")),
-        "yaw":    float(payload.get("yaw", 0.0)),
+        "yaw":    coerce_float(payload.get("yaw", 0.0), "yaw", InvalidSpawnPayload),
         "region": region_id,
     })
     return {}
 
 
 def update_spawn_link(data: dict, region_id: str, payload: dict) -> dict:
+    require_dict(payload, InvalidSpawnPayload)
     spawns: list = data.get("spawns", [])
     spawn = next((s for s in spawns if _spawn_region_id(s) == region_id), None)
     if spawn is None:
@@ -57,7 +60,7 @@ def update_spawn_link(data: dict, region_id: str, payload: dict) -> dict:
     if "team" in payload:
         spawn["team"] = str(payload["team"])
     if "yaw" in payload:
-        spawn["yaw"] = float(payload["yaw"])
+        spawn["yaw"] = coerce_float(payload["yaw"], "yaw", InvalidSpawnPayload)
     if "kit" in payload:
         spawn["kit"] = str(payload["kit"])
     return {}
@@ -74,6 +77,7 @@ def delete_spawn_link(data: dict, region_id: str) -> dict:
 
 def set_observer_spawn(data: dict, payload: dict) -> dict:
     """Set or replace the observer spawn (the <default> in <spawns>)."""
+    require_dict(payload, InvalidSpawnPayload)
     region_id = (payload.get("region_id") or "").strip()
     if not region_id:
         raise InvalidSpawnPayload("region_id is required")
@@ -84,7 +88,7 @@ def set_observer_spawn(data: dict, payload: dict) -> dict:
     data["observer_spawn"] = {
         "team": "",
         "kit":  str(payload.get("kit", "")),
-        "yaw":  float(payload.get("yaw", 0.0)),
+        "yaw":  coerce_float(payload.get("yaw", 0.0), "yaw", InvalidSpawnPayload),
         "region": region_id,
     }
     return {}

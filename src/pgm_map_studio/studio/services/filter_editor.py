@@ -16,6 +16,8 @@ Authoring rules (C3):
 """
 from __future__ import annotations
 
+from pgm_map_studio.studio.services._payload import require_dict
+
 # Known PGM filter types (mirror of pgm/deserializer.py::_decode_filter).
 _KNOWN_TYPES: frozenset[str] = frozenset({
     "all", "any", "one", "not", "deny", "allow",
@@ -137,6 +139,7 @@ def create_filter(data: dict, payload: dict) -> dict:
 
     Raises InvalidFilterPayload / FilterConflict.
     """
+    require_dict(payload, InvalidFilterPayload)
     filters = _filters(data)
     fid = (payload.get("id") or "").strip()
     if not fid:
@@ -155,6 +158,7 @@ def create_filter(data: dict, payload: dict) -> dict:
 
 def update_filter(data: dict, fid: str, payload: dict) -> dict:
     """Replace an existing filter's definition (id is immutable). Returns ``{"id"}``."""
+    require_dict(payload, InvalidFilterPayload)
     filters = _filters(data)
     if fid not in filters:
         raise FilterNotFound(f"no filter {fid!r}")

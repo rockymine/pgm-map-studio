@@ -72,8 +72,12 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   **write** routes (`PATCH setup/layout/overview`) now **validate input** against `SketchSetup`/
   `SketchLayout`/`SketchProject` → 400 on malformed bodies (gate only — the original partial payload
   is persisted). Verified no real sketch sub-shape 400s. `tests/studio/test_schema_wired_routes.py`.
-  *(Still: request-schemas for the map-editing write routes — regions/filters/teams/spawns have none
-  yet; fold C6 naming; B4a view de-clutter.)*
+  The **map-editing write routes** (teams/spawns/wools/filters/apply-rules/regions) are now **robust to
+  hostile input** — a non-object body or wrong-typed field is a clean **4xx, never a 500** (editor-layer
+  guards `services/_payload.py::require_dict`/`coerce_int`/`coerce_float` raising the editors' own
+  `Invalid*Payload`; missing `except` clauses on `update_team`/`update_spawn`/`create_counterpart`
+  fixed). `tests/studio/test_write_route_robustness.py`. *(Still: fold C6 naming; B4a view de-clutter.
+  Optional: pydantic request-models for these routes — the robustness gap is closed, so now a nicety.)*
 - [ ] **B4a. Region tree = view, not model (de-clutter).**
   Today `/regions/tree` renders the **raw PGM compound tree** verbatim: anonymous
   `union`/`complement`/`negative` scaffolding, voidmatchers, wrappers, and every synthetic

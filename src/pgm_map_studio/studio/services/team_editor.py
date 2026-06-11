@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pgm_map_studio.studio.services._payload import coerce_int, require_dict
+
 
 class TeamEditorError(Exception):
     pass
@@ -15,6 +17,7 @@ class InvalidTeamPayload(TeamEditorError):
 
 
 def add_team(data: dict, payload: dict) -> dict:
+    require_dict(payload, InvalidTeamPayload)
     team_id = (payload.get("id") or "").strip()
     if not team_id:
         raise InvalidTeamPayload("id is required")
@@ -27,8 +30,8 @@ def add_team(data: dict, payload: dict) -> dict:
         "id":          team_id,
         "name":        payload.get("name", team_id),
         "color":       payload.get("color", "red"),
-        "max_players": int(payload.get("max_players", 20)),
-        "min_players": int(payload.get("min_players", 0)),
+        "max_players": coerce_int(payload.get("max_players", 20), "max_players", InvalidTeamPayload),
+        "min_players": coerce_int(payload.get("min_players", 0), "min_players", InvalidTeamPayload),
     }
     if payload.get("dye_color"):
         team["dye_color"] = str(payload["dye_color"])
@@ -38,6 +41,7 @@ def add_team(data: dict, payload: dict) -> dict:
 
 
 def update_team(data: dict, team_id: str, payload: dict) -> dict:
+    require_dict(payload, InvalidTeamPayload)
     teams: list = data.get("teams", [])
     team = next((t for t in teams if t.get("id") == team_id), None)
     if team is None:
@@ -60,7 +64,7 @@ def update_team(data: dict, team_id: str, payload: dict) -> dict:
             team[field] = str(payload[field])
     for field in ("max_players", "min_players"):
         if field in payload:
-            team[field] = int(payload[field])
+            team[field] = coerce_int(payload[field], field, InvalidTeamPayload)
 
     return {"team": team}
 
