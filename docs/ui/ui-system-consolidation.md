@@ -129,4 +129,4 @@ Automated tests verify:
 4. Normalize generated author, list, coordinate, and inspector markup.
 5. Model Dashboard as the shared shell plus a documented master-detail layout.
 6. Replace `/design` with the compact production-backed gallery.
-7. Update `docs/ui-conventions.md`, run all tests, and visually verify each workflow.
+7. Update `docs/ui/ui-conventions.md`, run all tests, and visually verify each workflow.

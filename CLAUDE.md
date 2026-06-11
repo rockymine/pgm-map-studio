@@ -51,10 +51,10 @@ invariants done; ~920 py tests) lives in the plan + memory — **don't duplicate
 
 ## Implementation order — per activity (building an editor/sketch activity)
 
-1. Read the **requirements** (`docs/requirements/<file>.md` or `docs/cross-cutting.md`) + the relevant
+1. Read only the **activity-specific requirements** (`docs/requirements/<file>.md` or `docs/cross-cutting.md`) + the relevant
    **contract** (`docs/contracts/*`).
 2. **Check the tree** (`find src/`/`find tests/`) for what exists.
-3. Read the **design doc**: `docs/ui-conventions.md` (UI), `plans/editor-vision.md` (editor),
+3. Read the **design doc**: `docs/ui/ui-conventions.md` (UI), `plans/editor-vision.md` (editor),
    `docs/sketch-workflow.md` (sketch).
 4. **Clarify unknowns** with `AskUserQuestion`; update the requirement/contract if scope changes.
 5. **Write tests first** — pytest in `tests/` (mirroring `src/`) and/or Vitest, one test file per
@@ -132,15 +132,3 @@ File format + derivation rules are documented in the requirements files themselv
 
 Every package under `src/pgm_map_studio/` gets a `README.md`: purpose, module listing, key concepts,
 usage example. Keep it current when signatures change.
-
-## Reference Project — `/media/sf_repos/CTWAnalysisWithClaudeCode`
-
-The older implementation this was ported from. Copy **with caution** — different naming, plus
-analysis/match modules not relevant here. Run the old viewer:
-`cd /media/sf_repos/CTWAnalysisWithClaudeCode && /root/.venv-ctw/bin/python ctw.py viewer` (port 7891,
-kill `fuser -k 7891/tcp`). Full file classification + what's useful to copy: **`plans/00_assessment.md`**.
-
-Key differences when porting: it uses `map_data.json`/`map_context.json` (this project:
-`xml_data.json`/`islands.json`/`symmetry.json`); **bounding boxes are arrays `[minX,maxX,minZ,maxZ]`**
-there vs **`{min_x,min_z,max_x,max_z}` objects** here — always convert. Its in-repo `.venv` can't
-execute from the shared folder.

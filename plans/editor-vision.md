@@ -2,7 +2,7 @@
 
 ## Tool Identity
 
-The tool is an **editor**, not a viewer. The current "map_viewer" name is a historical artefact from when the goal was read-only analysis. As editing capabilities were added the name was never updated. Going forward the tool is consistently called the **editor**.
+The tool is an **editor**, not a viewer.
 
 The concept-first workflow (drawing a map from scratch) and the existing-map workflow share the same editor shell with different entry points. Region rules, filter logic, and symmetry behaviour are identical in both paths.
 
@@ -101,21 +101,6 @@ The full hierarchy view remains available because it is still useful for map ana
 
 ---
 
-## Notification System
-
-Four canonical types replace the current six fragmented mechanisms:
-
-| Type | Location | Trigger | Duration |
-|---|---|---|---|
-| **System Error** | Top bar | HTTP 4xx/5xx — human-readable message, never raw status codes | Until dismissed |
-| **Operation Toast** | Bottom-right | Successful save, export, pipeline run | 4 s auto-dismiss |
-| **Canvas Drawing Hint** | MapCanvas overlay | User enters draw/select mode | Until mode exits |
-| **Panel Validation Warning** | Inline in panel | Invalid field, missing required input, symmetry violation | Until resolved |
-
-Exact trigger mapping per activity step is to be defined during implementation.
-
----
-
 ## Entry Points
 
 ### Existing-map workflow
@@ -148,8 +133,6 @@ Every activity in the rail carries a **status indicator** with four states:
 
 Activities are freely navigable at any time once a map is loaded. Status indicators communicate progress without blocking navigation.
 
-The exact definition of what contributes to each state per activity — which fields are "required", what counts as a validation error — is to be specified per activity during implementation.
-
 ---
 
 ## Export
@@ -165,9 +148,3 @@ Key behaviours:
 - The original `map.xml` is never modified. Export always generates a new file from the current editor state.
 
 Panel layouts and the exact warning presentation are to be defined during implementation.
-
----
-
-## Open Questions
-
-1. **Filter grouping strategy**: Automatic inference from symmetry + team count, or user-guided grouping? Requires corpus analysis of the 300+ map dataset.
