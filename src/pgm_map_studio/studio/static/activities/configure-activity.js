@@ -520,8 +520,8 @@ export class ConfigureActivity {
     modeList.appendChild(noneRow);
 
     // Center values
-    const cx = this.#symmetryData.center?.center_x ?? 0;
-    const cz = this.#symmetryData.center?.center_z ?? 0;
+    const cx = this.#symmetryData.center?.cx ?? 0;
+    const cz = this.#symmetryData.center?.cz ?? 0;
     const inpX = document.getElementById("cfg-center-x");
     const inpZ = document.getElementById("cfg-center-z");
     if (inpX) inpX.value = cx;
@@ -553,8 +553,8 @@ export class ConfigureActivity {
   }
 
   #resetCenter() {
-    const cx = this.#symmetryData?.center?.center_x ?? 0;
-    const cz = this.#symmetryData?.center?.center_z ?? 0;
+    const cx = this.#symmetryData?.center?.cx ?? 0;
+    const cz = this.#symmetryData?.center?.cz ?? 0;
     const inpX = document.getElementById("cfg-center-x");
     const inpZ = document.getElementById("cfg-center-z");
     if (inpX) inpX.value = cx;
@@ -569,8 +569,8 @@ export class ConfigureActivity {
     if (this.#symChoice && this.#symChoice !== "none") payload.confirmed_type = this.#symChoice;
     const cx = parseFloat(document.getElementById("cfg-center-x")?.value ?? "");
     const cz = parseFloat(document.getElementById("cfg-center-z")?.value ?? "");
-    if (!isNaN(cx)) payload.center_x = cx;
-    if (!isNaN(cz)) payload.center_z = cz;
+    if (!isNaN(cx)) payload.cx = cx;
+    if (!isNaN(cz)) payload.cz = cz;
 
     const r = await fetch(`/api/configure/${this.#mapName}/symmetry`, {
       method: "PATCH",

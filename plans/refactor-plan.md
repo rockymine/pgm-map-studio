@@ -131,8 +131,13 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [x] **C3. Filters CRUD routes + service** (author-in-v1; reject-with-references on delete).
 - [x] **C4. Apply-rules CRUD routes + service** (stable `rule_<n>` synthetic ids, dropped on XML export).
 - [ ] **C5.** Wire region group/ungroup/restore/change-type into `api.js` (currently unwired).
-- [ ] **C6.** Unify bbox/center naming to `{min_x,min_z,max_x,max_z}` + `{cx,cz}` at the API
-  boundary; migrate `symmetry.json` `center_x/center_z` → `cx/cz`.
+- [x] **C6. bbox/center wire naming unified** to `{min_x,min_z,max_x,max_z}` + `{cx,cz}`. bbox was
+  already flat everywhere; the work was the **symmetry center** `center_x/center_z` → `cx/cz` (hard
+  cut, no fallback): writers (`symmetry/detection` `SymmetryResult.center`, `datatypes.center_cell`,
+  `pipeline` cache-reconstruct, `sketch_export._write_symmetry_json`) + readers (`configure`/`regions`
+  routes, `configure-activity`/`configure-renderer`/`overview-renderer` JS). Migrated the 30 live
+  `symmetry.json` in place (key rename preserves detected centers). *Out of scope: `Circle.center_x/
+  center_z` is a region's geometric center, a different concept — untouched.* py 1104 + js 143 green.
 - [ ] **C7.** CTW import-eligibility check (supported symmetric-CTW signal; flag AD/arcade/gimmick).
 - [x] **C8. Symmetric compound creation** — `group_regions` takes `type` (union/complement/intersect/negative);
   `change_region_type` test-backfilled.

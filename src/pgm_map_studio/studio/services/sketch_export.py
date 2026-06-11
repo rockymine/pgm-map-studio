@@ -480,7 +480,7 @@ def _write_symmetry_json(setup: dict, path: Path) -> None:
     data = {
         "status": "confirmed",
         "modes":  [{"type": mode, "detected": True, "confidence": 1.0}],
-        "center": {"center_x": cx, "center_z": cz},
+        "center": {"cx": cx, "cz": cz},
         "primary": {"type": mode, "confidence": 1.0},
     }
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")

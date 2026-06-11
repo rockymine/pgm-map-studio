@@ -168,9 +168,9 @@ def create_counterpart(name: str, region_id: str):
     if cx is None or cz is None:
         sym_path = path.parent / "symmetry.json"
         if sym_path.exists():
-            sym_center = json.loads(sym_path.read_text(encoding="utf-8")).get("center", {})
-            cx = sym_center.get("cx", sym_center.get("center_x"))
-            cz = sym_center.get("cz", sym_center.get("center_z"))
+            sym_center = json.loads(sym_path.read_text(encoding="utf-8")).get("center") or {}
+            cx = sym_center.get("cx")
+            cz = sym_center.get("cz")
     if cx is None or cz is None:
         return jsonify({"error": "center {cx,cz} required (absent from body and symmetry.json)"}), 400
     try:

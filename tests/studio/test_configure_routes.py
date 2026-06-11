@@ -33,7 +33,7 @@ def _write_symmetry(map_dir, status="unconfirmed"):
             {"type": "mirror_x", "detected": False, "confidence": 0.4},
             {"type": "mirror_z", "detected": False, "confidence": 0.4},
         ],
-        "center": {"center_x": 0.0, "center_z": 0.0},
+        "center": {"cx": 0.0, "cz": 0.0},
         "primary": {"type": "rot_90", "confidence": 1.0},
     }
     (map_dir / "symmetry.json").write_text(json.dumps(sym), encoding="utf-8")
@@ -243,10 +243,10 @@ def test_patch_symmetry_center_override(app_ctx):
     save_map_config(MapConfig(), map_dir)
     _write_symmetry(map_dir)
     client.patch("/api/configure/testmap/symmetry",
-                 json={"status": "confirmed", "center_x": 5.0, "center_z": -3.5})
+                 json={"status": "confirmed", "cx": 5.0, "cz": -3.5})
     sym = json.loads((map_dir / "symmetry.json").read_text())
-    assert sym["center"]["center_x"] == 5.0
-    assert sym["center"]["center_z"] == -3.5
+    assert sym["center"]["cx"] == 5.0
+    assert sym["center"]["cz"] == -3.5
 
 
 def test_patch_symmetry_invalid_type_returns_400(app_ctx):

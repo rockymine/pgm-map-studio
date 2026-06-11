@@ -236,5 +236,5 @@ def _load_symmetry_result(path: Path) -> SymmetryResult:
             )
             for e in d.get('modes', [])
         ],
-        center=d.get('center', {'center_x': 0.0, 'center_z': 0.0}),
+        center=d.get('center', {'cx': 0.0, 'cz': 0.0}),
     )

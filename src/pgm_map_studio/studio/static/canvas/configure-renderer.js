@@ -97,7 +97,7 @@ export class ConfigureRenderer {
     if (this.#symmetryData) {
       this.#symmetryData = {
         ...this.#symmetryData,
-        center: { center_x: cx, center_z: cz },
+        center: { cx, cz },
       };
     }
     this.#renderSymmetry();
@@ -198,8 +198,8 @@ export class ConfigureRenderer {
     const bbox    = this.#bbox;
     if (!center || !bbox) return;
 
-    const cx = center.center_x;
-    const cz = center.center_z;
+    const cx = center.cx;
+    const cz = center.cz;
 
     // Determine which type to draw axis for
     const type = sym._override_type

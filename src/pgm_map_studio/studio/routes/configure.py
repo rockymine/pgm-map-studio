@@ -141,11 +141,11 @@ def patch_symmetry(name: str):
     elif status == "none":
         sym["primary"] = None
 
-    if "center_x" in payload or "center_z" in payload:
+    if "cx" in payload or "cz" in payload:
         current = sym.get("center") or {}
         sym["center"] = {
-            "center_x": float(payload.get("center_x", current.get("center_x", 0.0))),
-            "center_z": float(payload.get("center_z", current.get("center_z", 0.0))),
+            "cx": float(payload.get("cx", current.get("cx", 0.0))),
+            "cz": float(payload.get("cz", current.get("cz", 0.0))),
         }
 
     sym_path.write_text(json.dumps(sym, indent=2), encoding="utf-8")

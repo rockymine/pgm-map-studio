@@ -72,7 +72,7 @@ def test_non_square_cells_are_not_square():
 
 def test_result_center_cell_derived_from_center():
     r = SymmetryResult(status='unconfirmed', modes=[],
-                       center={'center_x': 2.5, 'center_z': 2.5})
+                       center={'cx': 2.5, 'cz': 2.5})
     assert r.center_cell == '1x1'
 
 

@@ -69,7 +69,7 @@ def detect_from_data(
                 GlobalSymmetryEntry(t, False, 0.0)
                 for t in _CANDIDATES
             ],
-            center={'center_x': 0.0, 'center_z': 0.0},
+            center={'cx': 0.0, 'cz': 0.0},
         )
 
     bbox = _map_bbox(islands_data, exclude)
@@ -83,7 +83,7 @@ def detect_from_data(
     return SymmetryResult(
         status='unconfirmed',
         modes=modes,
-        center={'center_x': cx, 'center_z': cz},
+        center={'cx': cx, 'cz': cz},
     )
 
 

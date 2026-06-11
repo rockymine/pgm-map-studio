@@ -288,7 +288,7 @@ def test_export_symmetry_json_confirmed(sketch_env):
     sym = json.loads((out_dir / "symmetry.json").read_text())
     assert sym["status"] == "confirmed"
     assert sym["primary"]["type"] == "rot_180"
-    assert sym["center"]["center_x"] == 0.0
+    assert sym["center"]["cx"] == 0.0
 
 
 def test_export_xml_data_json_identity(sketch_env):

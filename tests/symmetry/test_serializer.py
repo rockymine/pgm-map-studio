@@ -16,7 +16,7 @@ def _result_with(entries, status='unconfirmed', center=None):
     return SymmetryResult(
         status=status,
         modes=entries,
-        center=center or {'center_x': 0.0, 'center_z': 0.0},
+        center=center or {'cx': 0.0, 'cz': 0.0},
     )
 
 
@@ -43,7 +43,7 @@ def test_required_keys_present():
 
 
 def test_center_cell_serialized():
-    result = _result_with([], center={'center_x': 2.5, 'center_z': 0.0})
+    result = _result_with([], center={'cx': 2.5, 'cz': 0.0})
     d = serializer.to_dict(result)
     assert d['center_cell'] == '1x2'
 

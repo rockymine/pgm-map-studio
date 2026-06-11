@@ -149,7 +149,7 @@ class SymmetryResult:
     """
     status: str
     modes: list[GlobalSymmetryEntry]
-    center: dict[str, float]   # {center_x, center_z}
+    center: dict[str, float]   # {cx, cz}
 
     @property
     def center_cell(self) -> str:
@@ -159,8 +159,8 @@ class SymmetryResult:
         is a derived label (see :func:`classify_center_cell`).
         """
         return classify_center_cell(
-            self.center.get('center_x', 0.0),
-            self.center.get('center_z', 0.0),
+            self.center.get('cx', 0.0),
+            self.center.get('cz', 0.0),
         )
 
     @property

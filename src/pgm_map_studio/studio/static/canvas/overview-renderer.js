@@ -107,7 +107,7 @@ export class OverviewRenderer {
       .sort((a, b) => b.confidence - a.confidence)[0];
 
     if (primary) {
-      const cx = center.center_x, cz = center.center_z;
+      const cx = center.cx, cz = center.cz;
       let lineStart, lineEnd;
       if (primary.type === "mirror_x") {
         lineStart = this.#toSvg(cx, min_z);
@@ -126,7 +126,7 @@ export class OverviewRenderer {
       }
     }
 
-    const pt = this.#toSvg(center.center_x, center.center_z);
+    const pt = this.#toSvg(center.cx, center.cz);
     this.#symmetryLayerEl.appendChild(makeEl("circle", {
       cx: pt.x, cy: pt.y, r: 5,
       fill: SYMMETRY_COLOR, stroke: "#fff", "stroke-width": "1.5", opacity,
