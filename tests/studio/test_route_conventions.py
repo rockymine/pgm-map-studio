@@ -19,6 +19,8 @@ def app():
 
 
 @pytest.mark.parametrize("method,url,endpoint", [
+    ("GET",    "/api/map/m/regions/authoring",     "map_api.get_regions_authoring"),
+    ("GET",    "/api/map/m/regions/tree",          "map_api.get_regions_tree"),
     ("PATCH",  "/api/map/m/regions/r1",            "regions.patch_region"),
     ("DELETE", "/api/map/m/regions/r1",            "regions.delete_region"),
     ("POST",   "/api/map/m/regions/group",         "regions.group_regions"),

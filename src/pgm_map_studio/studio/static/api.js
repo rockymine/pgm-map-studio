@@ -130,6 +130,13 @@ export async function fetchRegionsTree(mapName) {
   return r.json();
 }
 
+// B4a authoring split: { primitives, composed, bounding_box } — see region-authoring.md
+export async function fetchRegionsAuthoring(mapName) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/regions/authoring`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to load authoring regions (${r.status})`);
+  return r.json();
+}
+
 export async function fetchTopSurface(mapName) {
   const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/layers/top-surface`);
   if (!r.ok) throw new Error(`Failed to load surface layer (${r.status})`);

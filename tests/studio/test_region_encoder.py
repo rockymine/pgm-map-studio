@@ -202,3 +202,62 @@ def test_bounding_box_none_is_safe():
                      "min_x": 0, "min_z": 0, "max_x": 5, "max_z": 5}}
     result = _tree(regions, {}, None)
     assert result[0]["regions"][0]["id"] == "r"
+
+
+# ── authoring split (B4a) ─────────────────────────────────────────────────────
+
+from pgm_map_studio.studio.services.region_encoder import encode_region_authoring
+
+
+_AUTH_REGIONS = {
+    "red-spawn-floor": {"id": "red-spawn-floor", "type": "rectangle",
+                        "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 10, "z": 10}}},
+    "red-spawn-point": {"id": "red-spawn-point", "type": "point",
+                        "position": {"x": 5, "y": 64, "z": 5},
+                        "bounds_2d": {"min": {"x": 5, "z": 5}, "max": {"x": 5, "z": 5}}},
+    "red-spawn": {"id": "red-spawn", "type": "union",
+                  "children": ["red-spawn-floor", "red-spawn-point"],
+                  "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 10, "z": 10}}},
+}
+_AUTH_CATS = {"red-spawn-floor": "spawn", "red-spawn-point": "spawn", "red-spawn": "spawn"}
+_AUTH_RULES = [{"id": "rule_1", "region": "red-spawn", "enter": "only-red",
+                "block_break": "only-iron"}]
+
+
+def _auth():
+    return encode_region_authoring(_AUTH_REGIONS, _AUTH_CATS, _AUTH_RULES,
+                                   {"min_x": -20, "min_z": -20, "max_x": 30, "max_z": 30})
+
+
+def test_authoring_splits_primitives_from_composed():
+    split = _auth()
+    prims = {n["id"] for n in split["primitives"]}
+    comp = {n["id"] for n in split["composed"]}
+    assert prims == {"red-spawn-floor", "red-spawn-point"}   # leaf shapes
+    assert comp == {"red-spawn"}                              # the union
+
+
+def test_authoring_composed_lists_member_ids():
+    union = next(n for n in _auth()["composed"] if n["id"] == "red-spawn")
+    assert union["member_ids"] == ["red-spawn-floor", "red-spawn-point"]
+
+
+def test_authoring_wiring_attached_to_region():
+    union = next(n for n in _auth()["composed"] if n["id"] == "red-spawn")
+    events = {(w["event"], w["value"]) for w in union["wiring"]}
+    assert ("enter", "only-red") in events
+    assert ("block_break", "only-iron") in events
+    # an unwired primitive has no wiring
+    floor = next(n for n in _auth()["primitives"] if n["id"] == "red-spawn-floor")
+    assert floor["wiring"] == []
+
+
+def test_authoring_node_carries_category():
+    assert all(n["category"] == "spawn" for n in _auth()["primitives"])
+
+
+def test_authoring_primitive_has_coords_composed_has_polygon():
+    floor = next(n for n in _auth()["primitives"] if n["id"] == "red-spawn-floor")
+    assert floor["coords"]["min_x"] == 0          # primitives carry coords
+    union = next(n for n in _auth()["composed"] if n["id"] == "red-spawn")
+    assert union.get("polygon_2d") is not None     # composed carry a footprint

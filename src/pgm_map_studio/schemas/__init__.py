@@ -7,11 +7,14 @@ schemas are the persisted + view shapes at the API boundary. See
 """
 
 from pgm_map_studio.schemas.view import (
+    AuthoringNode,
     Bounds,
     Polygon2d,
+    RegionAuthoringResponse,
     RegionGroup,
     RegionTreeNode,
     RegionTreeResponse,
+    WiringEntry,
 )
 from pgm_map_studio.schemas.persisted import (
     ApplyRule,
@@ -51,6 +54,7 @@ from pgm_map_studio.schemas.sketch import (
 TS_CONTRACT_MODELS = [
     # view (B4)
     Bounds, Polygon2d, RegionTreeNode, RegionGroup, RegionTreeResponse,
+    WiringEntry, AuthoringNode, RegionAuthoringResponse,
     # persisted (B1)
     XZ, XYZ, Bounds2d, Team, Author, KitItem, KitArmor, Kit, Region, Spawn,
     Monument, Wool, DropItem, Spawner, Renewable, BlockDropRule, Filter,

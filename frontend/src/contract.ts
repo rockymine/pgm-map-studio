@@ -37,6 +37,30 @@ export interface RegionTreeResponse {
   bounding_box?: Bounds | null;
 }
 
+export interface WiringEntry {
+  event: string;
+  value: string;
+  rule_id?: string | null;
+}
+
+export interface AuthoringNode {
+  id: string;
+  type: string;
+  label: string;
+  category: string;
+  bounds: Bounds | null;
+  coords: Record<string, unknown> | null;
+  member_ids?: string[];
+  wiring?: WiringEntry[];
+  polygon_2d?: Polygon2d | null;
+}
+
+export interface RegionAuthoringResponse {
+  primitives: AuthoringNode[];
+  composed: AuthoringNode[];
+  bounding_box?: Bounds | null;
+}
+
 export interface XZ {
   x?: number | string | null;
   z?: number | string | null;

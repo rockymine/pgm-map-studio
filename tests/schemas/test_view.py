@@ -85,3 +85,23 @@ def test_generated_ts_contract_is_up_to_date():
     assert actual == expected, (
         "frontend/src/contract.ts is stale — run `python tools/generate_ts_contract.py`"
     )
+
+
+# ── authoring split (B4a) conformance ────────────────────────────────────────────
+
+def test_authoring_encoder_output_validates_against_schema():
+    from pgm_map_studio.studio.services.region_encoder import encode_region_authoring
+    from pgm_map_studio.schemas import RegionAuthoringResponse
+    regions = {
+        "floor": {"id": "floor", "type": "rectangle",
+                  "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 8, "z": 8}}},
+        "room":  {"id": "room", "type": "union", "children": ["floor"],
+                  "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 8, "z": 8}}},
+    }
+    cats = {"floor": "spawn", "room": "spawn"}
+    rules = [{"id": "r1", "region": "room", "enter": "only-red"}]
+    bbox = {"min_x": -10, "min_z": -10, "max_x": 20, "max_z": 20}
+    split = encode_region_authoring(regions, cats, rules, bbox)
+    parsed = RegionAuthoringResponse.model_validate({**split, "bounding_box": bbox})
+    assert {n.id for n in parsed.primitives} == {"floor"}
+    assert parsed.composed[0].wiring[0].event == "enter"

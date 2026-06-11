@@ -59,4 +59,33 @@ class RegionTreeResponse(BaseModel):
     bounding_box: Optional[Bounds] = None
 
 
+# ── authoring split (B4a) — mirrors `region_encoder.encode_region_authoring` ──────
+
+class WiringEntry(BaseModel):
+    """One apply-rule event wired onto a region (e.g. `enter → only-blue`)."""
+    event: str            # enter / block / block_break / kit / …
+    value: str            # filter id, region id, or literal
+    rule_id: Optional[str] = None
+
+
+class AuthoringNode(BaseModel):
+    """A flat authoring building block — a primitive or a composed structure."""
+    id: str
+    type: str
+    label: str
+    category: str
+    bounds: Optional[Bounds]
+    coords: Optional[dict[str, Any]]
+    member_ids: list[str] = []          # composed: the region ids it groups
+    wiring: list[WiringEntry] = []       # apply-rule events on this region
+    polygon_2d: Optional[Polygon2d] = None
+
+
+class RegionAuthoringResponse(BaseModel):
+    """The `GET /api/map/:name/regions/authoring` payload: the primitives/composed split."""
+    primitives: list[AuthoringNode]
+    composed: list[AuthoringNode]
+    bounding_box: Optional[Bounds] = None
+
+
 RegionTreeNode.model_rebuild()

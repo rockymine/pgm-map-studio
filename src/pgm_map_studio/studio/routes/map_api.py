@@ -10,8 +10,11 @@ from pgm_map_studio.studio.services.region_categorizer import (
     categorize_regions,
     derive_region_facets,
 )
-from pgm_map_studio.studio.services.region_encoder import encode_region_tree
-from pgm_map_studio.schemas import RegionTreeResponse
+from pgm_map_studio.studio.services.region_encoder import (
+    encode_region_authoring,
+    encode_region_tree,
+)
+from pgm_map_studio.schemas import RegionAuthoringResponse, RegionTreeResponse
 from pgm_map_studio.studio.services.wool_editor import _ensure_grouped
 from pgm_map_studio.studio.services.xml_data import load_xml_data, save_xml_data
 
@@ -108,6 +111,18 @@ def get_regions_tree(name: str):
     # Serialize through the schema: it validates the encoder output and produces
     # the exact shape the generated TS contract (RegionTreeResponse) expects.
     payload = RegionTreeResponse.model_validate({"groups": groups, "bounding_box": bounding_box})
+    return jsonify(payload.model_dump())
+
+
+@bp.route("/<name>/regions/authoring")
+def get_regions_authoring(name: str):
+    """B4a authoring split: flat primitives + composed (with wiring), per region-authoring.md."""
+    data, _ = load_xml_data(name)
+    regions      = data.get("regions", {})
+    bounding_box = _islands_bounding_box(get_output_root() / name / "islands.json")
+    categories   = categorize_regions(data)
+    split = encode_region_authoring(regions, categories, data.get("apply_rules", []), bounding_box)
+    payload = RegionAuthoringResponse.model_validate({**split, "bounding_box": bounding_box})
     return jsonify(payload.model_dump())
 
 

@@ -30,6 +30,19 @@ _POLYGON_TYPES = frozenset({
     "mirror", "translate",
 })
 
+# Authoring split (B4a, docs/contracts/region-authoring.md): a concrete leaf shape
+# is a *primitive* (a building block); everything else (compound / transform /
+# half-space / reference) is a *composed* structure.
+_PRIMITIVE_TYPES = frozenset({
+    "rectangle", "cuboid", "cylinder", "circle", "sphere", "block", "point",
+})
+
+# apply-rule event keys whose value is a filter/region/literal wired onto a region.
+_EVENT_KEYS = (
+    "enter", "leave", "block", "block_break", "block_place", "block_physics",
+    "block_place_against", "use", "filter", "kit", "lend_kit", "velocity", "message",
+)
+
 
 # ── reference resolution ──────────────────────────────────────────────────────
 # Compound children and transform sources are persisted as string ids into the
@@ -435,6 +448,19 @@ def _encode_node(region: dict, bounds: tuple | None = None,
 
 # ── public API ────────────────────────────────────────────────────────────────
 
+def _parse_bounds(bounding_box: dict | None) -> tuple | None:
+    """{min_x,min_z,max_x,max_z} → (min_x,min_z,max_x,max_z) floats, or None."""
+    if not bounding_box:
+        return None
+    try:
+        return (
+            float(bounding_box["min_x"]), float(bounding_box["min_z"]),
+            float(bounding_box["max_x"]), float(bounding_box["max_z"]),
+        )
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def encode_region_tree(
     regions_dict: dict,
     categories: dict,
@@ -450,17 +476,7 @@ def encode_region_tree(
     Returns:
         [{name, label, regions: [node, ...]}, ...] — only non-empty categories.
     """
-    bounds: tuple | None = None
-    if bounding_box:
-        try:
-            bounds = (
-                float(bounding_box["min_x"]),
-                float(bounding_box["min_z"]),
-                float(bounding_box["max_x"]),
-                float(bounding_box["max_z"]),
-            )
-        except (KeyError, TypeError, ValueError):
-            bounds = None
+    bounds = _parse_bounds(bounding_box)
 
     named_child_ids: set[str] = set()
     for region in regions_dict.values():
@@ -490,3 +506,96 @@ def encode_region_tree(
         for cat in ordered
         if cat in groups
     ]
+
+
+# ── authoring split (B4a) ─────────────────────────────────────────────────────
+# A flat, two-facet view that keeps the ground truth visible: `primitives` (the
+# leaf building blocks you drew) and `composed` (the structures you grouped them
+# into, each annotated with the apply-rule wiring on it). The nested tree above is
+# the demoted "raw" view. See docs/contracts/region-authoring.md.
+
+def _member_ids(region: dict) -> list[str]:
+    """The region ids a structure composes — children, transform source, or ref."""
+    t = region.get("type")
+    if t in ("union", "negative", "complement", "intersect"):
+        ids = []
+        for c in region.get("children", []):
+            if isinstance(c, str):
+                ids.append(c)
+            elif isinstance(c, dict) and c.get("id"):
+                ids.append(c["id"])
+        return ids
+    if t in ("mirror", "translate"):
+        sid = region.get("source_id") or region.get("ref_region_id") or ""
+        return [sid] if sid else []
+    if t == "reference":
+        rid = region.get("ref_id") or ""
+        return [rid] if rid else []
+    return []
+
+
+def _wiring_for(region_id: str, apply_rules: list | None) -> list[dict]:
+    """The apply-rule events wired onto `region_id`: [{event, value, rule_id}]."""
+    out: list[dict] = []
+    for rule in apply_rules or []:
+        if not isinstance(rule, dict) or rule.get("region") != region_id:
+            continue
+        for k in _EVENT_KEYS:
+            v = rule.get(k)
+            if v:
+                out.append({"event": k, "value": str(v), "rule_id": rule.get("id")})
+    return out
+
+
+def _authoring_node(region: dict, region_id: str, category: str,
+                    bounds: tuple | None, registry: dict,
+                    apply_rules: list | None) -> dict:
+    t = region.get("type", "unknown")
+    node: dict = {
+        "id":         region_id,
+        "type":       t,
+        "label":      region_id or f"({t})",
+        "category":   category,
+        "bounds":     _encode_bounds(region),
+        "coords":     _encode_coords(region),
+        "member_ids": _member_ids(region),
+        "wiring":     _wiring_for(region_id, apply_rules),
+    }
+    if bounds is not None and t in _POLYGON_TYPES:
+        polygon_2d = _compute_polygon_2d(region, bounds, registry)
+        if polygon_2d is not None:
+            node["polygon_2d"] = polygon_2d
+            if node["bounds"] is None:
+                xs = [p[0] for p in polygon_2d["exterior"]]
+                zs = [p[1] for p in polygon_2d["exterior"]]
+                if xs:
+                    node["bounds"] = {"min_x": min(xs), "min_z": min(zs),
+                                      "max_x": max(xs), "max_z": max(zs)}
+    return node
+
+
+def encode_region_authoring(
+    regions_dict: dict,
+    categories: dict,
+    apply_rules: list | None = None,
+    bounding_box: dict | None = None,
+) -> dict:
+    """Split the region registry into authoring facets (B4a).
+
+    Returns ``{"primitives": [...], "composed": [...]}`` — flat lists of every
+    *named* region, classified structurally (leaf shape vs structure), each node
+    carrying its derived `category` and (composed) `member_ids` + `wiring`. The
+    frontend filters per activity by `category`. The nested `encode_region_tree`
+    stays as the demoted raw view.
+    """
+    bounds = _parse_bounds(bounding_box)
+    primitives: list[dict] = []
+    composed: list[dict] = []
+    for region_id, region in regions_dict.items():
+        cat = categories.get(region_id, "other")
+        if cat not in _CATEGORY_ORDER:
+            cat = "other"
+        node = _authoring_node(region, region_id, cat, bounds, regions_dict, apply_rules)
+        target = primitives if region.get("type") in _PRIMITIVE_TYPES else composed
+        target.append(node)
+    return {"primitives": primitives, "composed": composed}

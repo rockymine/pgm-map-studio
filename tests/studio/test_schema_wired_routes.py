@@ -56,6 +56,30 @@ def test_regions_tree_returns_schema_conformant_payload(client):
     assert any(n.id == "blue-spawn" for g in parsed.groups for n in g.regions)
 
 
+def test_regions_authoring_returns_split_payload(client):
+    c, root = client
+    map_dir = root / "demo"
+    map_dir.mkdir()
+    (map_dir / "xml_data.json").write_text(json.dumps({
+        "regions": {
+            "floor": {"id": "floor", "type": "rectangle",
+                      "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 10, "z": 4}}},
+            "spawn": {"id": "spawn", "type": "union", "children": ["floor"],
+                      "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 10, "z": 4}}},
+        },
+        "apply_rules": [{"id": "r1", "region": "spawn", "enter": "only-blue"}],
+    }), encoding="utf-8")
+    (map_dir / "islands.json").write_text(json.dumps([{"bounds": [-50, -50, 50, 50]}]), "utf-8")
+
+    resp = c.get("/api/map/demo/regions/authoring")
+    assert resp.status_code == 200
+    from pgm_map_studio.schemas import RegionAuthoringResponse
+    parsed = RegionAuthoringResponse.model_validate(resp.get_json())
+    assert {n.id for n in parsed.primitives} == {"floor"}
+    spawn = parsed.composed[0]
+    assert spawn.member_ids == ["floor"] and spawn.wiring[0].value == "only-blue"
+
+
 # ── /api/sketch/<sid> → SketchProject (bezier alias must survive) ────────────────
 
 def _write_sketch(root, sid):

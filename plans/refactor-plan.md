@@ -42,13 +42,12 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [x] **B3. Sketch `sketch.json` typed** — `schemas/sketch.py` (`SketchProject`), bezier-faithful.
 - [x] **B4. `/regions/tree` view-model + TS pipeline** — `schemas/view.py` → generated `contract.ts`;
   routes wired through the schemas (GET serialize, write validate/reject-4xx).
-- [~] **B4a. Region authoring surface (view, not tree).** **Design done** —
-  `docs/contracts/region-authoring.md`: the tree is the *model* and loses the ground truth as you nest;
-  the fix is a **split view-model** — `primitives` (leaf building blocks) / `composed` (structures +
-  their wiring) / `raw` (the tree, demoted) — scoped per step by B5 role facets, in stacked left-sidebar
-  sections, with the author-groups → engine-wires (C9 templates) loop. *Remaining (split design↔build):
-  **now** = `region_encoder` gains the primitives/composed/raw split (backend, survives D1); **D1 (React)**
-  = the stacked panels + context-menu/keyboard-shortcut/command layer, shared with B6 undo/redo.*
+- [~] **B4a. Region authoring surface (view, not tree).** **Design + backend split done** —
+  `docs/contracts/region-authoring.md`; `region_encoder.encode_region_authoring` → `primitives`
+  (leaf building blocks) / `composed` (structures + `member_ids` + apply-rule `wiring`), flat, per-step
+  `category`; typed `RegionAuthoringResponse` (→ `contract.ts`), `GET /regions/authoring`,
+  `api.fetchRegionsAuthoring`. Corpus-smoke 345/345; encoder + conformance + route tests. *Remaining
+  (D1/React): the stacked split panels + context-menu/keyboard-shortcut/command layer (shared with B6).*
 - [x] **B5. Region categorization derivation** (`region_categorizer.py`; two-facet model — see
   `docs/contracts/region-categorization.md`).
 - [ ] **B6. Editor undo/redo (command model).** A real editor needs undo/redo of user actions.
