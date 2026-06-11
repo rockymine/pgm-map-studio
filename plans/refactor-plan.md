@@ -66,8 +66,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   `RegionGroup`/`RegionTreeResponse`, code-first match to `region_encoder`) + the **TS pipeline**:
   `tools/generate_ts_contract.py` → `frontend/src/contract.ts`, with a conformance test (encoder
   output validates) and a no-drift test (checked-in TS == generator). This is the schemas/TS
-  foundation B1/B3 build on. *(Still: wire the route to validate/serialize via the model; fold C6
-  naming; persisted shapes = B1.)*
+  foundation B1/B3 build on. **Live routes now serialize through the schemas** (load-bearing, not
+  just descriptive): `/api/map/<name>/regions/tree` → `RegionTreeResponse`, `/api/sketch/<sid>` →
+  `SketchProject` (dumped `by_alias=True` so the bezier `in` key survives);
+  `tests/studio/test_schema_wired_routes.py`. *(Still: fold C6 naming; B4a view de-clutter.)*
 - [ ] **B4a. Region tree = view, not model (de-clutter).**
   Today `/regions/tree` renders the **raw PGM compound tree** verbatim: anonymous
   `union`/`complement`/`negative` scaffolding, voidmatchers, wrappers, and every synthetic

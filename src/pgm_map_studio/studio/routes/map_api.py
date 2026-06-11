@@ -11,6 +11,7 @@ from pgm_map_studio.studio.services.region_categorizer import (
     derive_region_facets,
 )
 from pgm_map_studio.studio.services.region_encoder import encode_region_tree
+from pgm_map_studio.schemas import RegionTreeResponse
 from pgm_map_studio.studio.services.wool_editor import _ensure_grouped
 from pgm_map_studio.studio.services.xml_data import load_xml_data, save_xml_data
 
@@ -104,7 +105,10 @@ def get_regions_tree(name: str):
     bounding_box = _islands_bounding_box(get_output_root() / name / "islands.json")
     categories   = categorize_regions(data)
     groups       = encode_region_tree(regions, categories, bounding_box)
-    return jsonify({"groups": groups, "bounding_box": bounding_box})
+    # Serialize through the schema: it validates the encoder output and produces
+    # the exact shape the generated TS contract (RegionTreeResponse) expects.
+    payload = RegionTreeResponse.model_validate({"groups": groups, "bounding_box": bounding_box})
+    return jsonify(payload.model_dump())
 
 
 @bp.route("/<name>/layers/top-surface")

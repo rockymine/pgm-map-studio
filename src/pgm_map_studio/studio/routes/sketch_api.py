@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import Blueprint, jsonify, request
 
 from pgm_map_studio.studio.services import sketch_data, sketch_export
+from pgm_map_studio.schemas import SketchProject
 
 bp = Blueprint("sketch_api", __name__, url_prefix="/api/sketch")
 
@@ -21,9 +22,12 @@ def create():
 @bp.route("/<sid>")
 def get(sid: str):
     try:
-        return jsonify(sketch_data.load_sketch(sid))
+        data = sketch_data.load_sketch(sid)
     except KeyError:
         return jsonify({"error": "Sketch not found"}), 404
+    # Serialize through the schema so the response matches the TS contract.
+    # by_alias=True is required to emit the bezier "in" key (field is in_).
+    return jsonify(SketchProject.model_validate(data).model_dump(by_alias=True))
 
 
 @bp.route("/<sid>/setup", methods=["PATCH"])
