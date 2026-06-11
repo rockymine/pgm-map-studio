@@ -122,6 +122,51 @@ When teams exist + spawn safely, and wools can be obtained, defended, and captur
 the map is **valid**. Everything else regions can do (renewables, kits, mechanical exceptions) is
 optional polish layered on top.
 
+## Composites, categories & cross-step references
+
+A composite often pulls in regions from a **different step**, so its members span
+categories. Do **not** derive a composite's category from its members — derive it
+from **its role (the rule wired onto it) + the step that authors it**. Membership
+is allowed to cross steps freely.
+
+**The canonical case — spawn-protection carves out the monuments inside it.**
+In `annealing_iv` (4-team; each team captures its 3 enemy wools at monuments
+**inside its own spawn**) the spawn region is a *complement*, not a union:
+
+```
+spawns                        (union)        block_break = only-iron   ← spawn edit-protection
+  spawns__anon_0              (complement)   = spawn-areas − 12 monuments
+    spawns__anon_0__anon_0    (union)        blue/red/green/yellow-spawn   [spawn]
+    blue-team-red-wool … (×12) (block)       the monuments                 [monument]
+```
+
+The *why* is the rule: `block_break = only-iron` would block **placing the captured
+wool** on a monument sitting inside spawn — so the author **subtracts the monuments**
+from the protected region. The monuments aren't *grouped into* spawn; they're
+**holes** in it (geometry, not concept). Verified: all 12 monument blocks fall
+inside the four spawn areas. (Oracle: `tests/fixtures/region_authoring/annealing_iv.json`;
+`outback` does the same — `spawns__anon_0` = `spawns − monuments`.) So `spawns` is a
+**Spawns-step** structure even though it references **Objectives-step** monuments.
+
+**This makes two things first-class in the authoring UI:**
+
+- **Two member roles, not one.** Grouping isn't only union ("combine these"); it's also
+  **subtract** ("this area, *minus* these carve-outs"). The group affordance needs a
+  `union members` set and a `subtracted carve-outs` set (the complement's holes), which
+  are usually the cross-step references.
+- **Cross-step references.** Regions are a **shared pool**. Composing a structure in one
+  step, you **search + reference an existing region** (from any step) as a member — the
+  referenced region keeps its **home step** (the monument still belongs to Objectives;
+  it just appears as a carve-out in the spawn structure). The "Primitives (this step)"
+  panel stays step-scoped; the **reference search spans all regions**. This is how the
+  split steps (Spawns ⟂ Objectives) still compose across each other.
+
+**Engine hint.** Because "spawn − monuments-inside-spawn" (and "build − objects-inside-
+build") is mechanical and recurring, the spawn-protection / build templates can
+**auto-detect regions whose footprint falls inside the protected area and offer the
+carve-out**. The author states intent ("protect this spawn"); the engine proposes the
+subtractions — so the cross-step reference rarely has to be done by hand.
+
 ## Command & shortcut model (with B6)
 
 Group / ungroup / set-base-child / wire-template / delete are **commands**. A context menu and a
