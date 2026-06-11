@@ -94,7 +94,18 @@ preset-first is the default.
   (see `docs/requirements/editor-build-regions.md`). Max build height is set here (already supported).
 - **Groups:** union the build rectangles → take the `negative` (the not-build / void-affect area);
   some maps need `complement`/intersect for awkward shapes.
-- **Wiring:** `block_place = deny(void)` (+ break) on the negative.
+- **Wiring (the two halves differ):**
+  - `block_place = not(void)` — you **cannot build into the void** (no bridging across the gaps).
+  - `block_break` is **not** a blanket deny. By default a block with no solid block below it (at
+    `y=0`) can't be broken — but terrain/trees often overhang the void, so maps allow breaking a
+    **curated material set** there. The real filter is
+    `any( all( any(leaves, log[, tnt]), void ), not(void) )` — *"break allowed if it's a tree
+    material **and** in the void, **or** it isn't in the void at all."* So an overhanging tree can be
+    cleared to cross, while the void floor itself stays unbreakable. (Example: `docs/xml_template.xml`
+    `block-break-void-filter`; `annealing_iv` adds `tnt` to the allowlist.)
+- **Engine:** the build/void template carries the breakable-material allowlist (default `leaves`/`log`,
+  author-extendable) — same author-groups → engine-wires loop; the author shouldn't hand-write the
+  nested `any/all/void` filter.
 
 ### Objectives
 - **Primitives:** the wool item **spawn location**; the **monument** (always a `block` — where a team
