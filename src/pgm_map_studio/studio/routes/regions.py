@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import json
+
 from flask import Blueprint, jsonify, request
 
-from pgm_map_studio.studio.services import region_editor
+from pgm_map_studio.studio.services import region_editor, symmetry_authoring
 from pgm_map_studio.studio.services.region_editor import (
     InvalidRegionPayload,
     RegionConflict,
     RegionNotFound,
 )
+from pgm_map_studio.studio.services.symmetry_authoring import CounterpartError
 from pgm_map_studio.studio.services.xml_data import load_xml_data, save_xml_data
 
 bp = Blueprint("regions", __name__, url_prefix="/api/map")
@@ -143,3 +146,33 @@ def set_base_child(name: str, region_id: str):
         return jsonify({"error": str(exc)}), 404
     save_xml_data(data, path)
     return jsonify({"ok": True, **result})
+
+
+@bp.route("/<name>/region/<region_id>/counterpart", methods=["POST"])
+def create_counterpart(name: str, region_id: str):
+    """Create the symmetry counterpart(s) of a region (C13).
+
+    Body: ``{"mode": "<mode>", "center": {"cx", "cz"}}``. When ``center`` is
+    omitted it falls back to the confirmed center in ``symmetry.json``.
+    """
+    body = request.get_json(silent=True) or {}
+    mode = str(body.get("mode", "")).strip()
+    data, path = load_xml_data(name)
+
+    center = body.get("center") or {}
+    cx, cz = center.get("cx"), center.get("cz")
+    if cx is None or cz is None:
+        sym_path = path.parent / "symmetry.json"
+        if sym_path.exists():
+            sym_center = json.loads(sym_path.read_text(encoding="utf-8")).get("center", {})
+            cx = sym_center.get("cx", sym_center.get("center_x"))
+            cz = sym_center.get("cz", sym_center.get("center_z"))
+    if cx is None or cz is None:
+        return jsonify({"error": "center {cx,cz} required (absent from body and symmetry.json)"}), 400
+
+    try:
+        result = symmetry_authoring.create_counterpart(data, region_id, mode, float(cx), float(cz))
+    except CounterpartError as exc:
+        return jsonify({"error": str(exc)}), 400
+    save_xml_data(data, path)
+    return jsonify({"ok": True, **result}), 201

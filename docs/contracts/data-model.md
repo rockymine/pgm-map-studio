@@ -313,6 +313,7 @@ GET /api/configure/:name/layers/:layer_type/pixels|block-types
 POST /api/map/:name/regions ; POST /api/map/:name/regions/group|ungroup|restore
 PATCH|DELETE /api/map/:name/region/:region_id
 POST /api/map/:name/region/:region_id/change-type|remove-from-group|set-base-child
+POST /api/map/:name/region/:region_id/counterpart   # C13: symmetry counterpart(s) from a source
 
 # teams / spawns / objectives
 POST /api/map/:name/teams ; PATCH|DELETE /api/map/:name/teams/:team_id
