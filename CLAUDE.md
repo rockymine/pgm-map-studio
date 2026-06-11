@@ -14,9 +14,8 @@ Mid **contract-first refactor** on branch `refactor/contract-first`: stabilize t
   rationale / requirements / process). Start here when unsure where something belongs.
 - **`docs/contracts/`** — the contract (the *what*): `data-model.md` (domain +
   API surface), `geometry.md` (coordinate/transform math + converters), `region-categorization.md`,
-  `validation-invariants.md`, `frontend-stack-decision.md` (D1 target stack),
-  `refactor-constraints-and-pitfalls.md`. (Codec/service signatures live in the code —
-  `pgm.serializer`/`deserializer` + `studio/services/`.)
+  `validation-invariants.md`, `frontend-stack-decision.md` (D1 target stack).
+  (Codec/service signatures live in the code — `pgm.serializer`/`deserializer` + `studio/services/`.)
 
 Status (A round-trip complete, harness 350/350; B5 categorization, C3/C4 CRUD, B7 symmetry, B11
 invariants done; ~920 py tests) lives in the plan + memory — **don't duplicate it here.**

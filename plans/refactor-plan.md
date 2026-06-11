@@ -4,6 +4,10 @@ Branch: `refactor/contract-first`. Spec: `docs/contracts/data-model.md`
 (the *what*); this file is the *ordered how/status*. Status legend: `[ ]` todo, `[~]` in progress,
 `[x]` done. Keep this file current as work lands.
 
+**Conventions:** add a new task under the right workstream (A–E). Open `[ ]` items stay full (they
+spec the work); **collapse a task to its one-line subject once it's `[x]` done** — the detail lives
+in git + the auto-memory, not here.
+
 The **round-trip repair** is pulled ahead of typed models because the data model (§13) marks it a
 hard prerequisite and it was the keystone broken behaviour.
 
@@ -13,66 +17,17 @@ hard prerequisite and it was the keystone broken behaviour.
 
 Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tests green.
 
-- [x] **A1. Grouped-wool deserializer.** `deserializer.from_dict` ungroups grouped wool JSON into
-  the flat `Wool` domain list (one `Wool` per monument); legacy flat format still handled. Fixed
-  the 4 failing round-trip tests; added a 4-team multi-monument regression test (annealing_iv).
-  Validated: full `map.xml → json → MapXml → map.xml` now passes 344/345 (only `segment`'s
-  malformed-coord source defect fails).
-- [x] **A2. Deterministic wool/monument IDs in serializer.** `_encode_wools_grouped` now derives
-  IDs from content (wool = color slug; monument = `color-team`); no more per-serialize `uuid4`.
-- [x] **A3. Region `source_id` resolution in `region_encoder`.** Mirror/translate (and compound
-  string-id children) now resolve via `source_id`/registry in both the node builder and the
-  geometry (`_dict_to_shapely`); `_encode_coords` emits `source_id`. Added a regression test.
-  Validated: every transform with a non-empty `source_id` resolves (87/87 in registry); corpus
-  transform polygons went 0% → 62% (remainder = empty-source_id, see A9).
-- [x] **A4. Forbid inline-dict region children in `region_editor`.** `group_regions` now stores
-  string-id children; `ungroup`/`remove_from_group`/`set_base_child` use the str|dict-tolerant
-  `_child_id` (they previously crashed on the corpus's string-id unions). Added tests. Verified:
-  an editor-grouped union now round-trips through deserialize → `to_xml` (was impossible before).
-  Also generalized `ungroup` (decision): dissolves any compound type, one level only, with a
-  `warning` when dissolving an ordered compound (complement/negative). Contract §14 updated.
-- [x] **A5. Spawn-as-reference in serializer.** `_encode_spawn` now emits `region` as a string id
-  into the flat registry (id-less anonymous regions fall back to inline). Consumers were already
-  string-tolerant (`spawn_editor`, `teams-panel`). Also fixed a latent parser gap: a map with
-  inline `<spawn><region>` but no `<regions>` block now exposes those regions in `data.regions`
-  (added `region_parser.registry()`). Validated: 1175/1175 spawn regions serialize as resolved
-  string refs, zero duplication (was 270 duplicated); round-trip faithful.
-- [x] **A6. Align `wool_editor` IDs to the deterministic scheme** (consistency with A2). Wool id =
-  colour slug, monument id = `colour-team` (matches the serializer); no more `uuid4`. Ids are
-  re-keyed on colour/team rename (wool colour change cascades to monument ids), with a dup-colour
-  guard added to `update_wool` and a dup-team guard to `update_monument`. Tests added.
-- [x] **A7. Corpus round-trip harness.** `tools/roundtrip_check.py` runs the full round-trip over
-  both suites with two checks per map: JSON idempotence (canonical, derived `bounds_2d` excluded)
-  and an XML re-parse semantic compare. It immediately found a real round-trip bug — a named
-  mirror/translate source with a single parent was referenced by name but never written top-level,
-  so it vanished on re-parse; fixed in `xml_writer` (named sources forced top-level). Current
-  baseline: **337 ok, 9 failed (tracked as A10), 1 excluded (`segment`, A8)**.
-- [x] **A8. Robust coordinate parsing.** `parse_coord` now zeroes a malformed literal (e.g.
-  `5.185.5`) with a warning instead of raising, so one source typo no longer fails the whole map.
-  `segment` parses and round-trips; removed from the harness exclusions (now 341 ok, 9 A10, 0
-  excluded). Tests added.
-- [x] **A9. Populate `source_id` for inline transform sources.** Root cause was narrower than
-  thought: a transform whose inline source is a `<region id="X"/>` reference parsed it as a
-  `Reference` (blank id), leaving `source_id=""`. `_parse_mirror`/`_parse_translate` now resolve
-  the reference's `ref_id` (helper `_source_ref_id`). Result: empty `source_id` 50 → 0 across the
-  corpus; transform render resolution 62% → 96%. Test added.
-- [x] **A10. XML-writer round-trip fidelity (9 maps).** Surfaced by A7. (a) A named region
-  referenced from a *synthetic* region (apply-rule/spawn inline region) was emitted as a bare
-  `<region id=.../>` reference but never written top-level (`_region_elem_inline` uses a single-
-  region dict); now `_write_regions_block` forces any named child/source of a synthetic region to
-  be top-level (fixed 8 maps). (b) `never`/`always` built-ins were seeded only when a `<filters>`
-  block existed; the parser now always exposes the seeded filter registry (fixed kytriak_te).
-  **Harness now 350 ok, 0 failed, 0 excluded.** Regression tests added.
-- [x] **A11. Sketch export → editor compatibility (bug).** Two reproduced root causes, both fixed
-  in `sketch_export.py`: (a) `xml_data.json` wrote `regions`/`filters` as `[]` **lists**, but the
-  contract/editor expect id-keyed **dicts** — `/regions/tree` (`encode_region_tree` → `.values()`)
-  crashed → canvas stuck on "Loading map…"; now written as `{}`. (b) `layer_segments.parquet` was
-  never produced (the side view can't fall back to a `maps_folder` world for a sketch) → "No segment
-  data"; export now writes a synthetic flat-Y=0 segments parquet (`_write_segments_parquet`).
-  Verified via the `/regions/tree` and `/segments` code paths + 2 regression tests (792 pass), and
-  **confirmed in-browser** (exported `kleo-dcb85a8d`): editor canvas renders the map (no "Loading
-  map…"), Build Regions side view renders the Y=0 segment strip (no "No segment data"), zero console
-  errors on fresh load. *(rockymine §1.)*
+- [x] **A1. Grouped-wool deserializer.**
+- [x] **A2. Deterministic wool/monument IDs in serializer.**
+- [x] **A3. Region `source_id` resolution in `region_encoder`.**
+- [x] **A4. Forbid inline-dict region children in `region_editor`** (+ generalized `ungroup`).
+- [x] **A5. Spawn-as-reference in serializer.**
+- [x] **A6. Align `wool_editor` IDs to the deterministic scheme.**
+- [x] **A7. Corpus round-trip harness** (`tools/roundtrip_check.py`).
+- [x] **A8. Robust coordinate parsing** (flag-and-continue on malformed literals).
+- [x] **A9. Populate `source_id` for inline transform sources.**
+- [x] **A10. XML-writer round-trip fidelity** (harness 350/350).
+- [x] **A11. Sketch export → editor compatibility (bug).**
 
 ## Workstream B — Typed data models (Phase 2 proper)
 
@@ -99,75 +54,17 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   region child" policy: the canonical model keeps the full compound graph for round-trip; the editor
   shows a curated, category-first tree. Touches `region_encoder.encode_region_tree` (or a new
   view-builder) + `region/region-tree.js` + the regions/objectives/build panels. *Needs: design.*
-- [x] **B5. Region categorization derivation.** *(Done 2026-06-10.)* Replaced the thin
-  `_compute_categories` with `studio/services/region_categorizer.py` implementing the two-facet
-  model (`category` + `roles`; build from void-structure; `rule_container`/`rule_group`/`time_gated`
-  roles; constrained compound recursion). Categorized **23% → ~76%** of named regions across the
-  350-map corpus (conservative by design — build only from void structure, never `lane`/`bridge`
-  names, for near-zero false positives). `/regions` now also returns `facets`; `/regions/tree`,
-  the encoder taxonomy, and the Objectives activity (`WOOL_CATEGORIES`) consume the new categories.
-  Categories stay derived; `region_categories` is a user-override store layered on the flat map
-  only. **`annealing_iv` oracle (rockymine-verified) reproduced exactly** (35/35 named); added
-  `tests/studio/test_region_categorizer.py` (32 synthetic unit tests + 4 oracle fixtures) and
-  vendored input `xml_data.json` per fixture for hermetic tests. Derivation refinements pinned:
-  `spawner.player_region → wool_room`; `rule_group` descends only anonymous intermediate unions
-  and needs ≥2 uniform non-`other` peers (so `spawns` is *not* a rule_group); `rule_container` is
-  `negative`-only (a `complement` carries its base identity); build also handles `complement`
-  wrappers + inline `void` descriptors and excludes name-recognisable objectives. Contract doc
-  updated to match. **Remaining for rockymine:** verify the 3 *proposed* fixtures (vertex,
-  acapulco, icecream) — see `tests/fixtures/region_categories/README.md` open questions; and decide
-  whether the Objectives panel should include `monument` regions (now does) and whether `roles`
-  should surface in the editor UI (data is there, no UI yet).
-  *Round 2 (rockymine review 2026-06-10):* (a) `wool_spawner`/`wool_room` now gated on the spawner
-  actually dispensing **wool** — golden-apple/other spawners → `mechanic`; (b) added the **apply-
-  message** signal (author `message` text names spawn/wool_room/mechanic; clean across 3204 corpus
-  messages) + the **spawn-floor pattern** (break-only-material[iron|gold] + deny-place → spawn);
-  `rule_group` detection decoupled into its own structural pass so message/signal pre-categorised
-  unions still get the flag. Corpus categorized ~76% → ~79%. Acapulco verified. **Mirror geometry
-  bug fixed** (separate from categorization): diagonal `<mirror normal="-1,0,-1">` was computed as a
-  180° point-flip in both `region_parser._mirror_bounds` and `region_encoder`; replaced with PGM's
-  reflection (`pgm.regions.reflect_point_2d`/`reflect_bounds_2d` + encoder `_reflect_geom` via
-  affine matrix `I−2n̂n̂ᵀ`). Vertex red regions now flush with the footprint — browser-verified.
-  *Round 3 (rockymine review 2026-06-10):* added **mechanic** signals — `renewables[].region_id`,
-  apply `velocity`/`kit`/`lend_kit` actions (regen/portal/jump mechanics; applied as a *fallback*
-  after compound resolution so a wool-room-with-regen stays a wool_room) — and a **permissive-
-  placement build** signal: a region used as a `block_place` *filter* is the buildable floor
-  (vertex `playable-area`, resolving the open question). Spawner gating refined per rockymine: only
-  the non-wool `spawn_region` (item drop point) → mechanic; the `player_region` (detection region =
-  the room players stand in) keeps its own identity. Corpus categorized ~79% → **~80.5%** (mechanic
-  378→471, wool rooms no longer stolen). vertex/icecream/acapulco fixtures all verified.
+- [x] **B5. Region categorization derivation** (`region_categorizer.py`; two-facet model — see
+  `docs/contracts/region-categorization.md`).
 - [ ] **B6. Editor undo/redo (command model).** A real editor needs undo/redo of user actions.
   Pure create/delete inversion is insufficient — e.g. deleting a wool's monument keeps the wool
   but removes the monument (a PATCH today). Decide the model: command objects with inverse ops, or
   snapshot/restore (a `restore_region`-style snapshot already exists for regions). Must span
   region/team/spawn/wool/monument/filter/apply edits. *Needs: design decision + clarification.*
   *(rockymine §1 "Undo/Redo".)*
-- [x] **B7. Symmetry center typology + diagonal axis (model + contract).** *(Done 2026-06-10.)*
-  Locked contract §7 + `docs/contracts/geometry.md` §2; deferred the diagonal/secondary-axis **canvas UI** to
-  the D-series (per the clarification scope). Delivered:
-  - **Center cell typology** (`1x1`/`1x2`/`2x1`/`2x2`): **derived** from the center coordinate's
-    parity (half-integer → 1-wide, integer → 2-wide; `symmetry.datatypes.classify_center_cell`),
-    never stored twice; emitted as `symmetry.json.center_cell`. `rot_90` + diagonals require a
-    **square** cell (`1x1`/`2x2`); axis-aligned mirrors + `rot_180` accept any. A non-square cell
-    does **not** pin the mirror axis (mirror_x/mirror_z/rot_180 all fold one or both axes with the
-    other parity incidental) — it only **excludes** rot_90/diagonal (which swap X↔Z).
-  - **Diagonal mirror as a first-class class** (`mirror_d1`/`mirror_d2`): rockymine clarified
-    `vertex` is a *definitive* diagonal-mirror map (L-shaped equal legs, blue↔red across
-    `normal="-1,0,-1"`), **not** readable as rot_180; `golden_drought_ii` has two diagonal axes
-    **and** reads as rot_180. Added diagonal candidates to detection (`detection._CANDIDATES`,
-    `_detect_pair_transform`, `_transform_coords`, `_apply_transform_center`). Verified: vertex →
-    `mirror_d2` @ 1.0 (cell `1x1`); golden_drought_ii/ingwaz surface d1+d2+rot_180 for the user to
-    confirm. **Corrected the stale contract note**: diagonal reflection is now both renderable
-    (`_reflect_geom`, the `I−2n̂n̂ᵀ` matrix) **and** PGM-verified (vertex), so all four reflections
-    persist as native PGM `mirror`; only `rot_90`/`rot_270` bake (rotation, no PGM type).
-  - **Axes model** (primary always-on + optional perpendicular **secondary** axis, toggleable in
-    sketch authoring = intra-team symmetry, e.g. outback/last_overcastian/green_gem): specified in
-    contract §7 + `sketch.json.setup` shape. Imported-map **secondary-axis detection deferred**
-    (was excluded from the original port; low priority). Tests: `tests/symmetry/test_datatypes.py`
-    + diagonal/center-cell cases in `test_detection.py`/`test_serializer.py`. 913 py + 350 rt green.
-  - **Still open (D-series UI):** the diagonal + secondary-axis canvas controls in
-    `sketch-setup-canvas.js`; the JS `applySymmetry` diagonal branches; imported-map intra-team
-    detection. *(rockymine §1 "Symmetry Axis and Center Point".)*
+- [x] **B7. Symmetry center typology + diagonal axis (model + contract)** — center-cell typology,
+  diagonal-mirror class, axes model, `rot_n`; see `data-model.md` §7 + `geometry.md`. *(Canvas UI for
+  diagonal/secondary axes remains D-series.)*
 - [ ] **B8. Sketch–editor data-handling alignment.** *Investigated (autonomous session):* the two
   tools **already share the geometry format** — both import `canvas/transform.js`,
   `shared/converters.js`, `canvas-helpers.js`, `shape-render.js` (bbox object form per
@@ -187,27 +84,8 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   both project types and the sketch→map promotion on export (pairs with A11's export-artifact bug).
   *Needs: data-model decision (contract §11 open Q16/Q17).* *(rockymine §1 "sketches … not promoted
   to 'maps'".)*
-- [x] **B11. Editing validation model / invariants (design pass).** *(Done 2026-06-10.)* Wrote
-  **`docs/contracts/validation-invariants.md`** — a corpus-grounded (345-map) catalog in 3 groups
-  with severities decided by rockymine. **Posture (Q1):** non-blocking inline WARN by default;
-  HARD only for referential integrity; the auto-mirror/scaffold engine treats the strict symmetry
-  coupling as a precondition (never blocks manual edits). **Group A structural** (HARD): team id
-  non-empty+unique (`kytriak_te` empty-id defect), wool colour unique 345/345, `monument.team`
-  resolves, refs resolve. **Group B completeness** (WARN): ≥2 teams (`easter_egg_hunt`=1 non-CTW),
-  ≥1 wool/team, wool has ≥1 monument (4 misses = parse-broken `segment`), team ≥1 spawn (7 misses),
-  supported-CTW 5c shape (332/345; arcade/gimmick the rest), **wool obtainable = C12**, and
-  **objective-chain traversability** (rockymine: spawn→enemy wool→return must be physically runnable
-  = island connectivity + build/void edges + C12 — heavy spatial analysis, own feature). **Group C
-  symmetry coupling (Q2 strict divisibility):** `team_count % team_orbit(mode) == 0`,
-  `wool_count % team_count == 0`, `rot_90`/diagonals need a square cell — surfaced as WARN +
-  engine-precondition. **rot_n modeled (Q3):** general n-fold rotation `rot_<360/n>` added to the
-  vocabulary (contract §7 + `docs/contracts/geometry.md`) — `tridente`/`pentawool`/`thunderbolt` = rot_120/72/60;
-  **crystallographic restriction**: only 2-/4-fold + reflections are lattice-exact, others bake
-  (`is_lattice_exact`). Helpers in `symmetry/datatypes.py` (`team_orbit`, `team_count_compatible`,
-  `wool_count_compatible`, `requires_square_cell`, `is_lattice_exact`, `rotation_degrees`); tests in
-  `test_datatypes.py`. 920 py green. **Follow-ups:** enforcement (Workstream C), `rot_n` detection +
-  sketch UI (D-series), traversability analysis (own feature). *(rockymine §1 "Validation Model
-  while editing".)*
+- [x] **B11. Editing validation model / invariants (design pass)** — `docs/contracts/validation-invariants.md`.
+  *(Enforcement is Workstream C; traversability analysis is its own future feature.)*
 - [ ] **B12. Extract a Python geometry module + unify the symmetry transforms.**
   *Investigated 2026-06-10 (B7 follow-up).* There is **no geometry home in the Python tree** — pure
   2D transform math is either scattered or misplaced. `pgm/` is the **XML-derived domain model**, not
@@ -249,18 +127,8 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
 - [ ] **C1.** Structured error envelope `{error:{code,message}}` across routes + `api.js`.
 - [ ] **C2.** Documented request/response schema per route family (`api-schemas.md`).
-- [x] **C3.** Filters CRUD routes + service (author-in-v1). *(Done 2026-06-10.)*
-  `services/filter_editor.py` + `routes/filters.py`: list (with a usage/reference map), create
-  (validates type ∈ known set + child/region refs exist via the pgm codec shapes), update, delete
-  (**reject-with-references** when used by an apply-rule / another filter / renewable / block-drop;
-  builtin `never`/`always` guarded). Backend only; flat `{"error": str}` envelope (C1 unifies later).
-- [x] **C4.** Apply-rules CRUD routes + service, incl. stable synthetic rule ids. *(Done 2026-06-10.)*
-  `services/apply_rule_editor.py` + `routes/apply_rules.py`: stable `rule_<n>` synthetic id
-  (editor-only, backfilled on access, **dropped on XML export** — round-trip harness untouched);
-  list/create/update/delete; create validates region + filter refs (accepts region-as-filter,
-  builtins, and inline descriptors like `deny(void)`). Tests: `test_filter_editor.py` +
-  `test_apply_rule_editor.py` (36 cases incl. export-drop). Signatures captured in
-  the code (`pgm.serializer`/`deserializer` + `studio/services/`). Manual curl flow on annealing_iv verified (201/409+refs/400/200).
+- [x] **C3. Filters CRUD routes + service** (author-in-v1; reject-with-references on delete).
+- [x] **C4. Apply-rules CRUD routes + service** (stable `rule_<n>` synthetic ids, dropped on XML export).
 - [ ] **C5.** Wire region group/ungroup/restore/change-type into `api.js` (currently unwired).
 - [ ] **C6.** Unify bbox/center naming to `{min_x,min_z,max_x,max_z}` + `{cx,cz}` at the API
   boundary; migrate `symmetry.json` `center_x/center_z` → `cx/cz`.
@@ -308,6 +176,16 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   Implement the availability check (`docs/requirements/editor-objectives.md` Sub-step 3); PGM
   spawner / renewable / block-drop must be configurable as wool sources. *Needs: requirements pass.*
   *(rockymine §1 "Wool existence validation".)*
+- [ ] **C13. Editor symmetry-aware authoring (source → derived counterparts).** In the **editor**
+  (not just the sketch tool), let the author define **one source entity** and have the mirroring
+  engine derive/suggest its **counterparts** across regions, filters, apply-rules, objectives, and
+  spawn-linked structures. The **model is settled** — `data-model.md` §7 (counterpart persistence:
+  one source + a map-level relation index; reflections persist as native PGM `mirror` chained by
+  `source_id`, `rot_90`/`rot_n` bake to concrete). This task is the **authoring feature/flow** over
+  that model: generate + persist counterparts on create/edit, and surface accept/reject suggestions.
+  Backend authoring is C-tier (like C8 symmetric-compound creation, which it builds on); the canvas
+  controls are **D-series**. Related: B7 (model, done), B9 (template scaffolding), B11 (the
+  auto-mirror/scaffold engine precondition). *Needs: design over the settled §7 model.*
 
 ## Workstream D — UI migration (Phase 4)
 

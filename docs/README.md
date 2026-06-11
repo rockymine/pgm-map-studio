@@ -48,7 +48,6 @@ superseded by the planned `filter-region-wiring.md`, C9.)
 | `../plans/refactor-plan.md` | **The active driver** — ordered status tracker (Workstreams A–E) + "Current focus". |
 | `../plans/editor-vision.md` | Editor design vision. |
 | `contracts/frontend-stack-decision.md` | The D1 target stack decision (React + TS + Vite; keep Python). |
-| `contracts/refactor-constraints-and-pitfalls.md` | Strategy / risk notes for the refactor. |
 | `ui/ui-system-consolidation.md` | UI system consolidation notes. |
 | `testing.md` | How to run the Python + JS test suites. |
 
