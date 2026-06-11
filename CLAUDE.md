@@ -53,11 +53,10 @@ invariants done; ~920 py tests) lives in the plan + memory — **don't duplicate
 
 ## Implementation order — per activity (building an editor/sketch activity)
 
-1. Read only the **activity-specific requirements** (`docs/requirements/<file>.md` or `docs/contracts/geometry.md`) + the relevant
-   **contract** (`docs/contracts/*`).
+1. Read only the **relevant requirements** (`docs/requirements/<file>.md` or `docs/contracts/geometry.md`) + the 
+   **relevant contract** (`docs/contracts/*`).
 2. **Check the tree** (`find src/`/`find tests/`) for what exists.
-3. Read the **design doc**: `docs/contracts/ui-conventions.md` (UI), `plans/editor-vision.md` (editor),
-   `docs/sketch-workflow.md` (sketch).
+3. Read the **overview/design**: `docs/contracts/ui-conventions.md` (UI); `studio/README.md` (editor and sketch).
 4. **Clarify unknowns** with `AskUserQuestion`; update the requirement/contract if scope changes.
 5. **Write tests first** — pytest in `tests/` (mirroring `src/`) and/or Vitest, one test file per
    source file. For data-model work, validate against the corpus + harness.
@@ -126,9 +125,9 @@ runner at `/root/pgm-studio-tests/` (see `docs/testing.md`).
 
 Per-activity requirements live in `docs/requirements/` — editor workflow (`editor*.md`; note
 `editor-filters.md` is **UNSTABLE**, superseded by the forthcoming
-`docs/contracts/filter-region-wiring.md`) and sketch workflow (`sketch*.md`). Source docs:
-`docs/map-data-model.md` + `docs/ctw-map-pamphlet.md` (editor), `docs/sketch-workflow.md` (sketch).
-File format + derivation rules are documented in the requirements files themselves.
+`docs/contracts/filter-region-wiring.md`) and sketch workflow (`sketch*.md`). For a brief tool
+overview, see `src/pgm_map_studio/studio/EDITOR.md` + `SKETCH.md`. File format + derivation rules are
+documented in the requirements files themselves.
 
 ## Package READMEs
 

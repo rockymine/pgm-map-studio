@@ -7,7 +7,7 @@ The **canonical shape of every entity is the typed code**: the domain types in
 
 This doc is the human-readable map of those types — what each entity is, how they relate, and the
 rules types alone can't express. It is **present-tense**: it states what is true now. History lives
-in git and `plans/refactor-plan.md`; rationale and statistics live in `map-data-model.md`; the
+in git and `plans/refactor-plan.md`; per-activity needs live in `docs/requirements/`; the
 coordinate/transform math lives in `geometry.md`; the invariants in `validation-invariants.md`.
 
 ---

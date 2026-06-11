@@ -7,4 +7,4 @@ The Sketch workflow requirements are split into one file per activity:
 - [`sketch-layout.md`](sketch-layout.md) — shape drawing, override mode, mirror preview, per-island participation
 - [`sketch-export.md`](sketch-export.md) — rasterisation to synthetic scan layer, editor handoff
 
-For the mental model, island boolean rules, symmetry description, and activity structure table, see `docs/sketch-workflow.md`.
+For a brief tool overview, see `src/pgm_map_studio/studio/README.md`.

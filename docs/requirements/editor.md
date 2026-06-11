@@ -10,6 +10,4 @@ The editor workflow requirements are split into one file per activity:
 - [`editor-filters.md`](editor-filters.md) — rule review, block renewal, resistance reset, jump pads, lend-kit zones, map boundary, time-gated features
 - [`editor-regions.md`](editor-regions.md) — region inventory, unassigned region inspection, symmetry violation review
 
-For the activity order, status indicator behaviour, notification system, export rules, and entry point descriptions, see `plans/editor-vision.md`.
-
-For the source domain model and authoring narrative, see `docs/map-data-model.md` and `docs/ctw-map-pamphlet.md`.
+For a brief tool overview, see `src/pgm_map_studio/studio/EDITOR.md`.

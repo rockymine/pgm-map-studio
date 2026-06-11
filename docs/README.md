@@ -27,13 +27,10 @@ disagree, **the code wins**.
 | `filter-use-cases.md` | The filter **vocabulary** + event×filter-type matrices. *(Its corpus statistics are research — Rationale — bundled in an appendix.)* |
 | `contracts/ui-conventions.md` | CSS/UI conventions; the `/design` page is the live visual reference. |
 
-## Rationale — the *why* (feeds requirements; may carry statistics)
+## Tool overviews
 
-| Doc | Purpose |
-|---|---|
-| `map-data-model.md` | Activity-framed domain narrative, statistics, and the "questions that must be answered". The semantic source the requirements derive from. **Not** a second definition of shapes (those are in `data-model.md`). |
-| `ctw-map-pamphlet.md` | CTW domain narrative — author goals, why constraints exist. |
-| `sketch-workflow.md` | Sketch concept model (island booleans, override mode, symmetry tiers, export). |
+Brief goal + activity structure for each workflow live **code-adjacent**:
+`src/pgm_map_studio/studio/README.md` to understand the tool.
 
 ## Requirements — per-activity (what the user/system needs)
 
@@ -46,7 +43,6 @@ superseded by the planned `filter-region-wiring.md`, C9.)
 | Doc | Purpose |
 |---|---|
 | `../plans/refactor-plan.md` | **The active driver** — ordered status tracker (Workstreams A–E) + "Current focus". |
-| `../plans/editor-vision.md` | Editor design vision. |
 | `contracts/frontend-stack.md` | The D1 target stack decision (React + TS + Vite; keep Python). |
 | `testing.md` | How to run the Python + JS test suites. |
 

@@ -9,7 +9,6 @@
  * symmetry axis, return transformed copies for the live overlay.
  *
  * Imported via importmap in the browser; resolved from node_modules in tests.
- * See docs/sketch-workflow.md §Island model and §Symmetry model.
  */
 
 import polygonClipping from "polygon-clipping";
@@ -148,7 +147,7 @@ export function ringCentroid(ring) {
 /**
  * Compute islands from the given list of shapes.
  *
- * Evaluation order (see docs/sketch-workflow.md §Island model):
+ * Evaluation order:
  *   1. union(normal adds)
  *   2. − union(normal subtracts)
  *   3. ∪ union(override adds)       ← immune to normal subtracts
