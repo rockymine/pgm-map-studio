@@ -9,21 +9,42 @@ schemas are the persisted + view shapes at the API boundary. See
 from pgm_map_studio.schemas.view import (
     Bounds,
     Polygon2d,
-    RegionTreeNode,
     RegionGroup,
+    RegionTreeNode,
     RegionTreeResponse,
 )
+from pgm_map_studio.schemas.persisted import (
+    ApplyRule,
+    Author,
+    BlockDropRule,
+    Bounds2d,
+    DropItem,
+    Filter,
+    Kit,
+    KitArmor,
+    KitItem,
+    MapProject,
+    Monument,
+    ObserverSpawn,
+    Region,
+    Renewable,
+    Spawn,
+    Spawner,
+    Team,
+    Wool,
+    XYZ,
+    XZ,
+)
 
-# Models exported to the generated TypeScript contract, in emit order.
+# Models exported to the generated TypeScript contract (TS interfaces are hoisted,
+# so order is cosmetic): view models, then the persisted map shape.
 TS_CONTRACT_MODELS = [
-    Bounds,
-    Polygon2d,
-    RegionTreeNode,
-    RegionGroup,
-    RegionTreeResponse,
+    # view (B4)
+    Bounds, Polygon2d, RegionTreeNode, RegionGroup, RegionTreeResponse,
+    # persisted (B1)
+    XZ, XYZ, Bounds2d, Team, Author, KitItem, KitArmor, Kit, Region, Spawn,
+    Monument, Wool, DropItem, Spawner, Renewable, BlockDropRule, Filter,
+    ApplyRule, ObserverSpawn, MapProject,
 ]
 
-__all__ = [
-    "Bounds", "Polygon2d", "RegionTreeNode", "RegionGroup", "RegionTreeResponse",
-    "TS_CONTRACT_MODELS",
-]
+__all__ = [m.__name__ for m in TS_CONTRACT_MODELS] + ["TS_CONTRACT_MODELS"]

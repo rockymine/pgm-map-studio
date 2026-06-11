@@ -36,3 +36,186 @@ export interface RegionTreeResponse {
   groups: RegionGroup[];
   bounding_box?: Bounds | null;
 }
+
+export interface XZ {
+  x?: number | string | null;
+  z?: number | string | null;
+}
+
+export interface XYZ {
+  x?: number | string | null;
+  y?: number | string | null;
+  z?: number | string | null;
+}
+
+export interface Bounds2d {
+  min: XZ;
+  max: XZ;
+}
+
+export interface Team {
+  id: string;
+  name?: string;
+  color?: string;
+  dye_color?: string;
+  max_players?: number;
+  min_players?: number;
+}
+
+export interface Author {
+  uuid?: string;
+  role?: string;
+  contribution?: string | null;
+  name?: string | null;
+}
+
+export interface KitItem {
+  slot?: number | null;
+  material?: string;
+  amount?: number | null;
+  damage?: number | null;
+  unbreakable?: boolean | null;
+  team_color?: boolean | null;
+  enchantments?: string | null;
+}
+
+export interface KitArmor {
+  slot_name?: string;
+  material?: string;
+  unbreakable?: boolean | null;
+  team_color?: boolean | null;
+  enchantments?: string | null;
+}
+
+export interface Kit {
+  id: string;
+  items?: KitItem[];
+  armor?: KitArmor[];
+}
+
+export interface Region {
+  id?: string;
+  type: string;
+  bounds_2d?: Bounds2d | null;
+  min?: XYZ | null;
+  max?: XYZ | null;
+  base?: XYZ | null;
+  center?: XZ | null;
+  origin?: XYZ | null;
+  position?: XYZ | null;
+  radius?: number | string | null;
+  height?: number | string | null;
+  children?: string | Region[] | null;
+  source_id?: string | null;
+  normal?: XYZ | null;
+  offset?: XYZ | null;
+  ref_id?: string | null;
+  y?: number | string | null;
+}
+
+export interface Spawn {
+  team?: string;
+  kit?: string | null;
+  yaw?: number;
+  region?: string | Region | null;
+}
+
+export interface Monument {
+  id?: string;
+  team?: string;
+  location?: XYZ | null;
+  monument_region?: string | null;
+}
+
+export interface Wool {
+  id?: string;
+  color?: string;
+  location?: XYZ | null;
+  wool_room_region?: string | null;
+  monuments?: Monument[];
+  team?: string | null;
+}
+
+export interface DropItem {
+  material?: string;
+  damage?: number | null;
+  amount?: number | null;
+  chance?: number | null;
+}
+
+export interface Spawner {
+  spawn_region?: string | null;
+  player_region?: string | null;
+  delay?: string | null;
+  max_entities?: number | null;
+  items?: DropItem[];
+}
+
+export interface Renewable {
+  region_id?: string | null;
+  rate?: number | null;
+  renew_filter?: string | null;
+  replace_filter?: string | null;
+  grow?: boolean | null;
+}
+
+export interface BlockDropRule {
+  region_id?: string | null;
+  filter_id?: string | null;
+  replacement?: string | null;
+  wrong_tool?: boolean | null;
+  items?: DropItem[];
+}
+
+export interface Filter {
+  id?: string;
+  type: string;
+  children?: string[] | null;
+  child?: string | null;
+  region?: string | null;
+}
+
+export interface ApplyRule {
+  id?: string | null;
+  region?: string | null;
+  enter?: string | null;
+  leave?: string | null;
+  block?: string | null;
+  block_place?: string | null;
+  block_break?: string | null;
+  block_physics?: string | null;
+  block_place_against?: string | null;
+  use?: string | null;
+  filter?: string | null;
+  kit?: string | null;
+  lend_kit?: string | null;
+  velocity?: string | null;
+  message?: string | null;
+}
+
+export interface ObserverSpawn {
+  team?: string;
+  kit?: string | null;
+  yaw?: number | null;
+  region?: string | Region | null;
+}
+
+export interface MapProject {
+  name?: string;
+  version?: string | null;
+  gamemode?: string | null;
+  objective?: string | null;
+  max_build_height?: number | null;
+  authors?: Author[];
+  kits?: Kit[];
+  teams?: Team[];
+  spawns?: Spawn[];
+  observer_spawn?: ObserverSpawn | null;
+  wools?: Wool[];
+  spawners?: Spawner[];
+  renewables?: Renewable[];
+  block_drop_rules?: BlockDropRule[];
+  filters?: Record<string, unknown>;
+  regions?: Record<string, unknown>;
+  apply_rules?: ApplyRule[];
+}

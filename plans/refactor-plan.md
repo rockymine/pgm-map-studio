@@ -37,9 +37,13 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 > `openapi-typescript`) into `frontend/`. Adds a `pydantic` dependency (boundary only). This is the
 > D1 de-risker.
 
-- [ ] **B1.** Separate persisted / domain / view models per the contract (§1) into
-  `schemas/` (pydantic): `schemas/persisted.py` (xml_data/sketch shapes), `schemas/view.py`
-  (RegionTreeNode + route payloads). `studio` routes return these; `tools/` generates the TS.
+- [~] **B1. Persisted `xml_data.json` typed** — `schemas/persisted.py` (pydantic `MapProject` +
+  all entities), **validated against all 345 corpus maps** (`tools/validate_schemas.py`; caught the
+  `"oo"` infinity-coord literal, inline-region spawn refs, `None` template coords → `Coord =
+  float|str|None`). Generated into the TS contract; `tests/schemas/test_persisted.py`. *Remaining:
+  the sketch `sketch.json` shape (overlaps B3), and wiring `studio` routes to return/validate via the
+  models.* The view side (B4) already carries the canonical flat `{min_x..}`/`{cx,cz}` naming (C6);
+  persisted keeps the on-disk nested `bounds_2d` (the C6 on-disk migration is separate).
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
 - [ ] **B3.** Type sketch models (persisted `sketch.json` + sketch view) in `schemas/`.
 - [x] **B4. `/regions/tree` view-model typed** — `schemas/view.py` (pydantic `RegionTreeNode`/
