@@ -82,8 +82,13 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   *Needs: data-model decision (contract §11 open Q16/Q17).*
 - [x] **B11. Editing validation model / invariants (design pass)** — `docs/contracts/validation-invariants.md`.
   *(Enforcement is Workstream C; traversability analysis is its own future feature.)*
-- [ ] **B12. Extract a Python geometry module + unify the symmetry transforms.**
-  *Investigated 2026-06-10 (B7 follow-up).* There is **no geometry home in the Python tree** — pure
+- [~] **B12. Extract a Python geometry module + unify the symmetry transforms.**
+  **Foundation done:** `pgm_map_studio/geometry.py` now owns `reflect_point_2d`/`reflect_bounds_2d`
+  (moved out of `pgm/regions.py`; parser repointed) + new `rotate_point_2d`/`rotate_bounds_2d` (CCW,
+  90°-multiples exact, matching `geometry.md` §2). `tests/test_geometry.py`. C13 builds on it.
+  **Remaining:** consolidate `detection.py` (fixing its CW `rot_90`/`rot_270`) + `sketch_export.py`
+  `_mirror_poly` onto the module, and the JS `converters.js` parity test. *Original investigation:*
+  There was **no geometry home in the Python tree** — pure
   2D transform math is either scattered or misplaced. `pgm/` is the **XML-derived domain model**, not
   a geometry library, yet `pgm/regions.py` holds `reflect_point_2d`/`reflect_bounds_2d` (pure math,
   zero domain deps) purely because the parser was their first caller — a leak. And symmetry/rotation
@@ -161,16 +166,20 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **C12. Wool availability validation.** A map is unplayable if no wool is obtainable.
   Implement the availability check (`docs/requirements/editor-objectives.md` Sub-step 3); PGM
   spawner / renewable / block-drop must be configurable as wool sources. *Needs: requirements pass.*
-- [ ] **C13. Editor symmetry-aware authoring (source → derived counterparts).** In the **editor**
-  (not just the sketch tool), let the author define **one source entity** and have the mirroring
-  engine derive/suggest its **counterparts** across regions, filters, apply-rules, objectives, and
-  spawn-linked structures. The **model is settled** — `data-model.md` §7 (counterpart persistence:
-  one source + a map-level relation index; reflections persist as native PGM `mirror` chained by
-  `source_id`, `rot_90`/`rot_n` bake to concrete). This task is the **authoring feature/flow** over
-  that model: generate + persist counterparts on create/edit, and surface accept/reject suggestions.
-  Backend authoring is C-tier (like C8 symmetric-compound creation, which it builds on); the canvas
-  controls are **D-series**. Related: B7 (model, done), B9 (template scaffolding), B11 (the
-  auto-mirror/scaffold engine precondition). *Needs: design over the settled §7 model.*
+- [~] **C13. Editor symmetry-aware authoring (source → derived counterparts).** **Region
+  counterparts done (backend); other entity types + UI remaining.** `studio/services/symmetry_authoring.py`
+  + `POST /region/:id/counterpart` (in `routes/regions.py`): given a source region + mode + center
+  (falls back to `symmetry.json`), creates the counterpart per `data-model.md` §7 — reflections
+  (`mirror_x/z/d1/d2`) as a native PGM `mirror`; `rot_180` as two ⟂ mirrors; `rot_90` **baked** to a
+  concrete primitive via `geometry.rotate_*`. n-fold `rot_n` excluded (out of scope). Verified
+  editor-created mirrors round-trip to `<mirror>` XML. `tests/studio/test_symmetry_authoring.py` (12).
+  **Polygon-level equivalence** (`studio/services/region_geometry.py`: `regions_equivalent` /
+  `is_counterpart`, IoU via `_dict_to_shapely`) validates counterparts against real geometry —
+  corpus-oracle test on outback (rot_180 + ⟂ mirrors) + annealing (rot_90 orbit) all exact
+  (`test_region_geometry.py`, 16). Ready to power C13 **dedup** + the B11/Regions **symmetry-violation
+  review**. *Remaining: counterparts for filters/apply-rules/objectives/spawns + the map-level relation
+  index + dedup wiring into create_counterpart + the canvas accept/reject UI (D-series); rot_90 bake of
+  compound sources.*
 
 ## Workstream D — UI migration (Phase 4)
 
