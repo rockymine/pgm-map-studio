@@ -32,10 +32,12 @@ def _ts_type(ann) -> str:
     origin = typing.get_origin(ann)
     args = typing.get_args(ann)
 
+    if origin is typing.Literal:
+        return " | ".join(f'"{a}"' if isinstance(a, str) else str(a) for a in args)
     if origin in (list, set, tuple):
         return f"{_ts_type(args[0])}[]"
     if origin is dict:
-        return "Record<string, unknown>"
+        return f"Record<string, {_ts_type(args[1])}>" if len(args) == 2 else "Record<string, unknown>"
     if origin is typing.Union or origin is getattr(__import__("types"), "UnionType", None):
         non_none = [a for a in args if a is not type(None)]
         ts = " | ".join(_ts_type(a) for a in non_none) or "unknown"
@@ -48,8 +50,9 @@ def _ts_type(ann) -> str:
 def _emit_interface(model: type[BaseModel]) -> str:
     lines = [f"export interface {model.__name__} {{"]
     for name, field in model.model_fields.items():
+        wire = field.alias or name          # emit the JSON key (e.g. "in", not "in_")
         optional = "" if field.is_required() else "?"
-        lines.append(f"  {name}{optional}: {_ts_type(field.annotation)};")
+        lines.append(f"  {wire}{optional}: {_ts_type(field.annotation)};")
     lines.append("}")
     return "\n".join(lines)
 

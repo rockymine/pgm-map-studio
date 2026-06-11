@@ -215,7 +215,70 @@ export interface MapProject {
   spawners?: Spawner[];
   renewables?: Renewable[];
   block_drop_rules?: BlockDropRule[];
-  filters?: Record<string, unknown>;
-  regions?: Record<string, unknown>;
+  filters?: Record<string, Filter>;
+  regions?: Record<string, Region>;
   apply_rules?: ApplyRule[];
+}
+
+export interface Bbox {
+  min_x: number;
+  min_z: number;
+  max_x: number;
+  max_z: number;
+}
+
+export interface Center {
+  cx?: number;
+  cz?: number;
+}
+
+export interface SketchSetup {
+  bbox?: Bbox | null;
+  center?: Center | null;
+  mirror_mode?: "mirror_x" | "mirror_z" | "rot_180" | "rot_90";
+}
+
+export interface BezierControl {
+  in?: number[] | null;
+  out?: number[] | null;
+}
+
+export interface Shape {
+  id?: string;
+  type: string;
+  operation?: string;
+  override?: boolean;
+  min_x?: number | null;
+  min_z?: number | null;
+  max_x?: number | null;
+  max_z?: number | null;
+  center_x?: number | null;
+  center_z?: number | null;
+  radius?: number | null;
+  vertices?: number[][] | null;
+  controls?: Record<string, BezierControl> | null;
+}
+
+export interface IslandMeta {
+  id?: string;
+  name?: string;
+  mirrors?: boolean;
+  shapeIds?: string[];
+}
+
+export interface SketchLayout {
+  shapes?: Shape[];
+  islands?: IslandMeta[];
+}
+
+export interface SketchProject {
+  id?: string;
+  gamemode?: string;
+  name?: string;
+  version?: string;
+  objective?: string;
+  authors?: Author[];
+  setup?: SketchSetup | null;
+  layout?: SketchLayout | null;
+  export_slug?: string | null;
 }

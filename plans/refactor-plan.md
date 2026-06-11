@@ -45,7 +45,14 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   models.* The view side (B4) already carries the canonical flat `{min_x..}`/`{cx,cz}` naming (C6);
   persisted keeps the on-disk nested `bounds_2d` (the C6 on-disk migration is separate).
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
-- [ ] **B3.** Type sketch models (persisted `sketch.json` + sketch view) in `schemas/`.
+- [x] **B3. Sketch `sketch.json` typed** — `schemas/sketch.py` (`SketchProject` + setup/layout/
+  shape/island). **Cubic-Bézier model kept in lock-step with `geometry.js`/`sketch_export.py`:**
+  `controls` = dict keyed by stringified vertex index, `{in?,out?}` handles; `in` aliased
+  (Python keyword) and round-trips by-alias. `mirror_mode` is a strict `Literal`. Forced three TS-
+  generator gains (alias emission, typed `Record<string,V>` — also retyped `regions`/`filters` —
+  `Literal` unions). Validated against 26 real local sketches (`tools/validate_schemas.py`, incl. 7
+  with bezier data); `tests/schemas/test_sketch.py`. *Remaining: a sketch **view** model is deferred
+  until the sketch SPA needs one (the persisted shape is what `/api/sketch` returns today).*
 - [x] **B4. `/regions/tree` view-model typed** — `schemas/view.py` (pydantic `RegionTreeNode`/
   `RegionGroup`/`RegionTreeResponse`, code-first match to `region_encoder`) + the **TS pipeline**:
   `tools/generate_ts_contract.py` → `frontend/src/contract.ts`, with a conformance test (encoder
