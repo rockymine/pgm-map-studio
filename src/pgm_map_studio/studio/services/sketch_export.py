@@ -21,9 +21,10 @@ from urllib.parse import quote
 
 import numpy as np
 import pandas as pd
-from shapely.affinity import affine_transform
 from shapely.geometry import Point, Polygon, box, mapping
 from shapely.ops import unary_union
+
+from pgm_map_studio.studio.services.region_geometry import transform_geom
 
 from pgm_map_studio.minecraft.world_writer import write_world
 from pgm_map_studio.studio.services import sketch_data
@@ -322,27 +323,8 @@ def _match_metadata(
 
 
 # ── Symmetry transforms ───────────────────────────────────────────────────────
-
-def _mirror_poly(poly, axis: str, cx: float, cz: float):
-    """Apply a symmetry transform to a Shapely polygon.
-
-    Shapely affine_transform matrix [a, b, d, e, xoff, yoff]:
-      x' = a*x + b*y + xoff
-      y' = d*x + e*y + yoff
-    """
-    if axis == "mirror_x":
-        return affine_transform(poly, [-1, 0, 0, 1, 2 * cx, 0])
-    if axis == "mirror_z":
-        return affine_transform(poly, [1, 0, 0, -1, 0, 2 * cz])
-    if axis == "rot_180":
-        return affine_transform(poly, [-1, 0, 0, -1, 2 * cx, 2 * cz])
-    if axis == "rot_90":
-        # new_x = cx − (z − cz),  new_z = cz + (x − cx)
-        return affine_transform(poly, [0, -1, 1, 0, cx + cz, cz - cx])
-    if axis == "rot_270":
-        # new_x = cx + (z − cz),  new_z = cz − (x − cx)
-        return affine_transform(poly, [0, 1, -1, 0, cx - cz, cz + cx])
-    raise ValueError(f"Unknown symmetry axis: {axis!r}")
+# Polygon symmetry transforms come from region_geometry.transform_geom (which is
+# single-sourced from pgm_map_studio.geometry, CCW per geometry.md §2).
 
 
 # ── Rasterization ─────────────────────────────────────────────────────────────
@@ -381,7 +363,7 @@ def _rasterise_full_layout(
         all_blocks.update(_rasterise_poly(poly))
         if (meta or {}).get("mirrors", True):
             for axis in copy_axes:
-                all_blocks.update(_rasterise_poly(_mirror_poly(poly, axis, cx, cz)))
+                all_blocks.update(_rasterise_poly(transform_geom(poly, axis, cx, cz)))
 
     return all_blocks
 
@@ -480,7 +462,7 @@ def _write_islands_json(
             counter += 1
         if (meta or {}).get("mirrors", True):
             for axis in copy_axes:
-                mirrored = _mirror_poly(poly, axis, cx, cz)
+                mirrored = transform_geom(poly, axis, cx, cz)
                 entry = _island_entry(counter, mirrored, meta)
                 if entry:
                     data.append(entry)

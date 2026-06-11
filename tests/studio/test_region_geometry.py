@@ -12,11 +12,45 @@ regions. Three maps cover distinct symmetry classes:
 """
 import pytest
 
+from shapely.geometry import box
+
 from pgm_map_studio.studio.services.region_geometry import (
     counterpart_iou,
     is_counterpart,
     regions_equivalent,
+    transform_geom,
 )
+
+
+# ── transform_geom (shapely polygon symmetry transform) ─────────────────────────
+
+def _approx_bounds(geom, expected, tol=0.01):
+    return all(abs(a - b) < tol for a, b in zip(geom.bounds, expected))
+
+
+class TestTransformGeom:
+    def test_mirror_x_at_origin(self):
+        assert _approx_bounds(transform_geom(box(1, 0, 3, 4), "mirror_x", 0, 0), (-3, 0, -1, 4))
+
+    def test_mirror_z_at_origin(self):
+        assert _approx_bounds(transform_geom(box(0, 1, 4, 3), "mirror_z", 0, 0), (0, -3, 4, -1))
+
+    def test_rot_180_at_origin(self):
+        assert _approx_bounds(transform_geom(box(1, 1, 3, 3), "rot_180", 0, 0), (-3, -3, -1, -1))
+
+    def test_rot_90_area_preserved(self):
+        p = box(10, 10, 20, 30)
+        assert abs(transform_geom(p, "rot_90", 0, 0).area - p.area) < 0.01
+
+    def test_rot_90_then_270_is_identity(self):
+        p = box(5, 10, 15, 20)
+        out = transform_geom(transform_geom(p, "rot_90", 0, 0), "rot_270", 0, 0)
+        assert all(abs(a - b) < 0.01 for a, b in zip(p.bounds, out.bounds))
+
+    def test_unknown_mode_raises(self):
+        import pytest as _pytest
+        with _pytest.raises(ValueError):
+            transform_geom(box(0, 0, 1, 1), "nope", 0, 0)
 
 
 def _rect(rid, minx, minz, maxx, maxz):

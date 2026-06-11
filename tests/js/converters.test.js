@@ -133,6 +133,25 @@ describe("applySymmetry", () => {
       expect(applySymmetry(0, 1, "rot_90", 0, 0)).toEqual([-1, 0]);
     });
   });
+
+  // Cross-language parity: the JS applySymmetry must agree with the Python
+  // converter (pgm_map_studio.geometry, geometry.md §2). These cases mirror
+  // tests/test_geometry.py exactly — if either side drifts, one fails.
+  describe("Python parity (pgm_map_studio.geometry)", () => {
+    it("rot_90 matches rotate_point_2d", () => {
+      expect(applySymmetry(1, 0, "rot_90", 0, 0)).toEqual([0, 1]);
+      expect(applySymmetry(10, 5, "rot_90", 5, 5)).toEqual([5, 10]); // about (5,5)
+    });
+    it("rot_180 matches rotate_point_2d", () => {
+      expect(applySymmetry(10, 20, "rot_180", 0, 0)).toEqual([-10, -20]);
+    });
+    it("mirror_x matches reflect_point_2d (normal 1,0)", () => {
+      expect(applySymmetry(0, 5, "mirror_x", 10, 0)).toEqual([20, 5]);
+    });
+    it("mirror_z matches reflect_point_2d (normal 0,1)", () => {
+      expect(applySymmetry(5, 0, "mirror_z", 0, 10)).toEqual([5, 20]);
+    });
+  });
 });
 
 // ── applySymmetryToBounds ─────────────────────────────────────────────────────

@@ -21,7 +21,16 @@ from typing import Optional
 
 import numpy as np
 
+from pgm_map_studio.geometry import reflect_point_2d, rotate_point_2d
 from .datatypes import GlobalSymmetryEntry, SymmetryResult
+
+# Symmetry transforms are single-sourced from pgm_map_studio.geometry (CCW per
+# geometry.md §2). mode → mirror normal / rotation degrees.
+_REFLECTION_NORMALS = {
+    "mirror_x": (1.0, 0.0), "mirror_z": (0.0, 1.0),
+    "mirror_d1": (1.0, -1.0), "mirror_d2": (1.0, 1.0),
+}
+_ROTATION_DEG = {"rot_180": 180, "rot_90": 90, "rot_270": 270}
 
 
 # ---------------------------------------------------------------------------
@@ -161,44 +170,23 @@ def _build_canonical_pairs(islands: list[dict]) -> list[tuple[dict, dict]]:
 # Transform detection between centroid pairs
 # ---------------------------------------------------------------------------
 
+_PAIR_TRANSFORMS = (
+    "mirror_x", "mirror_z", "mirror_d1", "mirror_d2", "rot_180", "rot_90", "rot_270",
+)
+
+
 def _detect_pair_transform(
     a: dict, b: dict, center_x: float, center_z: float, tolerance: float = 2.0
 ) -> list[str]:
+    """Which transforms about the center map a's centroid onto b's (within tolerance)."""
     ax, az = a['center']
     bx, bz = b['center']
-    transforms = []
-
-    if abs(2 * center_x - ax - bx) < tolerance and abs(az - bz) < tolerance:
-        transforms.append('mirror_x')
-    if abs(ax - bx) < tolerance and abs(2 * center_z - az - bz) < tolerance:
-        transforms.append('mirror_z')
-    if abs(2 * center_x - ax - bx) < tolerance and abs(2 * center_z - az - bz) < tolerance:
-        transforms.append('rot_180')
-
-    # Diagonal reflections about the center. d1 is the main diagonal (line
-    # z - cz = x - cx), which swaps the centered coords (dx, dz) -> (dz, dx);
-    # d2 is the anti-diagonal (z - cz = -(x - cx)), (dx, dz) -> (-dz, -dx).
-    d1x = center_x + (az - center_z)
-    d1z = center_z + (ax - center_x)
-    if abs(d1x - bx) < tolerance and abs(d1z - bz) < tolerance:
-        transforms.append('mirror_d1')
-
-    d2x = center_x - (az - center_z)
-    d2z = center_z - (ax - center_x)
-    if abs(d2x - bx) < tolerance and abs(d2z - bz) < tolerance:
-        transforms.append('mirror_d2')
-
-    r90x = center_x + (az - center_z)
-    r90z = center_z - (ax - center_x)
-    if abs(r90x - bx) < tolerance and abs(r90z - bz) < tolerance:
-        transforms.append('rot_90')
-
-    r270x = center_x - (az - center_z)
-    r270z = center_z + (ax - center_x)
-    if abs(r270x - bx) < tolerance and abs(r270z - bz) < tolerance:
-        transforms.append('rot_270')
-
-    return transforms
+    out = []
+    for mode in _PAIR_TRANSFORMS:
+        ex, ez = _apply_transform_center(ax, az, mode, center_x, center_z)
+        if abs(ex - bx) < tolerance and abs(ez - bz) < tolerance:
+            out.append(mode)
+    return out
 
 
 def _aggregate_pair_transforms(
@@ -231,34 +219,11 @@ def _aggregate_pair_transforms(
 def _transform_coords(
     exterior: list, transform: str, cx: float, cz: float
 ) -> np.ndarray:
-    pts = np.array(exterior, dtype=float)
-    if transform == 'mirror_x':
-        pts[:, 0] = 2 * cx - pts[:, 0]
-    elif transform == 'mirror_z':
-        pts[:, 1] = 2 * cz - pts[:, 1]
-    elif transform == 'rot_180':
-        pts[:, 0] = 2 * cx - pts[:, 0]
-        pts[:, 1] = 2 * cz - pts[:, 1]
-    elif transform in ('rot_90', 'rot_270'):
-        dx = pts[:, 0] - cx
-        dz = pts[:, 1] - cz
-        if transform == 'rot_90':
-            pts[:, 0] = cx + dz
-            pts[:, 1] = cz - dx
-        else:
-            pts[:, 0] = cx - dz
-            pts[:, 1] = cz + dx
-    elif transform == 'mirror_d1':
-        dx = pts[:, 0] - cx
-        dz = pts[:, 1] - cz
-        pts[:, 0] = cx + dz
-        pts[:, 1] = cz + dx
-    elif transform == 'mirror_d2':
-        dx = pts[:, 0] - cx
-        dz = pts[:, 1] - cz
-        pts[:, 0] = cx - dz
-        pts[:, 1] = cz - dx
-    return pts
+    """Transform polygon-exterior coords about the center, via the geometry module."""
+    return np.array(
+        [_apply_transform_center(x, z, transform, cx, cz) for x, z in exterior],
+        dtype=float,
+    )
 
 
 def _verify_polygon_symmetry(
@@ -315,20 +280,12 @@ def _verify_polygon_symmetry(
 def _apply_transform_center(
     x: float, z: float, transform: str, cx: float, cz: float
 ) -> tuple[float, float]:
-    if transform == 'mirror_x':
-        return 2.0 * cx - x, z
-    elif transform == 'mirror_z':
-        return x, 2.0 * cz - z
-    elif transform == 'rot_180':
-        return 2.0 * cx - x, 2.0 * cz - z
-    elif transform == 'rot_90':
-        return cx + (z - cz), cz - (x - cx)
-    elif transform == 'rot_270':
-        return cx - (z - cz), cz + (x - cx)
-    elif transform == 'mirror_d1':
-        return cx + (z - cz), cz + (x - cx)
-    elif transform == 'mirror_d2':
-        return cx - (z - cz), cz - (x - cx)
+    """Reflect/rotate a point about the center — single-sourced from geometry.py (CCW)."""
+    if transform in _REFLECTION_NORMALS:
+        nx, nz = _REFLECTION_NORMALS[transform]
+        return reflect_point_2d(x, z, nx, nz, cx, cz)
+    if transform in _ROTATION_DEG:
+        return rotate_point_2d(x, z, _ROTATION_DEG[transform], cx, cz)
     return x, z
 
 

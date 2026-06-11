@@ -14,7 +14,6 @@ from pgm_map_studio.studio.services.sketch_export import (
     _compute_island_polys,
     _make_slug,
     _match_metadata,
-    _mirror_poly,
     _rasterise_full_layout,
     _rasterise_poly,
     _shape_to_shapely,
@@ -56,52 +55,8 @@ def test_rasterise_poly_empty():
     assert _rasterise_poly(None) == []
 
 
-# ── _mirror_poly ──────────────────────────────────────────────────────────────
-
-def _check_approx_bounds(poly, expected_bounds, tol=0.01):
-    b = poly.bounds
-    assert abs(b[0] - expected_bounds[0]) < tol
-    assert abs(b[1] - expected_bounds[1]) < tol
-    assert abs(b[2] - expected_bounds[2]) < tol
-    assert abs(b[3] - expected_bounds[3]) < tol
-
-
-def test_mirror_poly_mirror_x_at_origin():
-    poly = box(1, 0, 3, 4)  # x ∈ [1, 3]
-    mirrored = _mirror_poly(poly, "mirror_x", 0, 0)
-    _check_approx_bounds(mirrored, (-3, 0, -1, 4))
-
-
-def test_mirror_poly_mirror_z_at_origin():
-    poly = box(0, 1, 4, 3)  # z ∈ [1, 3]
-    mirrored = _mirror_poly(poly, "mirror_z", 0, 0)
-    _check_approx_bounds(mirrored, (0, -3, 4, -1))
-
-
-def test_mirror_poly_rot_180_at_origin():
-    poly = box(1, 1, 3, 3)
-    mirrored = _mirror_poly(poly, "rot_180", 0, 0)
-    _check_approx_bounds(mirrored, (-3, -3, -1, -1))
-
-
-def test_mirror_poly_rot_90_area_preserved():
-    poly = box(10, 10, 20, 30)
-    mirrored = _mirror_poly(poly, "rot_90", 0, 0)
-    assert abs(mirrored.area - poly.area) < 0.01
-
-
-def test_mirror_poly_rot_270_area_preserved():
-    poly = box(10, 10, 20, 30)
-    mirrored = _mirror_poly(poly, "rot_270", 0, 0)
-    assert abs(mirrored.area - poly.area) < 0.01
-
-
-def test_mirror_poly_rot_90_then_270_is_identity():
-    poly = box(5, 10, 15, 20)
-    rotated = _mirror_poly(_mirror_poly(poly, "rot_90", 0, 0), "rot_270", 0, 0)
-    b1, b2 = poly.bounds, rotated.bounds
-    for a, b in zip(b1, b2):
-        assert abs(a - b) < 0.01
+# (polygon symmetry transforms moved to region_geometry.transform_geom — see
+#  tests/studio/test_region_geometry.py)
 
 
 # ── _shape_to_shapely ─────────────────────────────────────────────────────────

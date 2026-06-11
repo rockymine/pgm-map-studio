@@ -123,11 +123,21 @@ def test_rot_180_pair():
 
 
 def test_rot_90_pair():
-    # (5, 3) -> rot_90 CCW -> (3, -5)
+    # rot_90 CCW (geometry.md §2): (Δx,Δz)=(5,3) -> (−Δz,Δx)=(-3,5)
+    a = {'center': [5.0, 3.0]}
+    b = {'center': [-3.0, 5.0]}
+    transforms = _detect_pair_transform(a, b, 0.0, 0.0)
+    assert 'rot_90' in transforms
+    assert 'rot_270' not in transforms
+
+
+def test_rot_270_pair():
+    # rot_270 CCW: (5,3) -> (Δz,−Δx)=(3,-5)  (the old CW "rot_90" — now correctly rot_270)
     a = {'center': [5.0, 3.0]}
     b = {'center': [3.0, -5.0]}
     transforms = _detect_pair_transform(a, b, 0.0, 0.0)
-    assert 'rot_90' in transforms
+    assert 'rot_270' in transforms
+    assert 'rot_90' not in transforms
 
 
 def test_mirror_d1_pair():

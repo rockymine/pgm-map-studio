@@ -64,7 +64,7 @@ def _iou(a, b) -> float:
     return a.intersection(b).area / union
 
 
-def _transform_geom(geom, mode: str, cx: float, cz: float):
+def transform_geom(geom, mode: str, cx: float, cz: float):
     """Reflect/rotate a shapely geometry about (cx,cz), via the geometry.py math."""
     from shapely.ops import transform as shp_transform
 
@@ -102,7 +102,7 @@ def counterpart_iou(data: dict, source_id: str, target_id: str, mode: str,
     tgt = _resolve(data, target_id, bounds)
     if src is None or tgt is None:
         return 0.0
-    return _iou(_transform_geom(src, mode, cx, cz), tgt)
+    return _iou(transform_geom(src, mode, cx, cz), tgt)
 
 
 def is_counterpart(data: dict, source_id: str, target_id: str, mode: str,

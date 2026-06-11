@@ -191,8 +191,9 @@ sketchShapeToPgmRegion(shape)                → PGM region | null
 - **Python peer:** `pgm_map_studio/geometry.py` is the canonical Python converter home (a pure-math
   leaf): `reflect_point_2d`/`reflect_bounds_2d` (PGM `<mirror>` semantics, any normal incl. diagonal)
   and `rotate_point_2d`/`rotate_bounds_2d` (CCW, 90°-multiples exact). The editor counterpart-creation
-  (C13) and the parser use these. *(Consolidating `detection.py` + `sketch_export.py` onto this module
-  — and fixing detection's CW `rot_90` — is the remaining B12 cleanup.)*
+  (C13) and the parser use these. `detection.py` and `sketch_export.py` (via
+  `region_geometry.transform_geom`) are consolidated onto this module — one implementation per
+  converter. The JS `converters.js` is the necessary cross-language twin, kept in parity by a Vitest test.
 - `rasterisePolygon` takes extent coords (boolean-clip output); no +1 before calling. Used by sketch
   export to build the synthetic scan layer.
 - `sketchShapeToPgmRegion`: rectangle→Rectangle, circle→Circle; **polygons are never exported as PGM
