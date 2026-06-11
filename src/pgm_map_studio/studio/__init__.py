@@ -5,11 +5,13 @@ import logging
 
 from flask import Flask
 
+from .errors import register_error_envelope
 from .routes import apply_rules, build_regions, config, configure, filters, map_api, minecraft, objectives, pages, pipeline, regions, sketch_api, sources, teams, spawns, wiring
 
 
 def create_app() -> Flask:
     app = Flask(__name__, template_folder="templates", static_folder="static")
+    register_error_envelope(app)
 
     app.register_blueprint(pages.bp)
     app.register_blueprint(config.bp)

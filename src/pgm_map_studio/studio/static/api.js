@@ -1,5 +1,17 @@
 /** All server communication for PGM Map Studio. */
 
+// ── Errors ──────────────────────────────────────────────────────────────────
+
+/** Pull the human message out of the structured error envelope
+ *  `{error:{code,message}}`, tolerating the legacy flat `{error:"..."}`.
+ *  Returns undefined when absent, so callers keep their `|| fallback`. */
+export function apiErrorMessage(body) {
+  const e = body && body.error;
+  if (e && typeof e === "object") return e.message;
+  if (typeof e === "string") return e;
+  return undefined;
+}
+
 // ── Config ────────────────────────────────────────────────────────────────
 
 export async function fetchConfig() {
@@ -24,7 +36,7 @@ export async function fetchSources() {
   const r = await fetch("/api/sources");
   if (!r.ok) {
     const body = await r.json().catch(() => ({}));
-    throw new Error(body.error || `Failed to load sources (${r.status})`);
+    throw new Error(apiErrorMessage(body) ||`Failed to load sources (${r.status})`);
   }
   return r.json();
 }
@@ -48,7 +60,7 @@ export async function importFromUrl(url, name = "") {
     body: JSON.stringify({ url, name }),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Import failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Import failed (${r.status})`);
   return body;
 }
 
@@ -87,7 +99,7 @@ export async function fetchSegments(mapName, axis = "z") {
   const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/segments?axis=${axis}`);
   if (!r.ok) {
     const body = await r.json().catch(() => ({}));
-    throw new Error(body.error || `Failed to fetch segments (${r.status})`);
+    throw new Error(apiErrorMessage(body) ||`Failed to fetch segments (${r.status})`);
   }
   return r.json();
 }
@@ -133,7 +145,7 @@ export async function addTeam(mapName, team) {
     body: JSON.stringify(team),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Add team failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Add team failed (${r.status})`);
   return body;
 }
 
@@ -144,7 +156,7 @@ export async function updateTeam(mapName, teamId, fields) {
     body: JSON.stringify(fields),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Update team failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Update team failed (${r.status})`);
   return body;
 }
 
@@ -153,7 +165,7 @@ export async function deleteTeam(mapName, teamId) {
     method: "DELETE",
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Delete team failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Delete team failed (${r.status})`);
   return body;
 }
 
@@ -166,7 +178,7 @@ export async function createRegion(mapName, payload) {
     body: JSON.stringify(payload),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Create region failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Create region failed (${r.status})`);
   return body;
 }
 
@@ -177,7 +189,7 @@ export async function patchRegion(mapName, regionId, payload) {
     body: JSON.stringify(payload),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Patch region failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Patch region failed (${r.status})`);
   return body;
 }
 
@@ -186,7 +198,80 @@ export async function deleteRegion(mapName, regionId) {
     method: "DELETE",
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Delete region failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Delete region failed (${r.status})`);
+  return body;
+}
+
+export async function groupRegions(mapName, payload) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/regions/group`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(apiErrorMessage(body) || `Group regions failed (${r.status})`);
+  return body;
+}
+
+export async function ungroupRegion(mapName, regionId) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/regions/ungroup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ region_id: regionId }),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(apiErrorMessage(body) || `Ungroup region failed (${r.status})`);
+  return body;
+}
+
+export async function restoreRegion(mapName, snapshot) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/regions/restore`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ snapshot }),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(apiErrorMessage(body) || `Restore region failed (${r.status})`);
+  return body;
+}
+
+export async function changeRegionType(mapName, regionId, type) {
+  const r = await fetch(
+    `/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}/change-type`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type }) },
+  );
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(apiErrorMessage(body) || `Change region type failed (${r.status})`);
+  return body;
+}
+
+export async function removeFromGroup(mapName, regionId, childId) {
+  const r = await fetch(
+    `/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}/remove-from-group`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ child_id: childId }) },
+  );
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(apiErrorMessage(body) || `Remove from group failed (${r.status})`);
+  return body;
+}
+
+export async function setBaseChild(mapName, regionId, childId) {
+  const r = await fetch(
+    `/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}/set-base-child`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ child_id: childId }) },
+  );
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(apiErrorMessage(body) || `Set base child failed (${r.status})`);
+  return body;
+}
+
+export async function createCounterpart(mapName, regionId, payload) {
+  const r = await fetch(
+    `/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}/counterpart`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+  );
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(apiErrorMessage(body) || `Create counterpart failed (${r.status})`);
   return body;
 }
 
@@ -199,7 +284,7 @@ export async function addSpawn(mapName, spawn) {
     body: JSON.stringify(spawn),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Add spawn failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Add spawn failed (${r.status})`);
   return body;
 }
 
@@ -210,7 +295,7 @@ export async function updateSpawn(mapName, regionId, fields) {
     body: JSON.stringify(fields),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Update spawn failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Update spawn failed (${r.status})`);
   return body;
 }
 
@@ -221,7 +306,7 @@ export async function setObserverSpawn(mapName, payload) {
     body: JSON.stringify(payload),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Set observer spawn failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Set observer spawn failed (${r.status})`);
   return body;
 }
 
@@ -230,7 +315,7 @@ export async function deleteObserverSpawn(mapName) {
     method: "DELETE",
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Delete observer spawn failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Delete observer spawn failed (${r.status})`);
   return body;
 }
 
@@ -239,7 +324,7 @@ export async function deleteSpawn(mapName, regionId) {
     method: "DELETE",
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Delete spawn failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Delete spawn failed (${r.status})`);
   return body;
 }
 
@@ -298,7 +383,7 @@ export async function exportSketch(sketchId) {
     method: "POST",
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Export failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Export failed (${r.status})`);
   return body;
 }
 
@@ -311,7 +396,7 @@ export async function addWool(mapName, payload) {
     body: JSON.stringify(payload),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Add wool failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Add wool failed (${r.status})`);
   return body;
 }
 
@@ -322,7 +407,7 @@ export async function updateWool(mapName, woolId, fields) {
     body: JSON.stringify(fields),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Update wool failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Update wool failed (${r.status})`);
   return body;
 }
 
@@ -331,7 +416,7 @@ export async function deleteWool(mapName, woolId) {
     method: "DELETE",
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Delete wool failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Delete wool failed (${r.status})`);
   return body;
 }
 
@@ -341,7 +426,7 @@ export async function addMonument(mapName, woolId, payload) {
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
   );
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Add monument failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Add monument failed (${r.status})`);
   return body;
 }
 
@@ -351,7 +436,7 @@ export async function updateMonument(mapName, woolId, monId, fields) {
     { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) },
   );
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Update monument failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Update monument failed (${r.status})`);
   return body;
 }
 
@@ -361,7 +446,7 @@ export async function deleteMonument(mapName, woolId, monId) {
     { method: "DELETE" },
   );
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error || `Delete monument failed (${r.status})`);
+  if (!r.ok) throw new Error(apiErrorMessage(body) ||`Delete monument failed (${r.status})`);
   return body;
 }
 

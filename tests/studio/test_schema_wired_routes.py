@@ -101,7 +101,9 @@ def test_patch_setup_rejects_unknown_mirror_mode(client):
     _write_sketch(root, "sid-2")
     resp = c.patch("/api/sketch/sid-2/setup", json={"mirror_mode": "rot_45"})
     assert resp.status_code == 400
-    assert resp.get_json()["error"] == "Invalid payload"
+    # structured error envelope (C1): {error:{code,message}}
+    assert resp.get_json()["error"]["message"] == "Invalid payload"
+    assert resp.get_json()["error"]["code"] == "bad_request"
 
 
 def test_patch_setup_accepts_valid_partial(client):

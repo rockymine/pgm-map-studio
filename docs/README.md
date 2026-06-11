@@ -25,6 +25,7 @@ disagree, **the code wins**.
 | `contracts/region-categorization.md` | How a region's `category` + `roles` are **derived** (two-facet model). |
 | `contracts/validation-invariants.md` | Editing invariants (severity, the symmetry↔team coupling, traversability). |
 | `contracts/filter-region-wiring.md` | How filters attach to regions (the wiring relationship) + the v1 suggestion templates. |
+| `contracts/api-schemas.md` | HTTP contract: success/error **envelopes**, error codes, naming & REST-vs-RPC conventions, route-family index. |
 | `filter-use-cases.md` | The filter **vocabulary** + event×filter-type matrices. *(Its corpus statistics are research — Rationale — bundled in an appendix.)* |
 | `contracts/ui-conventions.md` | CSS/UI conventions; the `/design` page is the live visual reference. |
 

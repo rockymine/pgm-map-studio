@@ -87,11 +87,15 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
 ## Workstream C — API stabilization (Phase 3)
 
-- [ ] **C1.** Structured error envelope `{error:{code,message}}` across routes + `api.js`.
-- [ ] **C2.** Documented request/response schema per route family (`api-schemas.md`).
+- [x] **C1. Structured error envelope** `{error:{code,message}}` — enforced centrally
+  (`studio/errors.py` after_request + HTTPException handler, scoped to `/api/`); `api.js`
+  `apiErrorMessage` extracts it. `tests/studio/test_error_envelope.py`.
+- [x] **C2. API contract documented** — `docs/contracts/api-schemas.md` (envelopes, error codes,
+  naming & REST-vs-RPC conventions, route-family index).
 - [x] **C3. Filters CRUD routes + service** (author-in-v1; reject-with-references on delete).
 - [x] **C4. Apply-rules CRUD routes + service** (stable `rule_<n>` synthetic ids, dropped on XML export).
-- [ ] **C5.** Wire region group/ungroup/restore/change-type into `api.js` (currently unwired).
+- [x] **C5. Region ops wired into `api.js`** — `groupRegions`/`ungroupRegion`/`restoreRegion`/
+  `changeRegionType`/`removeFromGroup`/`setBaseChild`/`createCounterpart` (activity UI buttons = D-series).
 - [x] **C6. bbox/center wire naming unified** to `{min_x,min_z,max_x,max_z}` + `{cx,cz}` — symmetry
   center migrated `center_x/center_z`→`cx/cz` (hard cut).
 - [ ] **C7.** CTW import-eligibility check (supported symmetric-CTW signal; flag AD/arcade/gimmick).
@@ -106,16 +110,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   defense (`enter=not-owner`), wool-room edit (`block=not-owner`), build/void enforcement
   (group build → `negative` → `block_place=deny(void)`). `tests/studio/test_filter_wiring.py` (15).
   *Remaining: the suggest/confirm **UI** — D-series, builds on these routes.*
-- [ ] **C10. Route consistency audit + CRUD conventions.** *Audited (autonomous session).*
-  Inconsistencies to resolve: (1) **singular/plural** mixed — `/teams` + `/teams/:id` and
-  `/wools` + `/wools/:id` (plural) vs `/regions` POST + `/region/:id` and `/spawns` POST +
-  `/spawn/:region_id` (plural-create, singular-item); (2) **success envelope** mixed — most
-  mutations return `{ok:true, ...result}`, spawns return bare `{ok:true}`, sketch PATCH `{ok:true}`,
-  sketch GET/POST and config GET return raw data; (3) **error envelope** flat `{"error":"..."}`
-  string (C1 fixes); (4) **REST vs RPC** mixed — collection POST for create, but action URLs for
-  region ops (`/regions/group`, `/region/:id/change-type`, `/set-base-child`); (5) spawn is keyed
-  by its linked `region_id`, not a spawn id. Standardize naming + envelopes; decide REST vs RPC for
-  compound ops.
+- [x] **C10. Route conventions decided + documented** (`api-schemas.md`): success `{ok:true,...}` /
+  GET raw resource; error envelope (C1); collections plural + RPC action-URLs for compound region ops;
+  spawn keyed by `region_id`. Singular `/region/:id`,`/spawn/:id` item-routes kept (cosmetic rename
+  reintroduces a routing adjacency; normalize at D1).
 - [ ] **C11. Intelligent team/wool ID + colour defaults.** Teams currently default to id
   `new-team-n`, name `New Team`, chat colour blue. Instead pick the next unused colour and derive
   id `<colour>-team`, name `<Colour> Team` (mirrors the wool colour-as-key scheme). Cap at the
