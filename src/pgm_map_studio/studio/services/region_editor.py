@@ -93,15 +93,32 @@ def create_region(data: dict, payload: dict) -> dict:
     return {"id": region_id}
 
 
-def group_regions(data: dict, payload: dict) -> dict:
-    """Wrap existing regions in a new union region.
+_COMPOUND_TYPES = frozenset({"union", "complement", "intersect", "negative"})
 
-    Returns {"id": union_id, "bounds": {min_x, min_z, max_x, max_z}}.
+
+def group_regions(data: dict, payload: dict) -> dict:
+    """Wrap existing regions in a new compound region.
+
+    ``payload["type"]`` selects the compound type (default ``"union"``); any of
+    union / intersect / complement / negative may be created directly. Children
+    are stored in payload order — for a ``complement`` the first child is the
+    base (use ``set_base_child`` to reorder later). ``negative`` means
+    "everywhere except the children's union" and accepts ≥1 child; the others
+    need ≥2.
+
+    Returns {"id": compound_id, "bounds": {min_x, min_z, max_x, max_z}}.
     Raises InvalidRegionPayload, RegionNotFound, RegionConflict.
     """
+    comp_type = (str(payload.get("type", "union")).strip() or "union")
+    if comp_type not in _COMPOUND_TYPES:
+        raise InvalidRegionPayload(f"{comp_type!r} is not a compound type")
+
     child_ids = [str(cid) for cid in payload.get("child_ids", [])]
-    if len(child_ids) < 2:
-        raise InvalidRegionPayload("at least 2 regions required")
+    min_children = 1 if comp_type == "negative" else 2
+    if len(child_ids) < min_children:
+        raise InvalidRegionPayload(
+            f"{comp_type} requires at least {min_children} region(s)"
+        )
 
     regions = _regions_dict(data)
 
@@ -109,34 +126,31 @@ def group_regions(data: dict, payload: dict) -> dict:
     if missing:
         raise RegionNotFound(f"unknown region(s): {missing}")
 
-    union_id = (payload.get("id") or "").strip()
-    if not union_id:
+    compound_id = (payload.get("id") or "").strip()
+    if not compound_id:
         i = 1
-        while f"union_{i}" in regions:
+        while f"{comp_type}_{i}" in regions:
             i += 1
-        union_id = f"union_{i}"
-    elif union_id in regions:
-        raise RegionConflict(f"id {union_id!r} already in use")
+        compound_id = f"{comp_type}_{i}"
+    elif compound_id in regions:
+        raise RegionConflict(f"id {compound_id!r} already in use")
 
     child_dicts = [regions[cid] for cid in child_ids]
     bounds_2d, min_x, min_z, max_x, max_z = build_union_bounds(child_dicts)
 
-    regions[union_id] = {
-        "id": union_id,
-        "type": "union",
+    regions[compound_id] = {
+        "id": compound_id,
+        "type": comp_type,
         # String-id references into the flat registry — never inline child dicts.
         # The children remain top-level entries; the tree view excludes them as roots.
         "children": list(child_ids),
         **({"bounds_2d": bounds_2d} if bounds_2d else {}),
     }
-    data.setdefault("region_categories", {}).setdefault("other", []).append(union_id)
+    data.setdefault("region_categories", {}).setdefault("other", []).append(compound_id)
     return {
-        "id": union_id,
+        "id": compound_id,
         "bounds": {"min_x": min_x, "min_z": min_z, "max_x": max_x, "max_z": max_z},
     }
-
-
-_COMPOUND_TYPES = frozenset({"union", "complement", "intersect", "negative"})
 
 
 def change_region_type(data: dict, region_id: str, payload: dict) -> dict:

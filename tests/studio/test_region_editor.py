@@ -5,6 +5,7 @@ from pgm_map_studio.studio.services.region_editor import (
     InvalidRegionPayload,
     RegionConflict,
     RegionNotFound,
+    change_region_type,
     create_region,
     delete_region,
     group_regions,
@@ -154,6 +155,94 @@ class TestGroupRegions:
         assert self.data["regions"]["u"]["children"] == ["r1", "r2"]
         # Children remain top-level registry entries.
         assert "r1" in self.data["regions"] and "r2" in self.data["regions"]
+
+    # ── C8: direct compound creation (type param) ──────────────────────────────
+
+    def test_default_type_is_union(self):
+        result = group_regions(self.data, {"child_ids": ["r1", "r2"]})
+        assert self.data["regions"][result["id"]]["type"] == "union"
+
+    def test_creates_complement(self):
+        result = group_regions(self.data, {"child_ids": ["r1", "r2"], "type": "complement"})
+        assert result["id"] == "complement_1"
+        assert self.data["regions"]["complement_1"]["type"] == "complement"
+
+    def test_creates_intersect(self):
+        result = group_regions(self.data, {"child_ids": ["r1", "r2"], "type": "intersect"})
+        assert self.data["regions"][result["id"]]["type"] == "intersect"
+
+    def test_creates_negative(self):
+        result = group_regions(self.data, {"child_ids": ["r1", "r2"], "type": "negative"})
+        assert self.data["regions"][result["id"]]["type"] == "negative"
+
+    def test_negative_allows_single_child(self):
+        result = group_regions(self.data, {"child_ids": ["r1"], "type": "negative"})
+        assert self.data["regions"][result["id"]]["children"] == ["r1"]
+
+    def test_complement_requires_two_children(self):
+        with pytest.raises(InvalidRegionPayload):
+            group_regions(self.data, {"child_ids": ["r1"], "type": "complement"})
+
+    def test_complement_preserves_child_order(self):
+        # First child is the base of a complement.
+        group_regions(self.data, {"child_ids": ["r2", "r1"], "type": "complement", "id": "c"})
+        assert self.data["regions"]["c"]["children"] == ["r2", "r1"]
+
+    def test_unknown_compound_type_raises(self):
+        with pytest.raises(InvalidRegionPayload):
+            group_regions(self.data, {"child_ids": ["r1", "r2"], "type": "rectangle"})
+
+    def test_compound_id_prefix_matches_type(self):
+        result = group_regions(self.data, {"child_ids": ["r1", "r2"], "type": "intersect"})
+        assert result["id"].startswith("intersect_")
+
+    def test_compound_children_are_string_ids(self):
+        group_regions(self.data, {"child_ids": ["r1", "r2"], "type": "complement", "id": "c"})
+        assert self.data["regions"]["c"]["children"] == ["r1", "r2"]
+        assert all(isinstance(c, str) for c in self.data["regions"]["c"]["children"])
+
+
+# ── C8: change_region_type ─────────────────────────────────────────────────────
+
+class TestChangeRegionType:
+    def setup_method(self):
+        self.data = {"regions": {"r1": _rect("r1"), "r2": _rect("r2")}}
+        group_regions(self.data, {"child_ids": ["r1", "r2"], "id": "u"})  # a union
+
+    def test_union_to_complement(self):
+        change_region_type(self.data, "u", {"type": "complement"})
+        assert self.data["regions"]["u"]["type"] == "complement"
+
+    def test_complement_to_union(self):
+        self.data["regions"]["u"]["type"] = "complement"
+        change_region_type(self.data, "u", {"type": "union"})
+        assert self.data["regions"]["u"]["type"] == "union"
+
+    def test_change_to_intersect_and_negative(self):
+        change_region_type(self.data, "u", {"type": "intersect"})
+        assert self.data["regions"]["u"]["type"] == "intersect"
+        change_region_type(self.data, "u", {"type": "negative"})
+        assert self.data["regions"]["u"]["type"] == "negative"
+
+    def test_children_preserved_across_change(self):
+        change_region_type(self.data, "u", {"type": "complement"})
+        assert self.data["regions"]["u"]["children"] == ["r1", "r2"]
+
+    def test_invalid_target_type_raises(self):
+        with pytest.raises(InvalidRegionPayload):
+            change_region_type(self.data, "u", {"type": "rectangle"})
+
+    def test_empty_type_raises(self):
+        with pytest.raises(InvalidRegionPayload):
+            change_region_type(self.data, "u", {"type": ""})
+
+    def test_region_not_found_raises(self):
+        with pytest.raises(RegionNotFound):
+            change_region_type(self.data, "ghost", {"type": "union"})
+
+    def test_non_compound_region_rejected(self):
+        with pytest.raises(InvalidRegionPayload):
+            change_region_type(self.data, "r1", {"type": "union"})  # a rectangle
 
 
 # ── ungroup / remove-from-group / set-base-child (string-id children) ──────────
