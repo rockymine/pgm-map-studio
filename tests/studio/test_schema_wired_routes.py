@@ -92,3 +92,47 @@ def test_sketch_get_returns_schema_payload_with_bezier_in_key(client):
 def test_sketch_get_missing_returns_404(client):
     c, _ = client
     assert c.get("/api/sketch/nope").status_code == 404
+
+
+# ── write routes reject malformed input at the boundary (400) ────────────────────
+
+def test_patch_setup_rejects_unknown_mirror_mode(client):
+    c, root = client
+    _write_sketch(root, "sid-2")
+    resp = c.patch("/api/sketch/sid-2/setup", json={"mirror_mode": "rot_45"})
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "Invalid payload"
+
+
+def test_patch_setup_accepts_valid_partial(client):
+    c, root = client
+    _write_sketch(root, "sid-3")
+    # partial PATCH: only mirror_mode — must succeed and not clobber other fields
+    resp = c.patch("/api/sketch/sid-3/setup", json={"mirror_mode": "rot_90"})
+    assert resp.status_code == 200
+    assert sketch_data_load(root, "sid-3")["setup"]["mirror_mode"] == "rot_90"
+
+
+def test_patch_layout_rejects_shape_without_type(client):
+    c, root = client
+    _write_sketch(root, "sid-4")
+    resp = c.patch("/api/sketch/sid-4/layout",
+                   json={"shapes": [{"id": "x", "min_x": 0}], "islands": []})
+    assert resp.status_code == 400
+
+
+def test_patch_layout_accepts_valid_bezier_shape(client):
+    c, root = client
+    _write_sketch(root, "sid-5")
+    resp = c.patch("/api/sketch/sid-5/layout", json={
+        "shapes": [{"id": "s1", "type": "polygon",
+                    "vertices": [[0, 0], [10, 0], [5, 9]],
+                    "controls": {"0": {"in": [1, 1], "out": [3, 0]}}}],
+        "islands": [{"id": "i1", "name": "A", "mirrors": True, "shapeIds": ["s1"]}],
+    })
+    assert resp.status_code == 200
+
+
+def sketch_data_load(root, sid):
+    import json as _json
+    return _json.loads((root / "sketches" / sid / "sketch.json").read_text())

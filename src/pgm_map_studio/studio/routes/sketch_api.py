@@ -1,11 +1,25 @@
 from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
+from pydantic import BaseModel, ValidationError
 
 from pgm_map_studio.studio.services import sketch_data, sketch_export
-from pgm_map_studio.schemas import SketchProject
+from pgm_map_studio.schemas import SketchLayout, SketchProject, SketchSetup
 
 bp = Blueprint("sketch_api", __name__, url_prefix="/api/sketch")
+
+
+def _reject(model: type[BaseModel], payload: dict):
+    """Validate a PATCH body against `model`. Returns a 400 response tuple if it
+    is malformed, or None if it is valid (a gate — the caller persists the
+    original partial payload, not a dumped model, so PATCH stays partial)."""
+    try:
+        model.model_validate(payload)
+        return None
+    except ValidationError as exc:
+        details = [{"loc": list(e["loc"]), "msg": e["msg"], "type": e["type"]}
+                   for e in exc.errors()]
+        return jsonify({"error": "Invalid payload", "details": details[:10]}), 400
 
 
 @bp.route("", methods=["GET"])
@@ -33,6 +47,8 @@ def get(sid: str):
 @bp.route("/<sid>/setup", methods=["PATCH"])
 def patch_setup(sid: str):
     payload = request.get_json(force=True) or {}
+    if (err := _reject(SketchSetup, payload)):     # e.g. an unknown mirror_mode
+        return err
     try:
         sketch_data.save_setup(sid, payload)
     except KeyError:
@@ -43,12 +59,12 @@ def patch_setup(sid: str):
 @bp.route("/<sid>/layout", methods=["PATCH"])
 def patch_layout(sid: str):
     payload = request.get_json(force=True) or {}
-    shapes  = payload.get("shapes", [])
-    islands = payload.get("islands", [])
-    if not isinstance(shapes, list) or not isinstance(islands, list):
-        return jsonify({"error": "shapes and islands must be arrays"}), 400
+    # validates shape types + bezier controls ("in"/"out") + island records
+    if (err := _reject(SketchLayout, {"shapes": payload.get("shapes", []),
+                                      "islands": payload.get("islands", [])})):
+        return err
     try:
-        sketch_data.save_layout(sid, shapes, islands)
+        sketch_data.save_layout(sid, payload.get("shapes", []), payload.get("islands", []))
     except KeyError:
         return jsonify({"error": "Sketch not found"}), 404
     return jsonify({"ok": True})
@@ -57,6 +73,10 @@ def patch_layout(sid: str):
 @bp.route("/<sid>/overview", methods=["PATCH"])
 def patch_overview(sid: str):
     payload = request.get_json(force=True) or {}
+    # SketchProject validates the overview subset (name/version/objective/authors);
+    # unrelated keys are ignored, and only _OVERVIEW_FIELDS are persisted.
+    if (err := _reject(SketchProject, payload)):
+        return err
     try:
         sketch_data.save_overview(sid, payload)
     except KeyError:
