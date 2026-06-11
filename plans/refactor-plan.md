@@ -44,7 +44,16 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   the sketch `sketch.json` shape (overlaps B3), and wiring `studio` routes to return/validate via the
   models.* The view side (B4) already carries the canonical flat `{min_x..}`/`{cx,cz}` naming (C6);
   persisted keeps the on-disk nested `bounds_2d` (the C6 on-disk migration is separate).
-- [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
+- [x] **B2. Imported-map domain typed** — already realized by the `pgm` dataclasses (kept as
+  dataclasses, not pydantic, per the B-note): `datatypes.py` (`MapXml` + 14 entities), `regions.py`
+  (`Region` + 17 types), `filters.py` (`Filter` + 36 types). Verified complete + aligned across
+  layers and **locked with a drift-guard** (`tests/pgm/test_codec_type_coverage.py`): the codec
+  round-trips every region/filter type back to its own class (adding a type without wiring
+  encode+decode now fails). One escape hatch left intentionally: `Region.bounds_2d: Optional[dict]`
+  (derived cache; typed at the persisted boundary as `Bounds2d`). Wools stay **native-flat** in the
+  domain (one per `<wool>`) and are grouped-by-colour with `monuments[].team` only at the persisted
+  boundary (`serializer._encode_wools_grouped` ↔ `deserializer._decode_wools_entry`) — the canonical
+  contract shape, owner-team derived.
 - [x] **B3. Sketch `sketch.json` typed** — `schemas/sketch.py` (`SketchProject` + setup/layout/
   shape/island). **Cubic-Bézier model kept in lock-step with `geometry.js`/`sketch_export.py`:**
   `controls` = dict keyed by stringified vertex index, `{in?,out?}` handles; `in` aliased
