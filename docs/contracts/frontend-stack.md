@@ -162,4 +162,4 @@ folder; the switch alone won't erase the venv/`node_modules` path quirk.
 - `docs/contracts/data-model.md` — the API surface the frontend consumes.
 - `docs/contracts/geometry.md` — canvas base, `transform.js` interface, required converters (the shared
   geometry layer to port to TS).
-- `docs/ui-conventions.md` + `/design` — the CSS/design system that carries over.
+- `docs/contracts/ui-conventions.md` + `/design` — the CSS/design system that carries over.

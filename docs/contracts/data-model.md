@@ -3,7 +3,7 @@
 The **canonical shape of every entity is the typed code**: the domain types in
 `src/pgm_map_studio/pgm/` (`datatypes.py`, `regions.py`, `filters.py`) and the codec
 (`serializer`/`deserializer`), plus the B1 view-models that generate the TypeScript types
-(see `frontend-stack-decision.md`). **When this document and the code disagree, the code wins.**
+(see `frontend-stack.md`). **When this document and the code disagree, the code wins.**
 
 This doc is the human-readable map of those types — what each entity is, how they relate, and the
 rules types alone can't express. It is **present-tense**: it states what is true now. History lives

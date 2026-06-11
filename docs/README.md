@@ -25,7 +25,7 @@ disagree, **the code wins**.
 | `contracts/region-categorization.md` | How a region's `category` + `roles` are **derived** (two-facet model). |
 | `contracts/validation-invariants.md` | Editing invariants (severity, the symmetry↔team coupling, traversability). |
 | `filter-use-cases.md` | The filter **vocabulary** + event×filter-type matrices. *(Its corpus statistics are research — Rationale — bundled in an appendix.)* |
-| `ui/ui-conventions.md` | CSS/UI conventions; the `/design` page is the live visual reference. |
+| `contracts/ui-conventions.md` | CSS/UI conventions; the `/design` page is the live visual reference. |
 
 ## Rationale — the *why* (feeds requirements; may carry statistics)
 
@@ -47,8 +47,7 @@ superseded by the planned `filter-region-wiring.md`, C9.)
 |---|---|
 | `../plans/refactor-plan.md` | **The active driver** — ordered status tracker (Workstreams A–E) + "Current focus". |
 | `../plans/editor-vision.md` | Editor design vision. |
-| `contracts/frontend-stack-decision.md` | The D1 target stack decision (React + TS + Vite; keep Python). |
-| `ui/ui-system-consolidation.md` | UI system consolidation notes. |
+| `contracts/frontend-stack.md` | The D1 target stack decision (React + TS + Vite; keep Python). |
 | `testing.md` | How to run the Python + JS test suites. |
 
 

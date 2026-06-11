@@ -14,7 +14,7 @@ Mid **contract-first refactor** on branch `refactor/contract-first`: stabilize t
   rationale / requirements / process). Start here when unsure where something belongs.
 - **`docs/contracts/`** — the contract (the *what*): `data-model.md` (domain +
   API surface), `geometry.md` (coordinate/transform math + converters), `region-categorization.md`,
-  `validation-invariants.md`, `frontend-stack-decision.md` (D1 target stack).
+  `validation-invariants.md`, `frontend-stack.md` (D1 target stack).
   (Codec/service signatures live in the code — `pgm.serializer`/`deserializer` + `studio/services/`.)
 
 Status (A round-trip complete, harness 350/350; B5 categorization, C3/C4 CRUD, B7 symmetry, B11
@@ -56,7 +56,7 @@ invariants done; ~920 py tests) lives in the plan + memory — **don't duplicate
 1. Read only the **activity-specific requirements** (`docs/requirements/<file>.md` or `docs/contracts/geometry.md`) + the relevant
    **contract** (`docs/contracts/*`).
 2. **Check the tree** (`find src/`/`find tests/`) for what exists.
-3. Read the **design doc**: `docs/ui/ui-conventions.md` (UI), `plans/editor-vision.md` (editor),
+3. Read the **design doc**: `docs/contracts/ui-conventions.md` (UI), `plans/editor-vision.md` (editor),
    `docs/sketch-workflow.md` (sketch).
 4. **Clarify unknowns** with `AskUserQuestion`; update the requirement/contract if scope changes.
 5. **Write tests first** — pytest in `tests/` (mirroring `src/`) and/or Vitest, one test file per
@@ -72,7 +72,7 @@ symmetry formulas (mirror_x/z, diagonal d1/d2, rot_180/90, general rot_n + cente
 the shared canvas base, the `transform.js` interface, shape/region wire formats, and the **required
 converters — each must have exactly one implementation** (with unit tests).
 
-## UI — follow `docs/ui-conventions.md`; `/design` is the living visual reference
+## UI — follow `docs/contracts/ui-conventions.md`; `/design` is the living visual reference
 
 - **CSS split:** game-agnostic → `components.css`; editor/game-aware → `editor.css`; tokens →
   `tokens.css`; design-page helpers → `design.css`. **One owning file per selector** — never copy a

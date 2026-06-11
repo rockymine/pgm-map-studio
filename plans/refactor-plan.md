@@ -34,11 +34,11 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 > The **view** models (B1/B4) are the shapes the frontend consumes, so they are also where the
 > **TypeScript** contract is defined — hand-written TS interfaces or generated from a Python schema
 > (pydantic/OpenAPI → `openapi-typescript`). This is the D1 de-risker; see
-> `docs/contracts/frontend-stack-decision.md`.
+> `docs/contracts/frontend-stack.md`.
 
 - [ ] **B1.** Separate persisted / domain / view models per the contract (§1). The **view** layer is
   the source of the **TypeScript** types the frontend builds against (see
-  `docs/contracts/frontend-stack-decision.md`); decide hand-written vs generated when B1 lands.
+  `docs/contracts/frontend-stack.md`); decide hand-written vs generated when B1 lands.
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
 - [ ] **B3.** Type sketch models.
 - [ ] **B4.** Type the `/regions/tree` view-model node (§5) explicitly.
@@ -183,7 +183,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 ## Workstream D — UI migration (Phase 4)
 
 - [ ] **D1.** Only after A–C are stable. Port/replace frontend; keep HTML/CSS patterns. **Target
-  stack decided** in `docs/contracts/frontend-stack-decision.md`: React + TypeScript + Vite (SPA)
+  stack decided** in `docs/contracts/frontend-stack.md`: React + TypeScript + Vite (SPA)
   against the *existing* Flask API — keep all Python; not Next.js; not a full-stack rewrite; port
   incrementally per activity. The typed TS contract comes from B1–B4 (the D1 de-risker, below).
 - [ ] **D2. 2.5D/3D coordinate editing.** Positioning point/block (monuments) and cuboid Y-coords
