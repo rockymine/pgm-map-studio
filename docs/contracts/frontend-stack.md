@@ -2,8 +2,10 @@
 
 Status: **decided 2026-06-10** (rockymine + Opus). The target stack for the **framework switch
 (D1)**. This is a decision record, not a how-to — it fixes *what* we port to and *what stays*, so the
-implementing session builds against a settled target. Plan item: `plans/refactor-plan.md` D1; the
-"D1 de-risker" is B4 + B4a + C6 + C1.
+implementing session builds against a settled target. Plan item: `plans/refactor-plan.md` D1. The
+"D1 de-risker" was B4 + B4a + C6 + C1 — **B4·C6·C1 are done** (typed view-models + generated
+`contract.ts`, unified `{min_x..}`/`{cx,cz}` naming, `{error:{code,message}}` envelope); only **B4a**
+(region-tree-as-view design) remains, to be settled at kickoff.
 
 ## Decision summary
 
@@ -68,9 +70,10 @@ not need and would have to maintain for no benefit.
 - **All of `pgm/`, `layout/`, `symmetry/`, `studio/services/`** — framework-agnostic Python. On
   Flask, the routes stay too. (A future FastAPI move rewrites only the *thin* route layer, keeping
   every service.)
-- **Pure-logic JS** — `static/shared/transform.js`, `converters.js`, the future `geometry.js`
-  (B12), rasterisation, boolean island computation. Ports to TypeScript almost mechanically and is
-  *reused* by the new canvas. (B12's "one implementation per converter" goal makes this clean.)
+- **Pure-logic JS** — `static/shared/transform.js`, `converters.js`, `geometry.js`
+  (B12, done — Python `geometry.py` + JS parity), rasterisation, boolean island computation. Ports to
+  TypeScript almost mechanically and is *reused* by the new canvas. (B12's "one implementation per
+  converter" goal makes this clean.)
 - **The CSS design system** — `tokens.css`, `components.css`, the `/design` system. React components
   use the **same class names**; carries over nearly as-is. (D1 already says "keep HTML/CSS patterns.")
 - **The contracts/docs** — they *are* the spec the new frontend builds against.
@@ -87,8 +90,12 @@ B1–B4 define the typed view-models (Region, Filter, ApplyRule, Wool, Symmetry,
 compile-time-guaranteed to match the API's JSON — it cannot read a missing field or misname
 `min_x`/`cx`. Two ways:
 
-**Decided (2026-06-10):** **pydantic + generated TS** (option b). The Python contract is the single
-source; TS is generated (pydantic → JSON Schema → `openapi-typescript`) so it cannot drift.
+**Decided (2026-06-10), built (2026-06-11):** **pydantic + generated TS** (option b). The Python
+schemas in `src/pgm_map_studio/schemas/` are the single source; `tools/generate_ts_contract.py`
+renders them directly to `frontend/src/contract.ts` (a no-drift test asserts the checked-in file
+equals the generator output). *(A pydantic-`model_json_schema` → `openapi-typescript` pipeline was the
+original sketch; the direct renderer proved simpler and gives tighter TS — Literal unions, typed
+`Record<string,V>`, alias-aware field names.)*
 
 ### Where it lives **[decided]**
 
@@ -100,15 +107,16 @@ A new, **framework-independent** top-level package — **`src/pgm_map_studio/sch
 - It is *not* under `studio/` on purpose: the founding block must survive the Flask→(possible
   FastAPI) move **and** the frontend swap, and the TS generator + React app consume it directly.
   Dependency flow: `pgm` (domain) ← `schemas` (boundary) ← `studio` (app) ← `frontend` (TS).
-- **TS generation:** `tools/` script (pydantic `model_json_schema` → `openapi-typescript`) emits
-  `frontend/src/contract.ts`; the Python schemas are the only hand-maintained copy.
+- **TS generation:** `tools/generate_ts_contract.py` emits `frontend/src/contract.ts` directly from
+  the pydantic models; the Python schemas are the only hand-maintained copy (no-drift test guards it).
 - Named `schemas/` (not `models`/`types`): idiomatic for pydantic, distinct from `pgm.datatypes`
   (domain models), and `types` would shadow the stdlib module.
 - **New dependency:** adds `pydantic` (boundary only; domain stays dataclasses).
 
-This is why **B4 + B4a + C6 + C1** are the D1 de-risker: nail the typed shapes + consistent naming
+This is why **B4 + B4a + C6 + C1** were the D1 de-risker: nail the typed shapes + consistent naming
 (`{min_x,min_z,max_x,max_z}` / `{cx,cz}`) + the `{error:{code,message}}` envelope **once**, and the
-port becomes mechanical — a cheaper model (Sonnet) can largely drive it.
+port becomes mechanical — a cheaper model (Sonnet) can largely drive it. **All but B4a are done**; the
+generated `contract.ts` already exists for the React app to import.
 
 ## Migration strategy
 
@@ -164,8 +172,9 @@ folder; the switch alone won't erase the venv/`node_modules` path quirk.
 
 - **State/data layer:** plain React state + context vs. a small store (Zustand) vs. a server-cache
   library (TanStack Query) for the API calls. *(Lean: TanStack Query for API + light local state.)*
-- **TS types: generate vs. hand-write** — tied to whether C-series adds a pydantic/OpenAPI schema
-  layer or a FastAPI move happens first.
+- ~~TS types: generate vs. hand-write~~ **resolved** — generated from the `schemas/` pydantic models
+  by `tools/generate_ts_contract.py` (`frontend/src/contract.ts` exists). A FastAPI move could later
+  swap the generator, but the React app already has its contract.
 - **Component styling:** keep the global CSS classes (recommended — preserves the design system) vs.
   CSS modules / a component lib (avoid; would fork the design system).
 - **Routing:** a light client router (the app has a handful of activities) — no SSR needed.

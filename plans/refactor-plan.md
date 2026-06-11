@@ -161,44 +161,32 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
 ## Current focus
 
-**Goal:** a ground-solid data/API frame so the frontend framework can be **switched (D1)** against
-typed, stable shapes — not polished endpoints.
+The typed data/API frame is locked (B1–B6 done above). What's left is the **frontend switch (D1)**
+and the work that orbits it. The organising call: **don't sink UI into the dying Jinja/vanilla stack —
+D1 rebuilds it in React.** So the buckets below are ordered by that, not by workstream. Target stack
++ migration strategy: `docs/contracts/frontend-stack.md`.
 
-**Canonical shapes already settled** (describable without hand-waving — see
-`docs/contracts/data-model.md` + `region-categorization.md`): **Region** (id-keyed, string-id
-children, compound recursion, enforced round-trip core), **Filter** + **ApplyRule** (taxonomy
-complete, wiring = region+event→filter+actions, synthetic ids), **Wool** (grouped-by-colour,
-deterministic ids, derived owner). Four of the six core entities are locked.
+**① Shape D1, then run it.**
+- **B4a — region tree as a *view*.** The last open piece of the D1 de-risker (B4·C6·C1 done). It's a
+  *shape* decision — the curated, category-first tree the React app renders, hiding raw compound
+  scaffolding — so settle it **at D1 kickoff**, not as old-stack UI. *Needs: design.*
+- **D1 — the switch (headline).** Port to a **React + TypeScript + Vite** SPA against the *existing*
+  Flask API + generated `contract.ts`, activity by activity, shared TS canvas/geometry layer first.
+  Old Jinja + new React coexist during the port. See `frontend-stack.md` (decision record + migration
+  steps + the kickoff decisions: state layer, routing, styling).
 
-### Sequencing (the order to run B/C — assessment 2026-06-10)
+**② Fold into D1 — UI over already-settled backends (building it now is throwaway).**
+- **C9** filter↔region wiring UI — backend + routes done; only the suggest/confirm UI remains.
+- **C13** symmetry-authoring UI (accept/reject counterparts) + counterparts for the non-region
+  entities — region counterparts + equivalence done.
+- **B6** undo/redo — the *command-model decision* can precede D1; the UI is React.
+- **B8** sketch↔editor alignment — diagnosis settled (give the editor an optimistic in-memory model);
+  lands naturally in the React rewrite.
 
-Model-defining work → **lock B1–B4** → API polish → features → D1. The blunt readiness test: *when
-you can describe Region/Filter/ApplyRule/Symmetry/Wool/SketchShape without hand-waving, do B1–B4.*
-**Symmetry is now described** (B7 model+contract locked 2026-06-10) — only **SketchShape** still
-hand-waves on the modeling side.
+**③ Backend/model features — independent of D1, not rebuilt by it (do anytime).**
+- **B10** map-vs-sketch project identity (data-model decision; pairs with the export-artifact bug).
+- **C7** CTW import-eligibility check · **C12** wool-availability validation (backend logic + tests).
+- **B9** template-driven import scaffolding (pre-scaffold teams/wools from symmetry + layer).
 
-1. **Close the symmetry model (the gate).** ✅ **B7 model+contract done** — center typology +
-   diagonal-mirror class + axes model locked in contract §7 / `docs/contracts/geometry.md`; counterpart
-   persistence corrected (all four reflections via native PGM mirror, only rot_90/270 bake). The
-   diagonal/secondary-axis **canvas UI** is deferred to D-series (it doesn't gate B1–B4). B1's
-   persisted/domain/view split and **B3** (sketch symmetry) are now unblocked on the symmetry side.
-   ✅ **B11 design done** — `validation-invariants.md` catalogs the invariants (incl. rot_90/diagonal
-   ⇒ square-cell + strict team/wool divisibility + rot_n) for the typed models to encode.
-   ✅ **Filter↔region wiring design done** — `docs/contracts/filter-region-wiring.md` settles the
-   wiring relationship + the v1 templates and confirms it adds **no new typed shape** (wiring =
-   apply_rules + filters over regions, surfaced as `roles`). **The B1–B4 gate is now closed.**
-2. **Lock B1–B4 (the typed frame).** B1 persisted/domain/view split · B2 imported-map domain · B3
-   sketch · B4 `/regions/tree` view node. **Fold C6** (canonical bbox/center wire naming) and the
-   **B4a** tree-as-view *design* in here — both are shape decisions the framework switch consumes,
-   not polish.
-3. **API polish (cheap once typed, pointless before).** C1 error envelope · C2 schemas · C5 wire
-   region ops into `api.js` · C10 route consistency.
-4. **Features + framework switch.** C8, **C9** wiring UI/templates, B6 undo/redo, C7/C11/C12, then
-   **D1** (port the frontend onto the typed view-models + stable error contract), E1 hosting.
-
-**Not B1–B4 gates** (despite appearances): **C8** is authoring convenience (doesn't change the
-Region shape; does carry `change_region_type`-has-no-tests debt — do opportunistically) and **C9** is
-UI/templates over the already-settled wiring shape. Both come *after* typing.
-
-**The de-risker for D1 specifically:** B4 + B4a + C6 + C1 — the typed, consistently-named view-models
-and the error contract the new frontend builds against. Treat those four as the real "frame."
+**④ Post-D1 / hosting.**
+- **D2** 2.5D/3D coordinate editing (Y-coords / monuments) · **E1** hosting + import pipeline.
