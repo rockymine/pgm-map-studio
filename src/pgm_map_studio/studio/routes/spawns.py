@@ -28,7 +28,7 @@ def add_spawn(name: str):
     return jsonify({"ok": True}), 201
 
 
-@bp.route("/<name>/spawn/<region_id>", methods=["PATCH"])
+@bp.route("/<name>/spawns/<region_id>", methods=["PATCH"])
 def update_spawn(name: str, region_id: str):
     body = request.get_json(silent=True) or {}
     data, path = load_xml_data(name)
@@ -42,7 +42,7 @@ def update_spawn(name: str, region_id: str):
     return jsonify({"ok": True})
 
 
-@bp.route("/<name>/spawn/<region_id>", methods=["DELETE"])
+@bp.route("/<name>/spawns/<region_id>", methods=["DELETE"])
 def delete_spawn(name: str, region_id: str):
     data, path = load_xml_data(name)
     try:

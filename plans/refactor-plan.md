@@ -110,10 +110,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   defense (`enter=not-owner`), wool-room edit (`block=not-owner`), build/void enforcement
   (group build → `negative` → `block_place=deny(void)`). `tests/studio/test_filter_wiring.py` (15).
   *Remaining: the suggest/confirm **UI** — D-series, builds on these routes.*
-- [x] **C10. Route conventions decided + documented** (`api-schemas.md`): success `{ok:true,...}` /
-  GET raw resource; error envelope (C1); collections plural + RPC action-URLs for compound region ops;
-  spawn keyed by `region_id`. Singular `/region/:id`,`/spawn/:id` item-routes kept (cosmetic rename
-  reintroduces a routing adjacency; normalize at D1).
+- [x] **C10. Route conventions standardized + documented** (`api-schemas.md`): success `{ok:true,...}` /
+  GET raw resource; error envelope (C1); **item routes pluralized** (`/regions/:id`, `/spawns/:id` —
+  Werkzeug resolves static `/regions/group` ahead of the dynamic item route); RPC action-URLs for
+  compound region ops; spawn keyed by `region_id`.
 - [ ] **C11. Intelligent team/wool ID + colour defaults.** Teams currently default to id
   `new-team-n`, name `New Team`, chat colour blue. Instead pick the next unused colour and derive
   id `<colour>-team`, name `<Colour> Team` (mirrors the wool colour-as-key scheme). Cap at the

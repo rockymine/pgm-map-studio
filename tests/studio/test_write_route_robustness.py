@@ -67,14 +67,14 @@ def test_spawn_patch_bad_yaw_is_400(client):
     # establish a spawn first, then PATCH it with a bad yaw
     assert client.post("/api/map/m/spawns",
                        json={"region_id": "r1", "team": "red"}).status_code == 201
-    resp = client.patch("/api/map/m/spawn/r1", json={"yaw": "sideways"})
+    resp = client.patch("/api/map/m/spawns/r1", json={"yaw": "sideways"})
     assert resp.status_code == 400
 
 
 # inline-body routes (read the body directly, not via a guarded editor)
 
 @pytest.mark.parametrize("url", ["/api/map/m/regions/restore",
-                                 "/api/map/m/region/r1/counterpart"])
+                                 "/api/map/m/regions/r1/counterpart"])
 def test_inline_body_routes_reject_non_object(client, url):
     resp = client.post(url, json=[1, 2, 3])
     assert resp.status_code != 500
@@ -82,6 +82,6 @@ def test_inline_body_routes_reject_non_object(client, url):
 
 
 def test_counterpart_non_numeric_center_is_400(client):
-    resp = client.post("/api/map/m/region/r1/counterpart",
+    resp = client.post("/api/map/m/regions/r1/counterpart",
                        json={"mode": "mirror_x", "center": {"cx": "x", "cz": "y"}})
     assert resp.status_code == 400

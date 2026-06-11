@@ -47,17 +47,16 @@ legacy flat form) and throws `Error(message)`; activities surface that message.
 
 - **Collections are plural**: `/api/map/<name>/teams`, `/wools`, `/spawns`,
   `/filters`, `/apply-rules`, `/regions`. Create = `POST` to the collection.
-- **Item routes** live under the collection: `/teams/<id>`, `/wools/<id>`,
-  `/filters/<id>`, `/apply-rules/<id>`. *Known deviation:* region and spawn items
-  are currently singular — `/region/<id>`, `/spawn/<region_id>` — kept as-is
-  (renaming is cosmetic and reintroduces a `/regions/<id>` vs `/regions/group`
-  routing adjacency); to be normalized when the frontend is ported (D1).
+- **Item routes** live under the plural collection: `/teams/<id>`, `/wools/<id>`,
+  `/filters/<id>`, `/apply-rules/<id>`, `/regions/<id>`, `/spawns/<region_id>`.
+  Werkzeug resolves the static collection-action routes (`/regions/group`) ahead
+  of the dynamic item route (`/regions/<id>`), so the two coexist safely.
 - **Spawns are keyed by their linked `region_id`**, not a separate spawn id (a
   spawn *is* a team↔region link).
 - **Compound / non-CRUD operations use RPC action-URLs**, not invented sub-resources:
   `/regions/group`, `/regions/ungroup`, `/regions/restore`,
-  `/region/<id>/change-type`, `/region/<id>/remove-from-group`,
-  `/region/<id>/set-base-child`, `/region/<id>/counterpart`. These mutate the
+  `/regions/<id>/change-type`, `/regions/<id>/remove-from-group`,
+  `/regions/<id>/set-base-child`, `/regions/<id>/counterpart`. These mutate the
   region graph in ways that aren't a single resource CRUD.
 - **Wool monuments are a sub-collection**: `/wools/<id>/monuments[/<mon_id>]`.
 
@@ -73,8 +72,8 @@ Shapes: `M` = persisted `MapProject` slice, `RT` = `RegionTreeResponse`,
 | Pipeline | `GET /api/pipeline/<slug>/run` (SSE) | streamed build |
 | Map data | `GET /api/map/<name>` · `/regions` · `/regions/tree`→`RT` · `/symmetry` · `/islands` · `/segments` · `/layers/top-surface` · `PATCH /metadata` · `/symmetry` | reads return the resource |
 | Teams | `POST /teams`, `PATCH/DELETE /teams/<id>` | `M.teams[]` |
-| Regions | `POST /regions`, `PATCH/DELETE /region/<id>`, + RPC ops above | `M.regions{}`; tree view = `RT` |
-| Spawns | `POST /spawns`, `PATCH/DELETE /spawn/<region_id>`, `PATCH/DELETE /observer-spawn` | keyed by region |
+| Regions | `POST /regions`, `PATCH/DELETE /regions/<id>`, + RPC ops above | `M.regions{}`; tree view = `RT` |
+| Spawns | `POST /spawns`, `PATCH/DELETE /spawns/<region_id>`, `PATCH/DELETE /observer-spawn` | keyed by region |
 | Objectives | `POST /wools`, `PATCH/DELETE /wools/<id>`, `…/<id>/monuments[/<mon>]` | grouped-by-colour wools |
 | Filters | `GET/POST /filters`, `PATCH/DELETE /filter/<id>` | delete rejects with `references` (409) |
 | Apply-rules | `GET/POST /apply-rules`, `PATCH/DELETE /apply-rule/<id>` | synthetic `rule_<n>` ids |

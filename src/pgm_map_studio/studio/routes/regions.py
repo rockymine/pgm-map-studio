@@ -81,7 +81,7 @@ def restore_region(name: str):
     return jsonify({"ok": True, **result})
 
 
-@bp.route("/<name>/region/<region_id>", methods=["DELETE"])
+@bp.route("/<name>/regions/<region_id>", methods=["DELETE"])
 def delete_region(name: str, region_id: str):
     data, path = load_xml_data(name)
     try:
@@ -92,7 +92,7 @@ def delete_region(name: str, region_id: str):
     return jsonify({"ok": True, **result})
 
 
-@bp.route("/<name>/region/<region_id>", methods=["PATCH"])
+@bp.route("/<name>/regions/<region_id>", methods=["PATCH"])
 def patch_region(name: str, region_id: str):
     body = request.get_json(silent=True) or {}
     data, path = load_xml_data(name)
@@ -108,7 +108,7 @@ def patch_region(name: str, region_id: str):
     return jsonify({"ok": True, **result})
 
 
-@bp.route("/<name>/region/<region_id>/change-type", methods=["POST"])
+@bp.route("/<name>/regions/<region_id>/change-type", methods=["POST"])
 def change_region_type(name: str, region_id: str):
     body = request.get_json(silent=True) or {}
     data, path = load_xml_data(name)
@@ -122,7 +122,7 @@ def change_region_type(name: str, region_id: str):
     return jsonify({"ok": True, **result})
 
 
-@bp.route("/<name>/region/<region_id>/remove-from-group", methods=["POST"])
+@bp.route("/<name>/regions/<region_id>/remove-from-group", methods=["POST"])
 def remove_from_group(name: str, region_id: str):
     body = request.get_json(silent=True) or {}
     data, path = load_xml_data(name)
@@ -136,7 +136,7 @@ def remove_from_group(name: str, region_id: str):
     return jsonify({"ok": True, **result})
 
 
-@bp.route("/<name>/region/<region_id>/set-base-child", methods=["POST"])
+@bp.route("/<name>/regions/<region_id>/set-base-child", methods=["POST"])
 def set_base_child(name: str, region_id: str):
     body = request.get_json(silent=True) or {}
     data, path = load_xml_data(name)
@@ -150,7 +150,7 @@ def set_base_child(name: str, region_id: str):
     return jsonify({"ok": True, **result})
 
 
-@bp.route("/<name>/region/<region_id>/counterpart", methods=["POST"])
+@bp.route("/<name>/regions/<region_id>/counterpart", methods=["POST"])
 def create_counterpart(name: str, region_id: str):
     """Create the symmetry counterpart(s) of a region (C13).
 

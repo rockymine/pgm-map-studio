@@ -183,7 +183,7 @@ export async function createRegion(mapName, payload) {
 }
 
 export async function patchRegion(mapName, regionId, payload) {
-  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}`, {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/regions/${encodeURIComponent(regionId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -194,7 +194,7 @@ export async function patchRegion(mapName, regionId, payload) {
 }
 
 export async function deleteRegion(mapName, regionId) {
-  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}`, {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/regions/${encodeURIComponent(regionId)}`, {
     method: "DELETE",
   });
   const body = await r.json().catch(() => ({}));
@@ -237,7 +237,7 @@ export async function restoreRegion(mapName, snapshot) {
 
 export async function changeRegionType(mapName, regionId, type) {
   const r = await fetch(
-    `/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}/change-type`,
+    `/api/map/${encodeURIComponent(mapName)}/regions/${encodeURIComponent(regionId)}/change-type`,
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type }) },
   );
   const body = await r.json().catch(() => ({}));
@@ -247,7 +247,7 @@ export async function changeRegionType(mapName, regionId, type) {
 
 export async function removeFromGroup(mapName, regionId, childId) {
   const r = await fetch(
-    `/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}/remove-from-group`,
+    `/api/map/${encodeURIComponent(mapName)}/regions/${encodeURIComponent(regionId)}/remove-from-group`,
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ child_id: childId }) },
   );
   const body = await r.json().catch(() => ({}));
@@ -257,7 +257,7 @@ export async function removeFromGroup(mapName, regionId, childId) {
 
 export async function setBaseChild(mapName, regionId, childId) {
   const r = await fetch(
-    `/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}/set-base-child`,
+    `/api/map/${encodeURIComponent(mapName)}/regions/${encodeURIComponent(regionId)}/set-base-child`,
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ child_id: childId }) },
   );
   const body = await r.json().catch(() => ({}));
@@ -267,7 +267,7 @@ export async function setBaseChild(mapName, regionId, childId) {
 
 export async function createCounterpart(mapName, regionId, payload) {
   const r = await fetch(
-    `/api/map/${encodeURIComponent(mapName)}/region/${encodeURIComponent(regionId)}/counterpart`,
+    `/api/map/${encodeURIComponent(mapName)}/regions/${encodeURIComponent(regionId)}/counterpart`,
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
   );
   const body = await r.json().catch(() => ({}));
@@ -289,7 +289,7 @@ export async function addSpawn(mapName, spawn) {
 }
 
 export async function updateSpawn(mapName, regionId, fields) {
-  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/spawn/${encodeURIComponent(regionId)}`, {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/spawns/${encodeURIComponent(regionId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(fields),
@@ -320,7 +320,7 @@ export async function deleteObserverSpawn(mapName) {
 }
 
 export async function deleteSpawn(mapName, regionId) {
-  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/spawn/${encodeURIComponent(regionId)}`, {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/spawns/${encodeURIComponent(regionId)}`, {
     method: "DELETE",
   });
   const body = await r.json().catch(() => ({}));
