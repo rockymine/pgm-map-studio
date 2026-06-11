@@ -5,37 +5,10 @@ import pytest
 
 from pgm_map_studio.pgm.regions import (
     parse_coord, Rectangle, Cuboid, Cylinder, Circle, Sphere,
-    Block, Point, Union, _b2d, reflect_point_2d, reflect_bounds_2d,
+    Block, Point, Union, _b2d,
 )
 
-
-# ---------------------------------------------------------------------------
-# mirror reflection (PGM <mirror> semantics)
-# ---------------------------------------------------------------------------
-
-def test_reflect_point_axis_aligned_x():
-    # normal (1,0) reflects across the vertical line x = ox
-    assert reflect_point_2d(0, 5, 1, 0, 10, 0) == (20, 5)
-
-
-def test_reflect_point_axis_aligned_z():
-    assert reflect_point_2d(5, 0, 0, 1, 0, 10) == (5, 20)
-
-
-def test_reflect_point_diagonal_swaps_axes():
-    # normal (-1,-1) about (261,284): the vertex case — reflection swaps x/z
-    x, z = reflect_point_2d(263, 340, -1, -1, 261, 284)
-    assert (round(x), round(z)) == (205, 282)
-
-
-def test_reflect_point_zero_normal_unchanged():
-    assert reflect_point_2d(3, 4, 0, 0, 1, 1) == (3, 4)
-
-
-def test_reflect_bounds_diagonal():
-    b = {"min": {"x": 263, "z": 340}, "max": {"x": 273, "z": 348}}
-    out = reflect_bounds_2d(b, -1, -1, 261, 284)
-    assert out == {"min": {"x": 197, "z": 272}, "max": {"x": 205, "z": 282}}
+# (reflection geometry moved to pgm_map_studio.geometry — see tests/test_geometry.py)
 
 
 # ---------------------------------------------------------------------------

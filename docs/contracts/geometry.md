@@ -187,8 +187,12 @@ sketchShapeToPgmRegion(shape)                → PGM region | null
 ```
 
 - `applySymmetry` `axis` ∈ `mirror_x`/`mirror_z`/`rot_180`/`rot_90` today; `mirror_d1`/`mirror_d2`
-  and `rot_<n>` land with the D-series canvas work (and the B12 geometry-module consolidation — the
-  Python side has the same transforms; keep them formula-identical).
+  and `rot_<n>` land with the D-series canvas work — keep them formula-identical to the Python side.
+- **Python peer:** `pgm_map_studio/geometry.py` is the canonical Python converter home (a pure-math
+  leaf): `reflect_point_2d`/`reflect_bounds_2d` (PGM `<mirror>` semantics, any normal incl. diagonal)
+  and `rotate_point_2d`/`rotate_bounds_2d` (CCW, 90°-multiples exact). The editor counterpart-creation
+  (C13) and the parser use these. *(Consolidating `detection.py` + `sketch_export.py` onto this module
+  — and fixing detection's CW `rot_90` — is the remaining B12 cleanup.)*
 - `rasterisePolygon` takes extent coords (boolean-clip output); no +1 before calling. Used by sketch
   export to build the synthetic scan layer.
 - `sketchShapeToPgmRegion`: rectangle→Rectangle, circle→Circle; **polygons are never exported as PGM

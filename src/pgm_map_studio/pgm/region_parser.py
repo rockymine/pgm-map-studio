@@ -15,8 +15,9 @@ from typing import Optional
 from .regions import (
     Region, Rectangle, Cuboid, Cylinder, Circle, Sphere, Block, Point,
     Union, Negative, Complement, Intersect, Mirror, Translate,
-    Half, Reference, Everywhere, Above, _b2d, parse_coord, reflect_bounds_2d,
+    Half, Reference, Everywhere, Above, _b2d, parse_coord,
 )
+from pgm_map_studio.geometry import reflect_bounds_2d
 from .datatypes import ApplyRule
 
 
