@@ -42,7 +42,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
 - [ ] **B3.** Type sketch models.
 - [ ] **B4.** Type the `/regions/tree` view-model node (§5) explicitly.
-- [ ] **B4a. Region tree = view, not model (de-clutter).** *(rockymine 2026-06-10; deferred — design.)*
+- [ ] **B4a. Region tree = view, not model (de-clutter).**
   Today `/regions/tree` renders the **raw PGM compound tree** verbatim: anonymous
   `union`/`complement`/`negative` scaffolding, voidmatchers, wrappers, and every synthetic
   `__anon` child are shown as-is, so on structurally heavy maps (golden_drought_ii, hydrolock_ii)
@@ -61,7 +61,6 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   but removes the monument (a PATCH today). Decide the model: command objects with inverse ops, or
   snapshot/restore (a `restore_region`-style snapshot already exists for regions). Must span
   region/team/spawn/wool/monument/filter/apply edits. *Needs: design decision + clarification.*
-  *(rockymine §1 "Undo/Redo".)*
 - [x] **B7. Symmetry center typology + diagonal axis (model + contract)** — center-cell typology,
   diagonal-mirror class, axes model, `rot_n`; see `data-model.md` §7 + `geometry.md`. *(Canvas UI for
   diagonal/secondary axes remains D-series.)*
@@ -72,18 +71,15 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   model**: the editor PATCHes each change to the backend and awaits the response before updating,
   while the sketch mutates an in-memory shapes array and debounce-saves. Fix = give the editor an
   optimistic in-memory model with async persist/validate (don't block the canvas on the round-trip).
-  *Needs: design (the diagnosis is settled).* *(rockymine §1 "Performance and implementation
-  drift".)*
+  *Needs: design (the diagnosis is settled).*
 - [ ] **B9. Template-driven import scaffolding.** Optionally start from a known XML template
-  (`docs/xml_template.xml`, Ruediger_LP's) instead of blank. On import/load, ask — or infer from
+  (`docs/xml_template.xml`) instead of blank. On import/load, ask — or infer from
   symmetry + layer parquet — how many teams/wools the map has, then pre-scaffold teams/wools/regions
-  so editing is directed. *Needs: design + clarification.* *(rockymine §1 "working off of xml
-  templates".)*
+  so editing is directed. *Needs: design + clarification.*
 - [ ] **B10. Map vs Sketch project identity.** Exported sketches aren't promoted to genuine "maps";
   the model doesn't cleanly distinguish a sketch project from an imported/real map project. Define
   both project types and the sketch→map promotion on export (pairs with A11's export-artifact bug).
-  *Needs: data-model decision (contract §11 open Q16/Q17).* *(rockymine §1 "sketches … not promoted
-  to 'maps'".)*
+  *Needs: data-model decision (contract §11 open Q16/Q17).*
 - [x] **B11. Editing validation model / invariants (design pass)** — `docs/contracts/validation-invariants.md`.
   *(Enforcement is Workstream C; traversability analysis is its own future feature.)*
 - [ ] **B12. Extract a Python geometry module + unify the symmetry transforms.**
@@ -139,8 +135,8 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   directly (set_base_child for complement ordering), and backfill `change_region_type` tests.
   Makes create symmetric with the now-generalized ungroup. (Authoring, not round-trip.)
 - [ ] **C9. Filter↔region wiring + intelligent templates.** Routes/UI to attach filters to
-  regions/unions, plus the tool *suggesting/questioning* filters from map setup. *Decisions
-  (rockymine):* build-step void-enforcement wiring is **suggest + confirm** (detect positive build
+  regions/unions, plus the tool *suggesting/questioning* filters from map setup. *Decisions:*
+  build-step void-enforcement wiring is **suggest + confirm** (detect positive build
   regions → propose "auto-group + apply void filter to the complement?" → user confirms/adjusts,
   using `layer_y0.parquet`). **v1 template set (all four):** (1) void/never build enforcement,
   (2) spawn protection `enter=only-team`, (3) wool-room defense `enter=not-owner`, (4) wool-room
@@ -148,10 +144,9 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   filter shapes. **Doc:** write a **new** `docs/contracts/filter-region-wiring.md` (like the
   categorization doc) from `docs/filter-use-cases.md` + the full corpus; **mark
   `docs/requirements/editor-filters.md` as unstable** rather than rewriting it. *Needs: corpus
-  analysis (doable) + the new doc, then routes/UI.* *(rockymine §1 "Filters, Regions and their
-  Relation".)* *Progress: `docs/filter-use-cases.md` refreshed (2026-06-10) with an Appendix —
-  filter-type frequency, the **event×filter-type matrix** (what attaches where), composite-child
-  shapes, and the stackability/soft-warning stance — the vocabulary source for the suggestion UI.
+  analysis (doable) + the new doc, then routes/UI. *Progress: `docs/filter-use-cases.md` refreshed 
+  (2026-06-10) with an Appendix — filter-type frequency, the **event×filter-type matrix** (what attaches where), 
+  composite-child shapes, and the stackability/soft-warning stance — the vocabulary source for the suggestion UI.
   `tests/studio/test_filter_use_cases.py` exercises the canonical shapes through the C3/C4 editors.*
 - [ ] **C10. Route consistency audit + CRUD conventions.** *Audited (autonomous session).*
   Inconsistencies to resolve: (1) **singular/plural** mixed — `/teams` + `/teams/:id` and
@@ -162,7 +157,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   string (C1 fixes); (4) **REST vs RPC** mixed — collection POST for create, but action URLs for
   region ops (`/regions/group`, `/region/:id/change-type`, `/set-base-child`); (5) spawn is keyed
   by its linked `region_id`, not a spawn id. Standardize naming + envelopes; decide REST vs RPC for
-  compound ops. *(rockymine §3 "Routes concern".)*
+  compound ops.
 - [ ] **C11. Intelligent team/wool ID + colour defaults.** Teams currently default to id
   `new-team-n`, name `New Team`, chat colour blue. Instead pick the next unused colour and derive
   id `<colour>-team`, name `<Colour> Team` (mirrors the wool colour-as-key scheme). Cap at the
@@ -170,12 +165,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   current defaults are set **client-side** in `panels/teams-panel.js:447` (`new-team[-n]` / `New
   Team` / `blue`), posting to `add_team` (which only requires an `id`). So this is a **frontend**
   change (next-unused-colour picker + id/name derivation), needing in-browser verification — **not**
-  a backend-only knock-down; deferred until rockymine can verify. *(rockymine §1 "Intelligent ID and
-  color defaults".)*
+  a backend-only knock-down;
 - [ ] **C12. Wool availability validation.** A map is unplayable if no wool is obtainable.
   Implement the availability check (`docs/requirements/editor-objectives.md` Sub-step 3); PGM
   spawner / renewable / block-drop must be configurable as wool sources. *Needs: requirements pass.*
-  *(rockymine §1 "Wool existence validation".)*
 - [ ] **C13. Editor symmetry-aware authoring (source → derived counterparts).** In the **editor**
   (not just the sketch tool), let the author define **one source entity** and have the mirroring
   engine derive/suggest its **counterparts** across regions, filters, apply-rules, objectives, and
@@ -196,7 +189,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **D2. 2.5D/3D coordinate editing.** Positioning point/block (monuments) and cuboid Y-coords
   is impractical in 2D today. Extend the build-step `layer_segments.parquet` side-depth view into a
   3D/2.5D selection view, or integrate the `/map-studio` plugin to push WorldEdit selections
-  directly into the tool. *Needs: design + (plugin) hosting work (E1).* *(rockymine §4.)*
+  directly into the tool. *Needs: design + (plugin) hosting work (E1).*
 
 ## Workstream E — Hosting & deployment (Phase 5)
 
@@ -206,7 +199,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   imports a map from an Overcast `//download` S3 zip link and opens it in the editor. Target: a Java
   plugin (`/map-studio`) that downloads the world, ships it to the server, and returns an edit link.
   The sketch→editor workflow stays separate and available. *Needs: stack selection + infra design
-  (contract §0 explicitly defers auth/hosting).* *(rockymine §2 "Stack selection".)*
+  (contract §0 explicitly defers auth/hosting).*
 
 ---
 
@@ -214,10 +207,6 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
 **Goal:** a ground-solid data/API frame so the frontend framework can be **switched (D1)** against
 typed, stable shapes — not polished endpoints.
-
-**Done:** Workstream A complete (round-trip harness green, 350/350) incl. A11. **B5** region
-categorization. **C3/C4** filters & apply-rules CRUD. Mirror geometry fixed. Suite ~893 + harness
-350/350 green.
 
 **Canonical shapes already settled** (describable without hand-waving — see
 `docs/contracts/data-model.md` + `region-categorization.md`): **Region** (id-keyed, string-id
