@@ -42,18 +42,13 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [x] **B3. Sketch `sketch.json` typed** — `schemas/sketch.py` (`SketchProject`), bezier-faithful.
 - [x] **B4. `/regions/tree` view-model + TS pipeline** — `schemas/view.py` → generated `contract.ts`;
   routes wired through the schemas (GET serialize, write validate/reject-4xx).
-- [ ] **B4a. Region tree = view, not model (de-clutter).**
-  Today `/regions/tree` renders the **raw PGM compound tree** verbatim: anonymous
-  `union`/`complement`/`negative` scaffolding, voidmatchers, wrappers, and every synthetic
-  `__anon` child are shown as-is, so on structurally heavy maps (golden_drought_ii, hydrolock_ii)
-  the tree is unreadable — it's the *model*, not a *view*. The fix is a **view-model that breaks
-  the literal tree**: present regions grouped by their derived `category`/`roles` (B5 facets),
-  promote the meaningful named regions, and **collapse or hide pure rule-wiring/synthetic compounds**
-  (rule_container wrappers, anonymous intermediates) behind an "advanced/raw" toggle rather than
-  inline. This is the UI face of the **persisted-vs-view model split** (B1) and the "individual
-  region child" policy: the canonical model keeps the full compound graph for round-trip; the editor
-  shows a curated, category-first tree. Touches `region_encoder.encode_region_tree` (or a new
-  view-builder) + `region/region-tree.js` + the regions/objectives/build panels. *Needs: design.*
+- [~] **B4a. Region authoring surface (view, not tree).** **Design done** —
+  `docs/contracts/region-authoring.md`: the tree is the *model* and loses the ground truth as you nest;
+  the fix is a **split view-model** — `primitives` (leaf building blocks) / `composed` (structures +
+  their wiring) / `raw` (the tree, demoted) — scoped per step by B5 role facets, in stacked left-sidebar
+  sections, with the author-groups → engine-wires (C9 templates) loop. *Remaining (split design↔build):
+  **now** = `region_encoder` gains the primitives/composed/raw split (backend, survives D1); **D1 (React)**
+  = the stacked panels + context-menu/keyboard-shortcut/command layer, shared with B6 undo/redo.*
 - [x] **B5. Region categorization derivation** (`region_categorizer.py`; two-facet model — see
   `docs/contracts/region-categorization.md`).
 - [ ] **B6. Editor undo/redo (command model).** A real editor needs undo/redo of user actions.
@@ -167,9 +162,10 @@ D1 rebuilds it in React.** So the buckets below are ordered by that, not by work
 + migration strategy: `docs/contracts/frontend-stack.md`.
 
 **① Shape D1, then run it.**
-- **B4a — region tree as a *view*.** The last open piece of the D1 de-risker (B4·C6·C1 done). It's a
-  *shape* decision — the curated, category-first tree the React app renders, hiding raw compound
-  scaffolding — so settle it **at D1 kickoff**, not as old-stack UI. *Needs: design.*
+- **B4a — region authoring surface.** **Design done** (`region-authoring.md`): split view-model
+  (primitives / composed / raw) + per-activity building blocks + group→engine-wires loop. Next:
+  the `region_encoder` split is a backend change to do **now** (survives D1); the stacked panels +
+  context-menu/shortcut/command UI build in React.
 - **D1 — the switch (headline).** Port to a **React + TypeScript + Vite** SPA against the *existing*
   Flask API + generated `contract.ts`, activity by activity, shared TS canvas/geometry layer first.
   Old Jinja + new React coexist during the port. See `frontend-stack.md` (decision record + migration

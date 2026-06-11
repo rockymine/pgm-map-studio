@@ -26,6 +26,7 @@ disagree, **the code wins**.
 | `contracts/validation-invariants.md` | Editing invariants (severity, the symmetry↔team coupling, traversability). |
 | `contracts/filter-region-wiring.md` | How filters attach to regions (the wiring relationship) + the v1 suggestion templates. |
 | `contracts/api-schemas.md` | HTTP contract: success/error **envelopes**, error codes, naming & REST-vs-RPC conventions, route-family index. |
+| `contracts/region-authoring.md` | The region **authoring** surface (B4a): the primitives/composed/raw split view-model, per-activity building blocks, the group→engine-wires loop, the command/shortcut model. |
 | `filter-use-cases.md` | The filter **vocabulary** + event×filter-type matrices. *(Its corpus statistics are research — Rationale — bundled in an appendix.)* |
 | `contracts/ui-conventions.md` | CSS/UI conventions; the `/design` page is the live visual reference. |
 

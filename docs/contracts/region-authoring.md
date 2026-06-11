@@ -1,0 +1,137 @@
+# Region authoring (B4a)
+
+*Spec — the region **authoring** surface: a curated split view-model + the per-activity
+building-block workflow.* Status: **design**; the view-model split is a near-term backend change,
+the interaction layer ships with the frontend switch (D1). Supersedes the stale region/objective bits
+of `docs/requirements/editor-*.md`.
+
+## The problem: a tree is a model, not a view
+
+Today every region-bearing activity renders the **full nested compound tree** (`/regions/tree`).
+That is the *model* — the literal PGM region graph, including anonymous `union`/`negative` scaffolding
+and rule-container wrappers. It's faithful and useful to inspect, but it is the wrong *authoring*
+surface:
+
+- On a complete imported map the tree is enormous; the meaningful building blocks are buried.
+- **As you author, you lose the ground truth.** Every time you wrap primitives in a union for some
+  rule, the thing you actually drew sinks a level deeper into the tree. The tree grows; "what are my
+  actual pieces" gets harder to see.
+
+The building blocks of a CTW map are small and concrete — a spawn point, a spawn area, a build
+rectangle, a wool room, a monument. Authoring should keep those in view and let the **structures**
+(unions, negatives) and **wiring** (filters/apply-rules) be a *separate, intentional* layer.
+
+## The split view-model
+
+The authoring view is a **split**, not a prettier tree — three derived facets of the same regions:
+
+| Facet | What | Derivation |
+|---|---|---|
+| **Primitives** | the leaf building blocks (`rectangle`/`cuboid`/`cylinder`/`circle`/`sphere`/`block`/`point`) | structural: a region with no children |
+| **Composed** | the structures the author built from primitives (`union`/`negative`/`complement`/`intersect`), each annotated with the filters/apply-rules wired onto it | structural: a compound region + its `apply_rules`/`filters` refs |
+| **Raw** | the full nested tree (`/regions/tree` today) | unchanged — demoted behind an "advanced / raw" toggle |
+
+The split is **structural, not provenance-based** (we can't know if an imported region was
+hand-drawn) — leaf = a building block, compound = a structure. That works the same authoring from
+blank (primitives accumulate as you draw, then you group them) and editing an import (the leaves *are*
+the ground truth; the compounds are what someone composed).
+
+Each facet is **scoped to the active step** by the derived `category`/`roles`
+(`region-categorization.md`, B5): the Spawns step shows spawn-role primitives/structures, Build shows
+build-role, Objectives shows objective-role. The step decides which building blocks are in view.
+
+## Layout
+
+The studio uses a three-panel workspace (modelled loosely on Figma). Authoring places the split in
+the **left sidebar** as **vertically stacked, collapsible sections** — the right panel is the
+**inspector** (selected region's type/coords + its wiring), the centre is the **canvas + creation
+toolbar**.
+
+```
+left sidebar (stacked)         centre                 right
+┌─────────────────────┐  ┌───────────────────┐  ┌──────────────┐
+│ Entities (teams/…)  │  │  canvas + toolbar │  │  Inspector   │
+├─────────────────────┤  │  (draw primitives)│  │  (selected   │
+│ Primitives (step)   │  │                   │  │   region +   │
+├─────────────────────┤  │                   │  │   its rules) │
+│ Groups & wiring     │  │                   │  │              │
+└─────────────────────┘  └───────────────────┘  └──────────────┘
+```
+
+Stacked (not tabbed): the group count is small (2 teams, a handful of wool colours), and keeping
+"my primitives" and "what I grouped them into" visible **together** is the point — a tab would hide
+the relationship that the tree already obscures.
+
+## The authoring loop
+
+```
+draw a primitive  →  group primitives into a structure  →  the engine wires the rule
+   (author)              (author — the judgement call)        (preset template, C9)
+```
+
+The division of labour: **the author groups** (which primitives form a wool room / a build area / a
+spawn region — human judgement), **the engine wires** (apply the correct filter + apply-rule by role,
+from the `filter-region-wiring.md` templates). Players do **not** write filters; a custom filter
+constructor is **deferred**. The four v1 templates (spawn protection, wool-room defense, wool-room
+edit, build/void enforcement) cover the valid-map path; manual override stays possible but
+preset-first is the default.
+
+## Per-activity building blocks
+
+*Grounded in the corpus (345 maps): spawn points are always inline `point`/`cylinder`/`cuboid`/`block`
+(814/814, never named, never wired); `outback_outback_edition` shows the full wiring pattern below.*
+
+### Spawns
+- **Primitives:** the spawn **point** (inline `point`/`cylinder`/`cuboid`/`block` — where players
+  appear; **nothing is wired to it**) and the spawn **area/building** region (`rectangle`/`cylinder`/…).
+- **Groups:** per-team spawn area; an "all spawns" union for shared mechanics.
+- **Wiring:** `enter = only-<team>` (spawn protection); `block_break = only-iron` +
+  `block_place = only-iron-cause-world` (the iron/gold armor-replenish blocks, often with a renewable);
+  optional kit reset.
+
+### Build
+- **Primitives:** `rectangle`s capturing void that must be crossed / floating terrain sections
+  (see `docs/requirements/editor-build-regions.md`). Max build height is set here (already supported).
+- **Groups:** union the build rectangles → take the `negative` (the not-build / void-affect area);
+  some maps need `complement`/intersect for awkward shapes.
+- **Wiring:** `block_place = deny(void)` (+ break) on the negative.
+
+### Objectives
+- **Primitives:** the wool item **spawn location**; the **monument** (always a `block` — where a team
+  captures the wool); the **wool-room** region(s) (the building the wool sits in).
+- **Groups — the two-grouping distinction (real, load-bearing):** the *same* wool-room primitives feed
+  **two** groups: **per defending team** (because `enter` differs — the defender is locked *out* of
+  their own rooms: `yellows-woolrooms enter=only-purple`) **and** **all wool rooms** (for shared
+  mechanics, e.g. cobwebs breakable in every room). One primitive, two groupings.
+- **Wiring:** `enter = only-<enemy-of-defender>`; block exceptions on the room; optional **kit on
+  enter** (better armor); the wool **renewable/spawner** (when no chest/mob source exists) keyed to a
+  **player-trigger region** (where entering players start the spawn — often the wool room itself).
+
+When teams exist + spawn safely, and wools can be obtained, defended, and captured at their monuments,
+the map is **valid**. Everything else regions can do (renewables, kits, mechanical exceptions) is
+optional polish layered on top.
+
+## Command & shortcut model (with B6)
+
+Group / ungroup / set-base-child / wire-template / delete are **commands**. A context menu and a
+keyboard-shortcut registry both dispatch the same commands, and **B6 undo/redo inverts them** — so the
+interaction layer, the shortcut system, and undo/redo are **one** concern built **once**. This is why
+the interaction half of B4a lands in the React port (D1): building a context-menu + shortcut + command
+system in the current vanilla stack would build it twice (see `frontend-stack.md`).
+
+## Build split (design now / React later)
+
+- **Now (backend, survives D1):** `region_encoder` gains the **primitives / composed / raw** split
+  keyed by step role facets; the per-activity building-block definitions above; the wiring templates
+  already exist (C9). React consumes this contract.
+- **D1 (React):** the stacked split-view sections, context-menu grouping, multi-select, and the
+  keyboard-shortcut/command layer (shared with B6).
+
+## Cross-references
+
+- `region-categorization.md` (B5) — the `category`/`roles` that scope each facet to a step.
+- `filter-region-wiring.md` (C9) — the preset templates the engine applies after grouping.
+- `data-model.md` — Region/Wool/Spawn/ApplyRule shapes; `geometry.md` — region geometry.
+- `frontend-stack.md` (D1) — the React port that builds the interaction layer; B6 — undo/redo commands.
+- Supersedes the stale authoring narrative in `docs/requirements/editor-regions.md` /
+  `editor-objectives.md` / `editor-build-regions.md`.
