@@ -87,9 +87,24 @@ B1–B4 define the typed view-models (Region, Filter, ApplyRule, Wool, Symmetry,
 compile-time-guaranteed to match the API's JSON — it cannot read a missing field or misname
 `min_x`/`cx`. Two ways:
 
-- **(a) Hand-write** TS interfaces mirroring the contract — simple, but two copies that can drift.
-- **(b) Generate** from one source of truth — pydantic/FastAPI → OpenAPI → `openapi-typescript`, or
-  JSON Schema → types. **The "do it right once" option**: the Python contract emits the TS types.
+**Decided (2026-06-10):** **pydantic + generated TS** (option b). The Python contract is the single
+source; TS is generated (pydantic → JSON Schema → `openapi-typescript`) so it cannot drift.
+
+### Where it lives **[decided]**
+
+A new, **framework-independent** top-level package — **`src/pgm_map_studio/schemas/`** (pydantic):
+
+- It holds the **persisted** shapes (`xml_data.json` / `sketch.json`) and the **view** models
+  (`RegionTreeNode`, route payloads) — B1's persisted/view split + B4. The **domain** layer (B2)
+  stays in `pgm/` as dataclasses; `schemas/` composes those domain types at the boundary.
+- It is *not* under `studio/` on purpose: the founding block must survive the Flask→(possible
+  FastAPI) move **and** the frontend swap, and the TS generator + React app consume it directly.
+  Dependency flow: `pgm` (domain) ← `schemas` (boundary) ← `studio` (app) ← `frontend` (TS).
+- **TS generation:** `tools/` script (pydantic `model_json_schema` → `openapi-typescript`) emits
+  `frontend/src/contract.ts`; the Python schemas are the only hand-maintained copy.
+- Named `schemas/` (not `models`/`types`): idiomatic for pydantic, distinct from `pgm.datatypes`
+  (domain models), and `types` would shadow the stdlib module.
+- **New dependency:** adds `pydantic` (boundary only; domain stays dataclasses).
 
 This is why **B4 + B4a + C6 + C1** are the D1 de-risker: nail the typed shapes + consistent naming
 (`{min_x,min_z,max_x,max_z}` / `{cx,cz}`) + the `{error:{code,message}}` envelope **once**, and the

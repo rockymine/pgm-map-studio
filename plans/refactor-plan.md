@@ -31,14 +31,15 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
 ## Workstream B — Typed data models (Phase 2 proper)
 
-> The **view** models (B1/B4) are the shapes the frontend consumes, so they are also where the
-> **TypeScript** contract is defined — hand-written TS interfaces or generated from a Python schema
-> (pydantic/OpenAPI → `openapi-typescript`). This is the D1 de-risker; see
-> `docs/contracts/frontend-stack.md`.
+> **Placement decided** (`frontend-stack.md`): B1/B4 land in a new framework-independent
+> **`src/pgm_map_studio/schemas/`** package (pydantic) — persisted + view shapes; domain (B2) stays
+> in `pgm/` as dataclasses. TS is **generated** from the pydantic schemas (→ JSON Schema →
+> `openapi-typescript`) into `frontend/`. Adds a `pydantic` dependency (boundary only). This is the
+> D1 de-risker.
 
-- [ ] **B1.** Separate persisted / domain / view models per the contract (§1). The **view** layer is
-  the source of the **TypeScript** types the frontend builds against (see
-  `docs/contracts/frontend-stack.md`); decide hand-written vs generated when B1 lands.
+- [ ] **B1.** Separate persisted / domain / view models per the contract (§1) into
+  `schemas/` (pydantic): `schemas/persisted.py` (xml_data/sketch shapes), `schemas/view.py`
+  (RegionTreeNode + route payloads). `studio` routes return these; `tools/` generates the TS.
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
 - [ ] **B3.** Type sketch models.
 - [ ] **B4.** Type the `/regions/tree` view-model node (§5) explicitly.
