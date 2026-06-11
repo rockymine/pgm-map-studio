@@ -1,7 +1,7 @@
 /**
  * Shared spatial converters.
  * Each function has exactly one implementation here — no caller applies +1 or
- * rotation arithmetic directly. See docs/cross-cutting.md §5 for contracts.
+ * rotation arithmetic directly. See docs/contracts/geometry.md §6 (required converters) for contracts.
  */
 
 // ── Block position → extent bounds ───────────────────────────────────────────

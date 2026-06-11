@@ -1,12 +1,11 @@
 # Contract-First Refactor — Work Plan
 
-Branch: `refactor/contract-first`. Spec: `docs/contracts/studio-domain-and-api-contract.md`
+Branch: `refactor/contract-first`. Spec: `docs/contracts/data-model.md`
 (the *what*); this file is the *ordered how/status*. Status legend: `[ ]` todo, `[~]` in progress,
 `[x]` done. Keep this file current as work lands.
 
-The phase order follows `plans/contract-first-migration-plan.md`, but the **round-trip repair**
-is pulled ahead of typed models because the contract (§13) marks it a hard prerequisite and it is
-the keystone broken behaviour.
+The **round-trip repair** is pulled ahead of typed models because the data model (§13) marks it a
+hard prerequisite and it was the keystone broken behaviour.
 
 ---
 
@@ -77,7 +76,14 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
 ## Workstream B — Typed data models (Phase 2 proper)
 
-- [ ] **B1.** Separate persisted / domain / view models per the contract (§1).
+> The **view** models (B1/B4) are the shapes the frontend consumes, so they are also where the
+> **TypeScript** contract is defined — hand-written TS interfaces or generated from a Python schema
+> (pydantic/OpenAPI → `openapi-typescript`). This is the D1 de-risker; see
+> `docs/contracts/frontend-stack-decision.md`.
+
+- [ ] **B1.** Separate persisted / domain / view models per the contract (§1). The **view** layer is
+  the source of the **TypeScript** types the frontend builds against (see
+  `docs/contracts/frontend-stack-decision.md`); decide hand-written vs generated when B1 lands.
 - [ ] **B2.** Type the imported-map domain (regions, filters, rules) — build on `pgm.datatypes`.
 - [ ] **B3.** Type sketch models.
 - [ ] **B4.** Type the `/regions/tree` view-model node (§5) explicitly.
@@ -137,7 +143,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   region/team/spawn/wool/monument/filter/apply edits. *Needs: design decision + clarification.*
   *(rockymine §1 "Undo/Redo".)*
 - [x] **B7. Symmetry center typology + diagonal axis (model + contract).** *(Done 2026-06-10.)*
-  Locked contract §7 + `cross-cutting.md` §1; deferred the diagonal/secondary-axis **canvas UI** to
+  Locked contract §7 + `docs/contracts/geometry.md` §2; deferred the diagonal/secondary-axis **canvas UI** to
   the D-series (per the clarification scope). Delivered:
   - **Center cell typology** (`1x1`/`1x2`/`2x1`/`2x2`): **derived** from the center coordinate's
     parity (half-integer → 1-wide, integer → 2-wide; `symmetry.datatypes.classify_center_cell`),
@@ -165,7 +171,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 - [ ] **B8. Sketch–editor data-handling alignment.** *Investigated (autonomous session):* the two
   tools **already share the geometry format** — both import `canvas/transform.js`,
   `shared/converters.js`, `canvas-helpers.js`, `shape-render.js` (bbox object form per
-  `cross-cutting.md`). So the lag isn't a geometry-format divergence; it's the **edit/persistence
+  `docs/contracts/geometry.md`). So the lag isn't a geometry-format divergence; it's the **edit/persistence
   model**: the editor PATCHes each change to the backend and awaits the response before updating,
   while the sketch mutates an in-memory shapes array and debounce-saves. Fix = give the editor an
   optimistic in-memory model with async persist/validate (don't block the canvas on the round-trip).
@@ -195,7 +201,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   symmetry coupling (Q2 strict divisibility):** `team_count % team_orbit(mode) == 0`,
   `wool_count % team_count == 0`, `rot_90`/diagonals need a square cell — surfaced as WARN +
   engine-precondition. **rot_n modeled (Q3):** general n-fold rotation `rot_<360/n>` added to the
-  vocabulary (contract §7 + `cross-cutting.md`) — `tridente`/`pentawool`/`thunderbolt` = rot_120/72/60;
+  vocabulary (contract §7 + `docs/contracts/geometry.md`) — `tridente`/`pentawool`/`thunderbolt` = rot_120/72/60;
   **crystallographic restriction**: only 2-/4-fold + reflections are lattice-exact, others bake
   (`is_lattice_exact`). Helpers in `symmetry/datatypes.py` (`team_orbit`, `team_count_compatible`,
   `wool_count_compatible`, `requires_square_cell`, `is_lattice_exact`, `rotation_degrees`); tests in
@@ -215,10 +221,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   3. **Py** `symmetry/detection.py::_apply_transform_center`/`_transform_coords` — imported-map
      **detection** (IoU); has `mirror_d1/d2` (added in B7) + `rot_90/180/270`.
 
-  This already **violates the `cross-cutting.md` §1 "exactly one implementation per converter"
+  This already **violates the `docs/contracts/geometry.md` §6 "exactly one implementation per converter"
   rule** for rotation. Two concrete problems fall out:
   - **Latent direction bug:** `detection.py`'s `rot_90` rotates the **opposite way (CW)** from the
-    sketch (CCW) and the `cross-cutting.md` spec — effectively its `rot_90`/`rot_270` labels are
+    sketch (CCW) and the `docs/contracts/geometry.md` spec — effectively its `rot_90`/`rot_270` labels are
     swapped. *Harmless for IoU detection today* (a rot_90-symmetric shape is also rot_270-symmetric),
     but it will bite the moment detection feeds an authoring/baking path. Can be fixed independently.
   - **Diagonal (B7) + `rot_n` for the sketch is not one change but several:** both `converters.js`
@@ -226,7 +232,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
 
   **Plan:** create a new **`pgm_map_studio/geometry.py`** — a pure-math leaf (no domain deps), the
   Python peer of the JS `transform.js`/`converters.js` layer and the single home for the
-  `cross-cutting.md` §1 "required converters". (1) **Move** `reflect_point_2d`/`reflect_bounds_2d`
+  `docs/contracts/geometry.md` §6 "required converters". (1) **Move** `reflect_point_2d`/`reflect_bounds_2d`
   there out of `pgm/regions.py`, updating the parser import. (2) **Add** canonical
   `rotate_point_2d(px,pz,degrees,ox,oz)` + `rotate_ring_2d` (CCW, matching the spec + sketch). Note:
   a bbox rotated by a non-90° angle is **not** a bbox (→ tilted quad) — so the primitive is
@@ -235,7 +241,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   inconsistency in passing); keep the round-trip harness + sketch-export tests green. (4) Leave
   `converters.js` as the one *necessary* JS twin (language boundary) but add a **Vitest parity test**
   asserting it matches the Python primitive for shared angles, so they cannot drift. (5) Point
-  `cross-cutting.md` §1 at `geometry.py` as the canonical Python converter home. Diagonal/`rot_n` in
+  `docs/contracts/geometry.md` §6 at `geometry.py` as the canonical Python converter home. Diagonal/`rot_n` in
   the JS + export stay D-series, but then plug into one geometry module instead of three.
   *Needs: none (mechanical refactor + tests).*
 
@@ -254,7 +260,7 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   list/create/update/delete; create validates region + filter refs (accepts region-as-filter,
   builtins, and inline descriptors like `deny(void)`). Tests: `test_filter_editor.py` +
   `test_apply_rule_editor.py` (36 cases incl. export-drop). Signatures captured in
-  `docs/contracts/data-layer-api.md`. Manual curl flow on annealing_iv verified (201/409+refs/400/200).
+  the code (`pgm.serializer`/`deserializer` + `studio/services/`). Manual curl flow on annealing_iv verified (201/409+refs/400/200).
 - [ ] **C5.** Wire region group/ungroup/restore/change-type into `api.js` (currently unwired).
 - [ ] **C6.** Unify bbox/center naming to `{min_x,min_z,max_x,max_z}` + `{cx,cz}` at the API
   boundary; migrate `symmetry.json` `center_x/center_z` → `cx/cz`.
@@ -336,7 +342,7 @@ categorization. **C3/C4** filters & apply-rules CRUD. Mirror geometry fixed. Sui
 350/350 green.
 
 **Canonical shapes already settled** (describable without hand-waving — see
-`docs/contracts/data-layer-api.md` + `region-categorization.md`): **Region** (id-keyed, string-id
+`docs/contracts/data-model.md` + `region-categorization.md`): **Region** (id-keyed, string-id
 children, compound recursion, enforced round-trip core), **Filter** + **ApplyRule** (taxonomy
 complete, wiring = region+event→filter+actions, synthetic ids), **Wool** (grouped-by-colour,
 deterministic ids, derived owner). Four of the six core entities are locked.
@@ -349,7 +355,7 @@ you can describe Region/Filter/ApplyRule/Symmetry/Wool/SketchShape without hand-
 hand-waves on the modeling side.
 
 1. **Close the symmetry model (the gate).** ✅ **B7 model+contract done** — center typology +
-   diagonal-mirror class + axes model locked in contract §7 / `cross-cutting.md`; counterpart
+   diagonal-mirror class + axes model locked in contract §7 / `docs/contracts/geometry.md`; counterpart
    persistence corrected (all four reflections via native PGM mirror, only rot_90/270 bake). The
    diagonal/secondary-axis **canvas UI** is deferred to D-series (it doesn't gate B1–B4). B1's
    persisted/domain/view split and **B3** (sketch symmetry) are now unblocked on the symmetry side.

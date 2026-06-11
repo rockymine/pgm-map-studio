@@ -2,7 +2,7 @@
  * ToolManager — centralizes tool-button state management for activity toolbars.
  *
  * Eliminates the near-identical setTool pattern duplicated across activities.
- * See docs/cross-cutting.md §6.
+ * See docs/contracts/geometry.md §7 (shared rendering & toolbar).
  *
  * @param {object} canvas     — canvas instance (must have setActiveTool(tool))
  * @param {object} buttonMap  — plain object { toolName: btnEl }

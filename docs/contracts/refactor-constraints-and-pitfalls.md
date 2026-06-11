@@ -170,7 +170,7 @@ grouped wools while `deserializer.from_dict` reads flat (`d['monument']`) → Ke
 tests in `tests/pgm/test_deserializer.py` fail today. It is latent only because no imported-map →
 XML export route is wired yet. Repairing the JSON↔datamodel round-trip (grouped wools, region
 `source_id` resolution, inline-child removal, spawn-as-reference) is a hard prerequisite before
-any XML export ships. See `studio-domain-and-api-contract.md` §0 and §13.
+any XML export ships. See `data-model.md` §0 and §13.
 
 ### 5.5 Replacing discovered domain behavior with idealized abstractions
 

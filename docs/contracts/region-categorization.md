@@ -1,43 +1,16 @@
 # Region Categorization Contract
 
-How the studio derives what a region *is* and what it's *used for*. This expands
-`studio-domain-and-api-contract.md` §10 (which stated only that category is derived
-with a thin spawn/wool/build/other model). It is grounded in analysis of the full
-350-map CTW corpus.
+How the studio derives what a region *is* and what it's *used for* — the full model behind
+`data-model.md` §10. Category is **derived, never persisted**; `region_categories` in
+`xml_data.json` is only a store of **user overrides** layered on top of this derivation.
 
-Category is **derived, never persisted** (contract §4/§10). The editor's
-`region_categories` map stays only as a store of **user overrides** of this derivation.
+A region falls into one of the gameplay categories below, with `build` taken only from
+void-enforcement *structure*, never from `lane`/`bridge` names (§5) — trading raw coverage for
+near-zero false positives.
 
----
-
-## 0. Why the four-bucket model is not enough
-
-The current `_compute_categories` (in `routes/map_api.py`) categorizes ~23% of named
-regions and dumps **76% into `other`**. Measured causes:
-
-- It only tags the *referenced* region (often a top-level compound) and ignores the
-  actual children — e.g. a `reds-woolroom` union is tagged but its child geometry falls
-  to `other`.
-- It **never reads `monument_region`** (monuments are invisible to it; in the grouped
-  wool model they live at `wool.monuments[].monument_region`).
-- It collapses three distinct objective roles — wool **storage**, wool **delivery**,
-  wool **regeneration** — into one idea, or misses them entirely.
-- It has no concept of **filter machinery**: many regions exist *only* to be a filter
-  target (`negative`/`complement` wrappers like `not-spawns`, `not-build-area`) and have
-  no intrinsic gameplay identity at all.
-
-A multi-signal derivation with the model below categorizes **~80%** of named regions
-across the 350-map corpus (up from ~23%), and the residual `other` (~20%) becomes a *meaningful*
-bucket rather than a dumping ground: ~37% of it is genuine rule targets (regions that carry
-`roles` but no gameplay identity) and the rest is territory/movement geometry with no
-intrinsic signal. The figure is deliberately conservative — `build` is taken only from
-void-enforcement *structure*, never from `lane`/`bridge` names (§5), so it trades raw
-coverage for near-zero false positives.
-
-> **Implementation:** `src/pgm_map_studio/studio/services/region_categorizer.py`
-> (`derive_region_facets` → `{id: {category, roles}}`; `categorize_regions` → flat
-> `{id: category}` with user overrides layered on). Oracle:
-> `tests/fixtures/region_categories/`.
+> **Implementation:** `studio/services/region_categorizer.py` — `derive_region_facets` →
+> `{id: {category, roles}}`; `categorize_regions` → flat `{id: category}` with user overrides
+> applied. Oracle: `tests/fixtures/region_categories/`.
 
 ---
 
@@ -88,9 +61,8 @@ Orthogonal flags/data attached to a region regardless of category:
   enforcement regions: `not-spawns`, `not-build-area`, `void-area`, `no-bridges`). A `complement`
   is **not** flagged — unlike a `negative` it carries a positive base (child[0]) and inherits that
   child's category (e.g. a `spawns` union over a `complement` keeps `category=spawn`). The editor
-  surfaces `rule_container`s under a "rule wiring" view, not as primary geometry. *(Verified
-  refinement: the annealing_iv oracle drops `rule_container` from `spawns`, which the §8 draft
-  table wrongly carried — `spawns` is rule-shaped, not a pure container.)*
+  surfaces `rule_container`s under a "rule wiring" view, not as primary geometry. A rule-shaped
+  union like `spawns` is **not** a pure container, so it does not get `rule_container`.
 - **`rule_group`** — the region **has** a gameplay category **and** is the union that batches a
   rule over its **same-category peers**. Detection: a `union` with apply-rules attached whose
   named, categorized descendants (reached through anonymous intermediate unions) are **all the same
@@ -140,7 +112,7 @@ category already set by a more reliable signal.**
    — **and** `block_place` denied: players may only break the spawn floor), or a **spawn-protection
    kit** (a `kit`/`lend_kit` whose id names spawn protection/regen — resistance + regeneration in
    spawn, e.g. `spawn-protection`, `spawn-regen`; excludes `leave-`/`remove-spawn` kits that strip
-   the buff *outside* spawn). rockymine: mushroom_gorge `base-sides`.
+   the buff *outside* spawn; e.g. mushroom_gorge `base-sides`).
 7. **build** ← void-structure **and** permissive placement (§5).
 8. **mechanic** ← non-wool spawner `spawn_region` (step 3).
 9. **spawn | wool_room** ← `enter=only-<team>` rules, disambiguated: in `spawns[]` → spawn;
@@ -159,9 +131,8 @@ category already set by a more reliable signal.**
     rule-wrapper (it keeps `rule_container`).
 
 Do **not** use `block` / `block-place` filter targeting as a `category` signal — record it
-as a `roles.rules` entry instead. (In testing, treating it as "build" inflated build to 32%
-of all regions, almost entirely false positives like `spawns` tagged build because it has an
-iron-only rule.)
+as a `roles.rules` entry instead. (Treating it as "build" produces near-all false positives —
+e.g. `spawns` would be tagged build merely because it carries an iron-only rule.)
 
 ---
 
@@ -309,35 +280,15 @@ surfaces *that it is a build region* and *that it opens after 30s*.
 
 ---
 
-## 9. Ground-truth fixture
+## 9. Known limitations
 
-Curate a small, hand-verified fixture (test oracle), **not** per-map stored categories for all
-350 (that would persist derived data — forbidden by the contract):
-
-- Format: `{ region_id: { category, subtype?, roles[] } }` per map.
-- Maps: `annealing_iv` (4-team, all patterns), a clean 2-team (e.g. `vertex`), a multi-wool
-  2-team (e.g. `acapulco`), and a time-gated map (`icecream_sandwiched_ii`).
-- The derivation is generated as a *proposed* labeling, then verified/corrected by a CTW author
-  before it becomes the oracle. Tests assert the derivation matches, with a small allowlist for
-  genuinely ambiguous regions.
-
----
-
-## 10. Implementation notes
-
-- Replace the thin `_compute_categories` with a typed `region_category` derivation module
-  emitting `{category, subtype, roles}` per region; unit-tested on synthetic data and validated
-  against the §9 fixture.
-- Keep categories **derived**; `region_categories` in `xml_data.json` remains a user-override
-  store only, layered on top of the derivation (overrides win).
-- The `time_gated` role requires resolving `after`/`time`/`pulse` filters (already parsed) to a
-  duration; reuse the filter registry.
-
-## 11. Open edges
-
-- `enter=only-<team>` ambiguity (spawn vs wool_room) — falls back to `spawns[]`/name; a small
-  set stays neutral-protected.
-- `mechanic` subtypes (kit/shop/renewable) are low-prevalence; start with a single `mechanic`
-  bucket + free-text subtype rather than a rigid enum.
+- `enter=only-<team>` is ambiguous (spawn vs wool_room) and falls back to `spawns[]`/name; a small
+  set of regions stay neutral-protected.
+- `mechanic` uses a single bucket + free-text subtype (kit/shop/renewable are low-prevalence),
+  rather than a rigid enum.
 - Build subtype (`footprint` vs `traversal`) is best-effort from geometry/naming; not all maps
   make the distinction explicit.
+
+The hand-verified test oracle (`tests/fixtures/region_categories/`) covers `annealing_iv` (4-team),
+`vertex` (2-team), `acapulco` (multi-wool 2-team), and `icecream_sandwiched_ii` (time-gated), each
+labeled `{ region_id: { category, subtype?, roles[] } }`.

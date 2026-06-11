@@ -10,10 +10,13 @@ Mid **contract-first refactor** on branch `refactor/contract-first`: stabilize t
   decisions + session history across context resets (esp. `project_contract_phase1.md`).
 - **`plans/refactor-plan.md`** — the ordered **status tracker** (Workstreams A–E) and its
   **"## Current focus"** section. The active driver. Keep it current as work lands.
-- **`docs/contracts/`** — the contract (the *what*): `studio-domain-and-api-contract.md` (domain +
-  API surface), `region-categorization.md`, `validation-invariants.md`, `data-layer-api.md` (codec +
-  editor-service signatures — keep in sync), `frontend-stack-decision.md` (D1 target stack),
-  `refactor-constraints-and-pitfalls.md`.
+- **`docs/README.md`** — the **documentation map**: what every doc is and its *kind* (spec /
+  rationale / requirements / process). Start here when unsure where something belongs.
+- **`docs/contracts/`** — the contract (the *what*): `data-model.md` (domain +
+  API surface), `geometry.md` (coordinate/transform math + converters), `region-categorization.md`,
+  `validation-invariants.md`, `frontend-stack-decision.md` (D1 target stack),
+  `refactor-constraints-and-pitfalls.md`. (Codec/service signatures live in the code —
+  `pgm.serializer`/`deserializer` + `studio/services/`.)
 
 Status (A round-trip complete, harness 350/350; B5 categorization, C3/C4 CRUD, B7 symmetry, B11
 invariants done; ~920 py tests) lives in the plan + memory — **don't duplicate it here.**
@@ -51,7 +54,7 @@ invariants done; ~920 py tests) lives in the plan + memory — **don't duplicate
 
 ## Implementation order — per activity (building an editor/sketch activity)
 
-1. Read only the **activity-specific requirements** (`docs/requirements/<file>.md` or `docs/cross-cutting.md`) + the relevant
+1. Read only the **activity-specific requirements** (`docs/requirements/<file>.md` or `docs/contracts/geometry.md`) + the relevant
    **contract** (`docs/contracts/*`).
 2. **Check the tree** (`find src/`/`find tests/`) for what exists.
 3. Read the **design doc**: `docs/ui/ui-conventions.md` (UI), `plans/editor-vision.md` (editor),
@@ -62,9 +65,9 @@ invariants done; ~920 py tests) lives in the plan + memory — **don't duplicate
 6. **Verify** — `pytest`, the harness where relevant, the browser (`/run-studio`).
 7. **Describe what was done and ask the user to test** before closing out.
 
-## Cross-cutting
+## Geometry & canvas
 
-Read `docs/cross-cutting.md` before writing any **canvas, symmetry, coordinate, or shape/region**
+Read `docs/contracts/geometry.md` before writing any **canvas, symmetry, coordinate, or shape/region**
 code: the coordinate system (world space, +1 rule, axis orientation, bbox `{min_x,min_z,max_x,max_z}`),
 symmetry formulas (mirror_x/z, diagonal d1/d2, rot_180/90, general rot_n + center-cell typology),
 the shared canvas base, the `transform.js` interface, shape/region wire formats, and the **required

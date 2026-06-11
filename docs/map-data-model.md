@@ -4,6 +4,8 @@ This document describes the data that defines a valid PGM Capture the Wool map �
 
 This document does not prescribe UI, field names, or JSON structure. It describes entities, their attributes, their semantic purpose, and the questions that need to be answered to define them.
 
+> **Scope:** this is the *why / semantic* layer that feeds the requirements docs — **not** a second definition of the data. The **canonical shapes, field names, types, and persistence** are owned by `docs/contracts/data-model.md` (with `region-categorization.md`, `validation-invariants.md`, and `geometry.md`). Where this file once restated those shapes, it now points to the contract so the two cannot drift.
+
 ---
 
 ## The Pipeline Foundation
@@ -26,7 +28,7 @@ Islands may be non-playable (observer tower, mid-air decorations). The user can 
 
 ### Symmetry
 
-From the island shapes, the pipeline infers the most likely global symmetry of the map. Detected symmetry types: `rot_90`, `rot_180`, `mirror_x`, `mirror_z`. Each candidate carries a confidence score.
+From the island shapes, the pipeline infers the most likely global symmetry of the map, scoring each candidate mode with a confidence. (The full mode vocabulary — axis-aligned and diagonal mirrors, `rot_180`/`rot_90`, general `rot_n` — and the center-cell typology are owned by the contract §7.)
 
 The pipeline outputs a **symmetry result** with:
 - Status: `unconfirmed` (pipeline output) → `confirmed` or `none` (user decision)
@@ -293,24 +295,12 @@ All filter and region references in an apply rule are by ID. Filters are separat
 
 ### Filter entities
 
-A filter is a named, reusable condition that evaluates to allow, deny, or abstain. Filters are composed from:
-
-**Combiners:** `all` (AND), `any` (OR), `one` (XOR) — take a list of child filter IDs.
-
-**Wrappers:** `not`, `deny`, `allow` — take a single child filter ID. Wrappers modify the logical sense of the child.
-
-**Leaf matchers** — the actual conditions:
-
-| Category | What it tests |
-|---|---|
-| Team | Player is on a specific team |
-| Player state | Alive, dead, participating, observing, on the ground |
-| Inventory | Player is carrying / wearing / holding a specific material |
-| Block | Material match; void (column is air at Y=0); event cause (player, world, explosion, trample); original-state match against a region (`blocks`); adjacent block at an offset (`offset`) |
-| Match timing | Match is running / started; elapsed time; delay after another filter becomes true; periodic pulse |
-| Objective | A specific wool has been captured |
-| Dynamic | PGM variable matches a value or range; mob spawn event matches an entity type |
-| Static | `always` (unconditional allow); `never` (unconditional deny) |
+A filter is a named, reusable condition that evaluates to allow, deny, or abstain, composed from
+combiners (`all`/`any`/`one`), wrappers (`not`/`deny`/`allow`), and leaf matchers (team, player
+state, inventory, block/void/cause, match timing, objective, dynamic variable, and the `always`/
+`never` constants). **The canonical filter taxonomy and shapes are owned by the contract §9** (and
+the full vocabulary + event×type matrices by `docs/filter-use-cases.md`); see those rather than
+re-listing the ~25 types here.
 
 ### Advanced mechanics authored in Filters
 
@@ -368,23 +358,11 @@ Every named region in the map lives in a flat registry keyed by ID. Composite re
 - Spawner positions, jump pad zones, boundary regions → Filters / advanced rules
 - Any region present in the imported XML that no editor step claimed
 
-**Region types:**
-
-| Family | Types | Key spatial attributes |
-|---|---|---|
-| Primitive | rectangle | 2D bounding box on the XZ plane |
-| | cuboid | 3D min + max corners |
-| | cylinder | base point, radius, height |
-| | circle | center (XZ), radius |
-| | sphere | origin, radius |
-| | block / point | single position |
-| Composite | union, negative, complement, intersect | list of child region IDs |
-| Transform | mirror | source region ID + reflection axis (origin + normal) |
-| | translate | source region ID + offset vector |
-| Special | half | origin + normal (half-space) |
-| | above | Y threshold |
-| | everywhere | unbounded |
-| | reference | alias to another region ID |
+**Region types** (primitive / composite / transform / special) and their fields are owned by the
+contract §4 — see it for the canonical shapes. Semantically the families are: primitives
+(rectangle, cuboid, cylinder, circle, sphere, block/point), composites (union, negative, complement,
+intersect — children referenced by ID), transforms (mirror, translate — a source region + the
+symmetry relation), and special forms (half, above, everywhere, reference).
 
 Transform regions (mirror, translate) are how confirmed symmetry is expressed in the XML — a mirror region is the counterpart of its source, defined by the symmetry axis.
 
@@ -442,7 +420,9 @@ The mirroring engine uses the confirmed axis and center point to compute the tra
 
 ## Validity
 
-A map is exportable when all of the following hold:
+The canonical, corpus-grounded invariant catalog (severities, the strict symmetry coupling, the
+traversability signal) is owned by `docs/contracts/validation-invariants.md`. The activity-framed
+summary below stays here as the per-activity view; a map is exportable when all of the following hold:
 
 | Condition | Activity responsible |
 |---|---|

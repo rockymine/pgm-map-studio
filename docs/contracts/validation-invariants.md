@@ -7,7 +7,7 @@ Workstream C**; this doc decides the rules and their severity, grounded in the 3
 
 Companion: symmetry shapes + `team_orbit`/`team_count_compatible`/`wool_count_compatible`/
 `requires_square_cell`/`is_lattice_exact` live in `pgm_map_studio.symmetry.datatypes`; the symmetry
-model itself is `studio-domain-and-api-contract.md` §7.
+model itself is `data-model.md` §7.
 
 ## Posture **[decision — Q1]**
 

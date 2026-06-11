@@ -2,7 +2,7 @@
  * Shared SVG shape renderer.
  * Used by both EditorCanvas (editor region outlines) and SketchLayoutCanvas
  * (sketch shapes) to avoid duplicating type-dispatch logic.
- * See docs/cross-cutting.md §7.
+ * See docs/contracts/geometry.md §7 (shared rendering & toolbar).
  */
 
 import { svgEl, polyToPath } from "../canvas/transform.js";

@@ -159,7 +159,7 @@ folder; the switch alone won't erase the venv/`node_modules` path quirk.
 
 - `plans/refactor-plan.md` — D1 (the switch), B1–B4 (typed models), B4a (tree-as-view), C1 (error
   envelope), C6 (naming unify), B12 (geometry-module/converter consolidation feeding the shared TS layer).
-- `docs/contracts/studio-domain-and-api-contract.md` — the API surface the frontend consumes.
-- `docs/cross-cutting.md` — canvas base, `transform.js` interface, required converters (the shared
+- `docs/contracts/data-model.md` — the API surface the frontend consumes.
+- `docs/contracts/geometry.md` — canvas base, `transform.js` interface, required converters (the shared
   geometry layer to port to TS).
 - `docs/ui-conventions.md` + `/design` — the CSS/design system that carries over.
