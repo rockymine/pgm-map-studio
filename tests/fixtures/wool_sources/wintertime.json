@@ -1,0 +1,35 @@
+{
+  "map": "wintertime",
+  "have_layers": false,
+  "sources": [
+    {
+      "color": "blue",
+      "total": 1,
+      "source_types": [
+        "pgm_spawner"
+      ],
+      "repeatable": true
+    },
+    {
+      "color": "red",
+      "total": 1,
+      "source_types": [
+        "pgm_spawner"
+      ],
+      "repeatable": true
+    }
+  ],
+  "availability": [
+    {
+      "color": "red",
+      "obtainable": true,
+      "severity": "ok"
+    },
+    {
+      "color": "blue",
+      "obtainable": true,
+      "severity": "ok"
+    }
+  ],
+  "suggestions": []
+}

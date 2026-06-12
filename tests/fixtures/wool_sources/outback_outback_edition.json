@@ -12,57 +12,61 @@
     },
     {
       "color": "blue",
-      "total": 27,
+      "total": 28,
       "source_types": [
-        "block"
+        "block",
+        "pgm_spawner"
       ],
-      "repeatable": false
+      "repeatable": true
     },
     {
       "color": "light_blue",
-      "total": 27,
+      "total": 28,
       "source_types": [
-        "block"
+        "block",
+        "pgm_spawner"
       ],
-      "repeatable": false
+      "repeatable": true
     },
     {
       "color": "pink",
-      "total": 27,
+      "total": 28,
       "source_types": [
-        "block"
+        "block",
+        "pgm_spawner"
       ],
-      "repeatable": false
+      "repeatable": true
     },
     {
       "color": "purple",
-      "total": 27,
+      "total": 28,
       "source_types": [
-        "block"
+        "block",
+        "pgm_spawner"
       ],
-      "repeatable": false
+      "repeatable": true
     }
   ],
   "availability": [
     {
       "color": "blue",
       "obtainable": true,
-      "severity": "info"
+      "severity": "ok"
     },
     {
       "color": "light_blue",
       "obtainable": true,
-      "severity": "info"
+      "severity": "ok"
     },
     {
       "color": "pink",
       "obtainable": true,
-      "severity": "info"
+      "severity": "ok"
     },
     {
       "color": "purple",
       "obtainable": true,
-      "severity": "info"
+      "severity": "ok"
     }
   ],
   "suggestions": [

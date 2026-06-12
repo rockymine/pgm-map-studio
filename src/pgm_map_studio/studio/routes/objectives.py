@@ -24,6 +24,7 @@ def wool_sources_in_region(name: str):
     b = body.get("bounds") or {}
     data, _ = load_xml_data(name)
     sources, have = wool_sources.load_wool_sources(get_output_root() / name)
+    sources += wool_sources.pgm_spawner_sources(data)   # PGM <spawner> modules (xml)
     region_geom = None
     try:
         from shapely.geometry import box
@@ -40,6 +41,7 @@ def wool_availability(name: str):
     """Per declared wool: is its room sourced? (error / info / ok)."""
     data, _ = load_xml_data(name)
     sources, have = wool_sources.load_wool_sources(get_output_root() / name)
+    sources += wool_sources.pgm_spawner_sources(data)   # PGM <spawner> modules (xml)
     wools = wool_sources.check_availability(data, sources)
     payload = WoolAvailabilityResponse.model_validate({"wools": wools, "have_layers": have})
     return jsonify(payload.model_dump())
@@ -50,6 +52,7 @@ def wool_suggestions(name: str):
     """Wool colours found in the world but not yet declared as objectives."""
     data, _ = load_xml_data(name)
     sources, have = wool_sources.load_wool_sources(get_output_root() / name)
+    sources += wool_sources.pgm_spawner_sources(data)   # PGM <spawner> modules (xml)
     suggestions = wool_sources.suggest_wools(data, sources)
     payload = WoolSuggestionsResponse.model_validate({"suggestions": suggestions, "have_layers": have})
     return jsonify(payload.model_dump())

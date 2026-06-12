@@ -96,16 +96,50 @@ def _renewable_geoms(data: dict) -> list:
 def _in_region(source: dict, geom) -> bool:
     if geom is None:
         return True
-    import shapely
+    g = source.get("geom")                                # a PGM spawner covers a region…
+    if g is not None:
+        return bool(g.intersects(geom))
+    import shapely                                         # …a physical source is a point
     return bool(shapely.contains_xy(geom, source["x"] + 0.5, source["z"] + 0.5))
 
 
 def _is_renewable(source: dict, renewable_geoms: list) -> bool:
-    if source["type"] == "spawner":
+    if source["type"] in ("spawner", "pgm_spawner"):
         return True                                       # spawners regenerate by nature
     if source["type"] == "block":
         return any(_in_region(source, g) for g in renewable_geoms)
     return False                                          # a chest is a one-time stock
+
+
+def pgm_spawner_sources(data: dict) -> list[dict]:
+    """Wool sources declared as PGM `<spawner>` modules (`xml_data.spawners`) — a
+    gameplay delivery the author adds, not a physical block. Region-based: the geom
+    is the spawn∪player region; position is its centroid (for display only)."""
+    from shapely.ops import unary_union
+    regions = data.get("regions", {})
+    bbox = _map_bbox(regions)
+    out: list[dict] = []
+    for sp in data.get("spawners", []):
+        geoms = []
+        for key in ("spawn_region", "player_region"):
+            rid = sp.get(key)
+            reg = regions.get(rid) if isinstance(rid, str) else None
+            g = _dict_to_shapely(reg, bbox, regions) if reg else None
+            if g is not None and not g.is_empty:
+                geoms.append(g)
+        geom = unary_union(geoms) if geoms else None
+        cx = int(round(geom.centroid.x)) if geom else 0
+        cz = int(round(geom.centroid.y)) if geom else 0
+        for item in sp.get("items", []):
+            if "wool" not in str(item.get("material", "")).lower():
+                continue
+            dmg = item.get("damage")
+            color = WOOL_DAMAGE_TO_COLOR.get(int(dmg)) if dmg is not None else None
+            if not color:
+                continue
+            out.append({"type": "pgm_spawner", "color": color, "x": cx, "y": 0, "z": cz,
+                        "count": int(item.get("amount") or 1), "geom": geom})
+    return out
 
 
 # ── summaries ─────────────────────────────────────────────────────────────────
@@ -136,34 +170,43 @@ def summarize_sources(sources: list[dict], region_geom=None,
 
 
 def check_availability(data: dict, sources: list[dict]) -> list[dict]:
-    """Per declared wool: is its room sourced? error if not, info if one-time only."""
+    """Per declared wool: is it obtainable? A **physical** source must be in the
+    wool's room; a **PGM `<spawner>`** counts by colour (room-independent — the
+    author's deliberate delivery, and the room is often undeclared). `error` if
+    neither, `info` if only one-time, else `ok`."""
     regions = data.get("regions", {})
     bbox = _map_bbox(regions)
     renewable = _renewable_geoms(data)
+    physical = [s for s in sources if s["type"] != "pgm_spawner"]
+    pgm_colors = {s["color"] for s in sources if s["type"] == "pgm_spawner"}
     out = []
     for w in data.get("wools", []):
         color = normalize_wool_color(str(w.get("color", "")))
         room_id = w.get("wool_room_region")
         room = regions.get(room_id) if isinstance(room_id, str) else None
         room_geom = _dict_to_shapely(room, bbox, regions) if room else None
-        summary = next((e for e in summarize_sources(sources, room_geom, renewable)
-                        if e["color"] == color), None)
-        if summary is None:
+        phys = next((e for e in summarize_sources(physical, room_geom, renewable)
+                     if e["color"] == color), None)
+        has_pgm = color in pgm_colors
+
+        if phys is None and not has_pgm:
             out.append({"wool_id": w.get("id", ""), "color": color, "obtainable": False,
                         "repeatable": False, "one_time": False, "severity": "error",
-                        "source_types": [],
-                        "message": (f"{color} wool has no source in its room"
-                                    if room else f"{color} wool has no wool-room region declared")})
-        else:
-            one_time = summary["one_time"]
-            out.append({"wool_id": w.get("id", ""), "color": color, "obtainable": True,
-                        "repeatable": summary["repeatable"], "one_time": one_time,
-                        "severity": "info" if one_time else "ok",
-                        "source_types": summary["source_types"],
-                        "message": (f"{color} wool is obtainable but only one-time "
-                                    f"({'/'.join(summary['source_types'])}) — consider a "
-                                    f"renewable or spawner" if one_time
-                                    else f"{color} wool is obtainable ({'/'.join(summary['source_types'])})")})
+                        "source_types": [], "message":
+                        f"{color} wool has no obtainable source — add a wool spawner"
+                        f"{'' if room else ' (and declare its wool-room region)'}"})
+            continue
+
+        types = (phys["source_types"] if phys else []) + (["pgm_spawner"] if has_pgm else [])
+        repeatable = bool(has_pgm or (phys and phys["repeatable"]))
+        one_time = not repeatable
+        out.append({"wool_id": w.get("id", ""), "color": color, "obtainable": True,
+                    "repeatable": repeatable, "one_time": one_time,
+                    "severity": "info" if one_time else "ok", "source_types": types,
+                    "message": (f"{color} wool is obtainable but only one-time "
+                                f"({'/'.join(types)}) — consider a renewable or spawner"
+                                if one_time
+                                else f"{color} wool is obtainable ({'/'.join(types)})")})
     return out
 
 

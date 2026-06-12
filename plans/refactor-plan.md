@@ -112,9 +112,11 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   colour (`game-colors.js::nextTeamColor`, priority red/blue/green/yellow…) → id `<colour>-team`,
   name `<Colour> Team`, colour set; falls back to `new-team` when all 16 are used. `panels/teams-panel.js`
   + `tests/js/game-colors.test.js`. Browser-verified (red→blue→green, persisted correctly).
-- [~] **C12. Wool availability + detection (backend done).** `services/wool_sources.py` scans the
-  world layers for wool — `block` (`wools.parquet`), item in a `chest` (`chests.parquet`),
-  wool `spawner` (`spawners.parquet`) — colour-decoded via `minecraft/wool.py`. Three typed routes:
+- [~] **C12. Wool availability + detection (backend done).** `services/wool_sources.py` finds wool from
+  **physical** sources (world layers — `block`/`chest`/Minecraft-`spawner` block, colour-decoded via
+  `minecraft/wool.py`) **and** the **PGM `<spawner>`** module (`xml_data.spawners`, region-based) — the
+  author-added delivery, matched by colour (room-independent; 152 corpus maps use it). Obtainable =
+  a physical source in the room **or** a PGM spawner of that colour; neither → `error`. Three typed routes:
   **POST `/wool-sources`** (what wool is in a drawn rectangle — colour + type + count + positions),
   **GET `/wool-availability`** (per declared wool: `error` if its room is unsourced, `info` if
   one-time-only, else `ok`; `repeatable` = spawner or renewable block), **GET `/wool-suggestions`**

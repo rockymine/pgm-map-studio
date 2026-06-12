@@ -21,9 +21,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from pgm_map_studio.studio.services.wool_sources import (  # noqa: E402
-    check_availability, load_wool_sources, suggest_wools, summarize_sources)
+    check_availability, load_wool_sources, pgm_spawner_sources, suggest_wools, summarize_sources)
 
-_MAPS = ["outback_outback_edition", "icecream_sandwiched_ii", "curly_wools_ix"]
+_MAPS = ["outback_outback_edition", "icecream_sandwiched_ii", "curly_wools_ix", "wintertime"]
 _FIXTURES = Path(__file__).parent.parent / "tests" / "fixtures" / "wool_sources"
 
 
@@ -34,6 +34,7 @@ def _oracle(map_name: str) -> dict | None:
     out_dir = Path(hits[0]).parent
     data = json.loads((out_dir / "xml_data.json").read_text())
     sources, have = load_wool_sources(out_dir)
+    sources += pgm_spawner_sources(data)
     return {
         "map": map_name,
         "have_layers": have,
