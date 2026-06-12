@@ -29,6 +29,9 @@ def app():
     ("POST",   "/api/map/m/regions/restore",       "regions.restore_region"),
     ("POST",   "/api/map/m/regions/r1/change-type", "regions.change_region_type"),
     ("POST",   "/api/map/m/regions/r1/counterpart", "regions.create_counterpart"),
+    ("POST",   "/api/map/m/wool-sources",          "objectives.wool_sources_in_region"),
+    ("GET",    "/api/map/m/wool-availability",      "objectives.wool_availability"),
+    ("GET",    "/api/map/m/wool-suggestions",       "objectives.wool_suggestions"),
     ("PATCH",  "/api/map/m/spawns/r1",             "spawns.update_spawn"),
     ("DELETE", "/api/map/m/spawns/r1",             "spawns.delete_spawn"),
 ])

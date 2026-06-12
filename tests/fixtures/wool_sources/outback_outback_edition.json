@@ -1,0 +1,76 @@
+{
+  "map": "outback_outback_edition",
+  "have_layers": true,
+  "sources": [
+    {
+      "color": "black",
+      "total": 4388,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "blue",
+      "total": 27,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "light_blue",
+      "total": 27,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "pink",
+      "total": 27,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "purple",
+      "total": 27,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    }
+  ],
+  "availability": [
+    {
+      "color": "blue",
+      "obtainable": true,
+      "severity": "info"
+    },
+    {
+      "color": "light_blue",
+      "obtainable": true,
+      "severity": "info"
+    },
+    {
+      "color": "pink",
+      "obtainable": true,
+      "severity": "info"
+    },
+    {
+      "color": "purple",
+      "obtainable": true,
+      "severity": "info"
+    }
+  ],
+  "suggestions": [
+    {
+      "color": "black",
+      "source_types": [
+        "block"
+      ]
+    }
+  ]
+}

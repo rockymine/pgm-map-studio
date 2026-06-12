@@ -1,0 +1,27 @@
+{
+  "map": "curly_wools_ix",
+  "have_layers": true,
+  "sources": [
+    {
+      "color": "blue",
+      "total": 4,
+      "source_types": [
+        "spawner"
+      ],
+      "repeatable": true
+    }
+  ],
+  "availability": [
+    {
+      "color": "red",
+      "obtainable": false,
+      "severity": "error"
+    },
+    {
+      "color": "blue",
+      "obtainable": true,
+      "severity": "ok"
+    }
+  ],
+  "suggestions": []
+}

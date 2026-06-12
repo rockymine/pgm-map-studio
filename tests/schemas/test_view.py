@@ -122,3 +122,22 @@ def test_buildability_payload_validates_against_schema():
     assert len(parsed.rows) == parsed.height == 10
     assert all(len(row) == parsed.width for row in parsed.rows)
     assert parsed.colors["never"] == "#c62828"
+
+
+def test_wool_response_schemas_validate_service_output():
+    from shapely.geometry import box
+    from pgm_map_studio.studio.services.wool_sources import (
+        summarize_sources, check_availability, suggest_wools)
+    from pgm_map_studio.schemas import (
+        WoolSourcesResponse, WoolAvailabilityResponse, WoolSuggestionsResponse)
+    src = [{"type": "block", "color": "red", "x": 5, "y": 9, "z": 5, "count": 1}]
+    data = {"regions": {"room": {"type": "rectangle",
+            "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 10, "z": 10}}}},
+            "wools": [{"id": "red", "color": "red", "wool_room_region": "room"}]}
+    WoolSourcesResponse.model_validate(
+        {"colors": summarize_sources(src, box(0, 0, 10, 10)), "have_layers": True})
+    a = WoolAvailabilityResponse.model_validate(
+        {"wools": check_availability(data, src), "have_layers": True})
+    assert a.wools[0].severity == "info"
+    WoolSuggestionsResponse.model_validate(
+        {"suggestions": suggest_wools({"wools": [], "regions": {}}, src), "have_layers": True})

@@ -112,9 +112,16 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   colour (`game-colors.js::nextTeamColor`, priority red/blue/green/yellow…) → id `<colour>-team`,
   name `<Colour> Team`, colour set; falls back to `new-team` when all 16 are used. `panels/teams-panel.js`
   + `tests/js/game-colors.test.js`. Browser-verified (red→blue→green, persisted correctly).
-- [ ] **C12. Wool availability validation.** A map is unplayable if no wool is obtainable.
-  Implement the availability check (`docs/requirements/editor-objectives.md` Sub-step 3); PGM
-  spawner / renewable / block-drop must be configurable as wool sources. *Needs: requirements pass.*
+- [~] **C12. Wool availability + detection (backend done).** `services/wool_sources.py` scans the
+  world layers for wool — `block` (`wools.parquet`), item in a `chest` (`chests.parquet`),
+  wool `spawner` (`spawners.parquet`) — colour-decoded via `minecraft/wool.py`. Three typed routes:
+  **POST `/wool-sources`** (what wool is in a drawn rectangle — colour + type + count + positions),
+  **GET `/wool-availability`** (per declared wool: `error` if its room is unsourced, `info` if
+  one-time-only, else `ok`; `repeatable` = spawner or renewable block), **GET `/wool-suggestions`**
+  (colours found but not declared). `BuildabilityResponse`-style typed schemas → `contract.ts` +
+  `api.fetch{WoolSourcesInRegion,WoolAvailability,WoolSuggestions}`. Hermetic tests + corpus oracle
+  (`tools/gen_wool_oracle.py`; outback blocks / icecream chests / curly_wools spawner+red-error).
+  *Next: the objectives-step UI (draw→query, suggestion prompts, availability badges) — D-series.*
 - [~] **C13. Editor symmetry-aware authoring (source → derived counterparts).** **Region
   counterparts done (backend); other entity types + UI remaining.** `studio/services/symmetry_authoring.py`
   + `POST /region/:id/counterpart` (in `routes/regions.py`): given a source region + mode + center

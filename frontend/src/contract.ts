@@ -72,6 +72,56 @@ export interface BuildabilityResponse {
   has_y0: boolean;
 }
 
+export interface WoolSource {
+  type: string;
+  color: string;
+  x: number;
+  y: number;
+  z: number;
+  count: number;
+}
+
+export interface WoolColorSummary {
+  color: string;
+  total: number;
+  source_types: string[];
+  repeatable: boolean;
+  one_time: boolean;
+  sources: WoolSource[];
+}
+
+export interface WoolSourcesResponse {
+  colors: WoolColorSummary[];
+  have_layers: boolean;
+}
+
+export interface WoolAvailabilityEntry {
+  wool_id: string;
+  color: string;
+  obtainable: boolean;
+  repeatable: boolean;
+  one_time: boolean;
+  severity: string;
+  message: string;
+  source_types: string[];
+}
+
+export interface WoolAvailabilityResponse {
+  wools: WoolAvailabilityEntry[];
+  have_layers: boolean;
+}
+
+export interface WoolSuggestion {
+  color: string;
+  total: number;
+  source_types: string[];
+}
+
+export interface WoolSuggestionsResponse {
+  suggestions: WoolSuggestion[];
+  have_layers: boolean;
+}
+
 export interface XZ {
   x?: number | string | null;
   z?: number | string | null;

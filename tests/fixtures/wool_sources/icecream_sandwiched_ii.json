@@ -1,0 +1,150 @@
+{
+  "map": "icecream_sandwiched_ii",
+  "have_layers": true,
+  "sources": [
+    {
+      "color": "blue",
+      "total": 132,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "brown",
+      "total": 542,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "cyan",
+      "total": 668,
+      "source_types": [
+        "block",
+        "chest"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "lime",
+      "total": 668,
+      "source_types": [
+        "block",
+        "chest"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "orange",
+      "total": 668,
+      "source_types": [
+        "block",
+        "chest"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "pink",
+      "total": 316,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "purple",
+      "total": 61,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "red",
+      "total": 132,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "white",
+      "total": 402,
+      "source_types": [
+        "block"
+      ],
+      "repeatable": false
+    },
+    {
+      "color": "yellow",
+      "total": 668,
+      "source_types": [
+        "block",
+        "chest"
+      ],
+      "repeatable": false
+    }
+  ],
+  "availability": [
+    {
+      "color": "orange",
+      "obtainable": true,
+      "severity": "info"
+    },
+    {
+      "color": "yellow",
+      "obtainable": true,
+      "severity": "info"
+    },
+    {
+      "color": "lime",
+      "obtainable": true,
+      "severity": "info"
+    },
+    {
+      "color": "cyan",
+      "obtainable": true,
+      "severity": "info"
+    }
+  ],
+  "suggestions": [
+    {
+      "color": "blue",
+      "source_types": [
+        "block"
+      ]
+    },
+    {
+      "color": "brown",
+      "source_types": [
+        "block"
+      ]
+    },
+    {
+      "color": "pink",
+      "source_types": [
+        "block"
+      ]
+    },
+    {
+      "color": "purple",
+      "source_types": [
+        "block"
+      ]
+    },
+    {
+      "color": "red",
+      "source_types": [
+        "block"
+      ]
+    },
+    {
+      "color": "white",
+      "source_types": [
+        "block"
+      ]
+    }
+  ]
+}

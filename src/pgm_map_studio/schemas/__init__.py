@@ -16,6 +16,13 @@ from pgm_map_studio.schemas.view import (
     RegionTreeNode,
     RegionTreeResponse,
     WiringEntry,
+    WoolAvailabilityEntry,
+    WoolAvailabilityResponse,
+    WoolColorSummary,
+    WoolSource,
+    WoolSourcesResponse,
+    WoolSuggestion,
+    WoolSuggestionsResponse,
 )
 from pgm_map_studio.schemas.persisted import (
     ApplyRule,
@@ -56,6 +63,9 @@ TS_CONTRACT_MODELS = [
     # view (B4)
     Bounds, Polygon2d, RegionTreeNode, RegionGroup, RegionTreeResponse,
     WiringEntry, AuthoringNode, RegionAuthoringResponse, BuildabilityResponse,
+    WoolSource, WoolColorSummary, WoolSourcesResponse,
+    WoolAvailabilityEntry, WoolAvailabilityResponse,
+    WoolSuggestion, WoolSuggestionsResponse,
     # persisted (B1)
     XZ, XYZ, Bounds2d, Team, Author, KitItem, KitArmor, Kit, Region, Spawn,
     Monument, Wool, DropItem, Spawner, Renewable, BlockDropRule, Filter,

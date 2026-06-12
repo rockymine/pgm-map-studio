@@ -454,6 +454,28 @@ export async function updateMonument(mapName, woolId, monId, fields) {
   return body;
 }
 
+// C12 wool availability/detection — see editor-objectives.md Sub-step 3
+export async function fetchWoolSourcesInRegion(mapName, bounds) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/wool-sources`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bounds }),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(apiErrorMessage(body) || `Wool sources failed (${r.status})`);
+  return body;
+}
+
+export async function fetchWoolAvailability(mapName) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/wool-availability`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to load wool availability (${r.status})`);
+  return r.json();
+}
+
+export async function fetchWoolSuggestions(mapName) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/wool-suggestions`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to load wool suggestions (${r.status})`);
+  return r.json();
+}
+
 export async function deleteMonument(mapName, woolId, monId) {
   const r = await fetch(
     `/api/map/${encodeURIComponent(mapName)}/wools/${encodeURIComponent(woolId)}/monuments/${encodeURIComponent(monId)}`,

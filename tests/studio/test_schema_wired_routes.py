@@ -22,10 +22,12 @@ def client(tmp_path, monkeypatch):
     import pgm_map_studio.studio.services.config as cfg_mod
     import pgm_map_studio.studio.services.xml_data as xml_mod
     import pgm_map_studio.studio.routes.map_api as map_api_mod
+    import pgm_map_studio.studio.routes.objectives as objectives_mod
     import pgm_map_studio.studio.services.sketch_data as sk_mod
     monkeypatch.setattr(cfg_mod, "get_output_root", lambda: tmp_path)
     monkeypatch.setattr(xml_mod, "get_output_root", lambda: tmp_path)
     monkeypatch.setattr(map_api_mod, "get_output_root", lambda: tmp_path)
+    monkeypatch.setattr(objectives_mod, "get_output_root", lambda: tmp_path)
     monkeypatch.setattr(sk_mod, "SKETCHES_DIR", tmp_path / "sketches")
 
     app = create_app()
@@ -75,6 +77,41 @@ def test_buildability_returns_verdict_grid(client):
     assert parsed.counts["never"] > 0                   # the spawn region
     assert len(parsed.rows) == parsed.height
     assert parsed.classes[1] == "never" and parsed.colors["never"] == "#c62828"
+
+
+def test_wool_routes_detect_availability_and_suggestions(client):
+    c, root = client
+    import pandas as pd
+    map_dir = root / "demo"
+    map_dir.mkdir()
+    (map_dir / "xml_data.json").write_text(json.dumps({
+        "regions": {"room": {"id": "room", "type": "rectangle",
+                             "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 10, "z": 10}}}},
+        "wools": [{"id": "red", "color": "red", "wool_room_region": "room"}],
+    }), encoding="utf-8")
+    # a red wool block in the room + a stray blue block elsewhere
+    pd.DataFrame([
+        {"world_x": 5, "world_z": 5, "world_y": 12, "color": "red"},
+        {"world_x": 80, "world_z": 80, "world_y": 12, "color": "blue"},
+    ]).to_parquet(map_dir / "wools.parquet")
+
+    from pgm_map_studio.schemas import (WoolAvailabilityResponse, WoolSourcesResponse,
+                                        WoolSuggestionsResponse)
+
+    # availability: red is obtainable (one-time block → info)
+    av = WoolAvailabilityResponse.model_validate(c.get("/api/map/demo/wool-availability").get_json())
+    assert av.have_layers and av.wools[0].color == "red" and av.wools[0].severity == "info"
+
+    # suggestions: blue exists but isn't declared
+    sg = WoolSuggestionsResponse.model_validate(c.get("/api/map/demo/wool-suggestions").get_json())
+    assert {s.color for s in sg.suggestions} == {"blue"}
+
+    # region query: the room rectangle contains the red block, not the blue
+    resp = c.post("/api/map/demo/wool-sources",
+                  json={"bounds": {"min_x": 0, "min_z": 0, "max_x": 10, "max_z": 10}})
+    src = WoolSourcesResponse.model_validate(resp.get_json())
+    assert [col.color for col in src.colors] == ["red"]
+    assert src.colors[0].sources[0].type == "block"
 
 
 def test_regions_authoring_returns_split_payload(client):

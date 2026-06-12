@@ -108,4 +108,66 @@ class BuildabilityResponse(BaseModel):
     has_y0: bool
 
 
+# ── wool sources & availability (C12) — mirrors `services.wool_sources` ──────────
+
+class WoolSource(BaseModel):
+    """One wool occurrence: a `block`, an item in a `chest`, or a `spawner`."""
+    type: str
+    color: str
+    x: int
+    y: int
+    z: int
+    count: int
+
+
+class WoolColorSummary(BaseModel):
+    """Wool of one colour found in a scan (region query). `repeatable` = a spawner
+    or a renewable block; otherwise `one_time` (bare block / chest)."""
+    color: str
+    total: int
+    source_types: list[str]
+    repeatable: bool
+    one_time: bool
+    sources: list[WoolSource]
+
+
+class WoolSourcesResponse(BaseModel):
+    """`POST /api/map/:name/wool-sources` — what wool is in the drawn region.
+    `have_layers` is false when the world layers are absent (xml-only map)."""
+    colors: list[WoolColorSummary]
+    have_layers: bool
+
+
+class WoolAvailabilityEntry(BaseModel):
+    """A declared wool's obtainability. `severity`: `error` (no source) /
+    `info` (one-time only) / `ok`."""
+    wool_id: str
+    color: str
+    obtainable: bool
+    repeatable: bool
+    one_time: bool
+    severity: str
+    message: str
+    source_types: list[str]
+
+
+class WoolAvailabilityResponse(BaseModel):
+    """`GET /api/map/:name/wool-availability` — the per-wool validation."""
+    wools: list[WoolAvailabilityEntry]
+    have_layers: bool
+
+
+class WoolSuggestion(BaseModel):
+    """A wool colour found in the world but not yet declared as an objective."""
+    color: str
+    total: int
+    source_types: list[str]
+
+
+class WoolSuggestionsResponse(BaseModel):
+    """`GET /api/map/:name/wool-suggestions` — colours to propose adding."""
+    suggestions: list[WoolSuggestion]
+    have_layers: bool
+
+
 RegionTreeNode.model_rebuild()
