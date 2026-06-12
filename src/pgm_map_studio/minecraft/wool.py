@@ -36,6 +36,17 @@ _ALIASES: dict[str, str] = {
     'light blue': 'light_blue',
 }
 
+# Dye = the 1.8 `ink sack` item, whose damage encodes colour on a **different**
+# scale from wool (roughly inverted: dye 0 = black, wool 0 = white). Values map to
+# the same wool-colour slugs (light-gray → 'silver') so a dye colour can be matched
+# to a wool colour. Used to read sheep-CTW dye spawners (kill sheep → dye the wool).
+DYE_DAMAGE_TO_COLOR: dict[int, str] = {
+    0:  'black',   1:  'red',     2:  'green',  3:  'brown',
+    4:  'blue',    5:  'purple',  6:  'cyan',   7:  'silver',
+    8:  'gray',    9:  'pink',    10: 'lime',   11: 'yellow',
+    12: 'light_blue', 13: 'magenta', 14: 'orange', 15: 'white',
+}
+
 
 def normalize_wool_color(color: str) -> str:
     """Normalize a wool color name to the canonical form used in WOOL_DAMAGE_TO_COLOR.

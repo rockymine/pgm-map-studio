@@ -23,7 +23,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from pgm_map_studio.studio.services.wool_sources import (  # noqa: E402
     check_availability, load_wool_sources, pgm_spawner_sources, suggest_wools, summarize_sources)
 
-_MAPS = ["outback_outback_edition", "icecream_sandwiched_ii", "curly_wools_ix", "wintertime"]
+_MAPS = ["outback_outback_edition", "icecream_sandwiched_ii", "curly_wools_ix",
+         "wintertime", "sheep_ctw"]
 _FIXTURES = Path(__file__).parent.parent / "tests" / "fixtures" / "wool_sources"
 
 

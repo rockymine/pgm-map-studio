@@ -109,3 +109,22 @@ def test_pgm_spawner_region_query_matches_by_overlap():
     hit = summarize_sources(src, box(0, 0, 5, 5))            # rect overlaps the spawn region
     assert hit and hit[0]["color"] == "blue" and hit[0]["repeatable"] is True
     assert summarize_sources(src, box(50, 50, 60, 60)) == []  # rect elsewhere → nothing
+
+
+# ── sheep/dye indirect mechanic (returns false, but a soft warning) ───────────
+
+def test_dye_spawner_softens_unsourced_wool_to_warning():
+    # a PGM spawner dropping dye (ink sack), not wool → sheep/dye mechanic
+    data = {"regions": {}, "wools": [{"id": "orange", "color": "orange", "wool_room_region": None}],
+            "spawners": [{"spawn_region": None, "items": [{"material": "ink sack", "damage": 14}]}]}  # 14 = orange dye
+    a = check_availability(data, [])[0]
+    assert a["obtainable"] is False                      # still false, as it should be
+    assert a["severity"] == "warning" and a["source_types"] == ["dye_spawner"]
+    assert "sheep" in a["message"] or "dye" in a["message"]
+
+
+def test_dye_uses_its_own_damage_scale():
+    from pgm_map_studio.minecraft.wool import DYE_DAMAGE_TO_COLOR, WOOL_DAMAGE_TO_COLOR
+    assert DYE_DAMAGE_TO_COLOR[14] == "orange" and DYE_DAMAGE_TO_COLOR[11] == "yellow"
+    # the encodings differ (≈ inverted): wool 0 = white, dye 0 = black
+    assert WOOL_DAMAGE_TO_COLOR[0] == "white" and DYE_DAMAGE_TO_COLOR[0] == "black"

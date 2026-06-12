@@ -116,7 +116,10 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   **physical** sources (world layers — `block`/`chest`/Minecraft-`spawner` block, colour-decoded via
   `minecraft/wool.py`) **and** the **PGM `<spawner>`** module (`xml_data.spawners`, region-based) — the
   author-added delivery, matched by colour (room-independent; 152 corpus maps use it). Obtainable =
-  a physical source in the room **or** a PGM spawner of that colour; neither → `error`. Three typed routes:
+  a physical source in the room **or** a PGM spawner of that colour; neither → `error` — **except** a
+  PGM **dye** (`ink sack`) spawner (different damage scale, `minecraft/wool.py::DYE_DAMAGE_TO_COLOR`)
+  flags the **sheep/dye** mechanic: still not auto-verifiable (`obtainable=False`) but a soft `warning`,
+  not an error (sheep_ctw). Three typed routes:
   **POST `/wool-sources`** (what wool is in a drawn rectangle — colour + type + count + positions),
   **GET `/wool-availability`** (per declared wool: `error` if its room is unsourced, `info` if
   one-time-only, else `ok`; `repeatable` = spawner or renewable block), **GET `/wool-suggestions`**

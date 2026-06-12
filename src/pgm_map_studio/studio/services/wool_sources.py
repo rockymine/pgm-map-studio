@@ -19,7 +19,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pgm_map_studio.minecraft.wool import WOOL_DAMAGE_TO_COLOR, normalize_wool_color
+from pgm_map_studio.minecraft.wool import (
+    DYE_DAMAGE_TO_COLOR, WOOL_DAMAGE_TO_COLOR, normalize_wool_color)
 from pgm_map_studio.studio.services.region_encoder import _dict_to_shapely
 
 # a source: {"type": "block"|"chest"|"spawner", "color": slug, "x","y","z": int, "count": int}
@@ -179,6 +180,7 @@ def check_availability(data: dict, sources: list[dict]) -> list[dict]:
     renewable = _renewable_geoms(data)
     physical = [s for s in sources if s["type"] != "pgm_spawner"]
     pgm_colors = {s["color"] for s in sources if s["type"] == "pgm_spawner"}
+    dye_colors = indirect_dye_colors(data)
     out = []
     for w in data.get("wools", []):
         color = normalize_wool_color(str(w.get("color", "")))
@@ -190,11 +192,20 @@ def check_availability(data: dict, sources: list[dict]) -> list[dict]:
         has_pgm = color in pgm_colors
 
         if phys is None and not has_pgm:
-            out.append({"wool_id": w.get("id", ""), "color": color, "obtainable": False,
-                        "repeatable": False, "one_time": False, "severity": "error",
-                        "source_types": [], "message":
-                        f"{color} wool has no obtainable source — add a wool spawner"
-                        f"{'' if room else ' (and declare its wool-room region)'}"})
+            # no direct source — but a dye spawner of this colour means a sheep/dye
+            # mechanic: still not auto-verifiable (obtainable=False), but a WARN, not error.
+            if color in dye_colors:
+                out.append({"wool_id": w.get("id", ""), "color": color, "obtainable": False,
+                            "repeatable": False, "one_time": False, "severity": "warning",
+                            "source_types": ["dye_spawner"], "message":
+                            f"{color} wool has no direct source, but a dye spawner suggests an "
+                            f"indirect sheep/dye mechanic — can't auto-verify; confirm manually"})
+            else:
+                out.append({"wool_id": w.get("id", ""), "color": color, "obtainable": False,
+                            "repeatable": False, "one_time": False, "severity": "error",
+                            "source_types": [], "message":
+                            f"{color} wool has no obtainable source — add a wool spawner"
+                            f"{'' if room else ' (and declare its wool-room region)'}"})
             continue
 
         types = (phys["source_types"] if phys else []) + (["pgm_spawner"] if has_pgm else [])
@@ -207,6 +218,26 @@ def check_availability(data: dict, sources: list[dict]) -> list[dict]:
                                 f"({'/'.join(types)}) — consider a renewable or spawner"
                                 if one_time
                                 else f"{color} wool is obtainable ({'/'.join(types)})")})
+    return out
+
+
+def indirect_dye_colors(data: dict) -> set[str]:
+    """Colours delivered **indirectly** via a sheep/dye mechanic: a PGM `<spawner>`
+    that drops **dye** (`ink sack`) rather than wool. The wool itself comes from
+    shearing/killing (sheep-)mobs and dyeing it that colour — not auto-verifiable,
+    but a strong signal the colour is intended (sheep-CTW). Colour from the dye
+    damage scale, which differs from wool's."""
+    out: set[str] = set()
+    for sp in data.get("spawners", []):
+        for item in sp.get("items", []):
+            mat = str(item.get("material", "")).lower()
+            if "wool" in mat:
+                continue
+            if "ink" in mat or "dye" in mat:
+                dmg = item.get("damage")
+                color = DYE_DAMAGE_TO_COLOR.get(int(dmg)) if dmg is not None else "black"
+                if color:
+                    out.add(color)
     return out
 
 

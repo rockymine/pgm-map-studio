@@ -1,0 +1,28 @@
+{
+  "map": "sheep_ctw",
+  "have_layers": false,
+  "sources": [],
+  "availability": [
+    {
+      "color": "orange",
+      "obtainable": false,
+      "severity": "warning"
+    },
+    {
+      "color": "pink",
+      "obtainable": false,
+      "severity": "warning"
+    },
+    {
+      "color": "lime",
+      "obtainable": false,
+      "severity": "warning"
+    },
+    {
+      "color": "yellow",
+      "obtainable": false,
+      "severity": "warning"
+    }
+  ],
+  "suggestions": []
+}
