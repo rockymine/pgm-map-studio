@@ -1,0 +1,16 @@
+{
+  "map": "golden_drought_ii",
+  "bbox": [
+    -196,
+    -196,
+    197,
+    197
+  ],
+  "has_y0": true,
+  "counts": {
+    "buildable": 24869,
+    "never": 117488,
+    "void_denied": 11192,
+    "restricted": 900
+  }
+}

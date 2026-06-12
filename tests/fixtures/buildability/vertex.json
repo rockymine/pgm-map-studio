@@ -1,0 +1,16 @@
+{
+  "map": "vertex",
+  "bbox": [
+    179,
+    247,
+    298,
+    366
+  ],
+  "has_y0": false,
+  "counts": {
+    "buildable": 4248,
+    "never": 9785,
+    "void_denied": 0,
+    "restricted": 128
+  }
+}

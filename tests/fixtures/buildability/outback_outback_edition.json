@@ -1,0 +1,16 @@
+{
+  "map": "outback_outback_edition",
+  "bbox": [
+    -86,
+    -153,
+    86,
+    153
+  ],
+  "has_y0": true,
+  "counts": {
+    "buildable": 22656,
+    "never": 0,
+    "void_denied": 27864,
+    "restricted": 2112
+  }
+}

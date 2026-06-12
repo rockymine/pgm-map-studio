@@ -135,9 +135,13 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   region — e.g. vertex `playable-area`), and **global** (region-less) rules; clipped to the map bbox
   (void/negatives are unbounded). **Done:** `tools/buildability_preview.py` — visual-debug PNG,
   validated on outback (void+positive), golden_drought_ii (partial void moats + carved bridging paths),
-  vertex (region-gate, no void) — the three authoring approaches. *Next: lift the compute into a
-  service + `GET /buildability` route returning the typed per-column verdict, oracle fixtures + tests;
-  then the live canvas overlay (D-series UI).*
+  vertex (region-gate, no void) — the three authoring approaches. **Service + route done:**
+  `services/buildability.py` (`compute_buildability`, shared by the tool) + typed `BuildabilityResponse`
+  (→ `contract.ts`, `api.fetchBuildability`) + `GET /buildability` (per-column verdict grid). Keeps the
+  **4-class story** (buildable/never/void_denied/restricted) with canonical `CLASS_COLORS` surfaced in
+  the payload, so the UI legend reads identically. Hermetic tests + corpus oracle
+  (`tools/gen_buildability_oracle.py`, `tests/fixtures/buildability/`). *Next: the live canvas overlay
+  (D-series UI).*
 
 ## Workstream D — UI migration (Phase 4)
 

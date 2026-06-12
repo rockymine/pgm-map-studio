@@ -88,4 +88,24 @@ class RegionAuthoringResponse(BaseModel):
     bounding_box: Optional[Bounds] = None
 
 
+# ── buildability (C14) — mirrors `services.buildability.compute_buildability` ─────
+
+class BuildabilityResponse(BaseModel):
+    """The `GET /api/map/:name/buildability` payload: a per-column verdict grid.
+
+    `rows` holds `height` strings of `width` chars; each char is a verdict code
+    indexing `classes` (`"0"`=buildable … `"3"`=restricted). Row 0 is `min_z`,
+    char 0 is `min_x`. `colors` is the canonical legend (allow/deny *story*).
+    `has_y0` is false when the Y=0 layer is missing (deny-void can't be resolved).
+    """
+    bbox: Bounds
+    width: int
+    height: int
+    classes: list[str]
+    colors: dict[str, str]
+    counts: dict[str, int]
+    rows: list[str]
+    has_y0: bool
+
+
 RegionTreeNode.model_rebuild()

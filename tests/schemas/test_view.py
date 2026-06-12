@@ -105,3 +105,20 @@ def test_authoring_encoder_output_validates_against_schema():
     parsed = RegionAuthoringResponse.model_validate({**split, "bounding_box": bbox})
     assert {n.id for n in parsed.primitives} == {"floor"}
     assert parsed.composed[0].wiring[0].event == "enter"
+
+
+def test_buildability_payload_validates_against_schema():
+    from pgm_map_studio.studio.services.buildability import CLASSES, CLASS_COLORS, compute_buildability
+    from pgm_map_studio.schemas import BuildabilityResponse
+    data = {"regions": {"a": {"type": "rectangle",
+                              "bounds_2d": {"min": {"x": 0, "z": 0}, "max": {"x": 6, "z": 6}}}},
+            "apply_rules": [{"region": "a", "block": "never"}]}
+    r = compute_buildability(data, None, (0, 0, 10, 10))
+    rows = ["".join(map(str, row)) for row in r["verdict"].tolist()]
+    parsed = BuildabilityResponse.model_validate({
+        "bbox": {"min_x": 0, "min_z": 0, "max_x": 10, "max_z": 10},
+        "width": r["width"], "height": r["height"], "classes": CLASSES,
+        "colors": CLASS_COLORS, "counts": r["counts"], "rows": rows, "has_y0": r["has_y0"]})
+    assert len(parsed.rows) == parsed.height == 10
+    assert all(len(row) == parsed.width for row in parsed.rows)
+    assert parsed.colors["never"] == "#c62828"

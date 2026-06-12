@@ -61,6 +61,17 @@ export interface RegionAuthoringResponse {
   bounding_box?: Bounds | null;
 }
 
+export interface BuildabilityResponse {
+  bbox: Bounds;
+  width: number;
+  height: number;
+  classes: string[];
+  colors: Record<string, string>;
+  counts: Record<string, number>;
+  rows: string[];
+  has_y0: boolean;
+}
+
 export interface XZ {
   x?: number | string | null;
   z?: number | string | null;

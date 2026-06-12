@@ -10,11 +10,22 @@ from pgm_map_studio.studio.services.region_categorizer import (
     categorize_regions,
     derive_region_facets,
 )
+from pgm_map_studio.studio.services.buildability import (
+    CLASS_COLORS,
+    CLASSES,
+    compute_buildability,
+)
 from pgm_map_studio.studio.services.region_encoder import (
     encode_region_authoring,
     encode_region_tree,
 )
-from pgm_map_studio.schemas import RegionAuthoringResponse, RegionTreeResponse
+from pgm_map_studio.schemas import (
+    BuildabilityResponse,
+    RegionAuthoringResponse,
+    RegionTreeResponse,
+)
+
+_BUILDABILITY_MARGIN = 16
 from pgm_map_studio.studio.services.wool_editor import _ensure_grouped
 from pgm_map_studio.studio.services.xml_data import load_xml_data, save_xml_data
 
@@ -123,6 +134,38 @@ def get_regions_authoring(name: str):
     categories   = categorize_regions(data)
     split = encode_region_authoring(regions, categories, data.get("apply_rules", []), bounding_box)
     payload = RegionAuthoringResponse.model_validate({**split, "bounding_box": bounding_box})
+    return jsonify(payload.model_dump())
+
+
+def _y0_columns(out_dir: Path):
+    """Set of (x,z) columns with a block at Y=0, or None when the layer is absent."""
+    p = out_dir / "layer_y0.parquet"
+    if not p.exists():
+        return None
+    import pandas as pd
+    df = pd.read_parquet(p, columns=["world_x", "world_z"])
+    return set(zip(df["world_x"].tolist(), df["world_z"].tolist()))
+
+
+@bp.route("/<name>/buildability")
+def get_buildability(name: str):
+    """C14: per-column build verdict (region geometry × Y=0 layer × block rules)."""
+    data, _ = load_xml_data(name)
+    out_dir = get_output_root() / name
+    isl = _islands_bounding_box(out_dir / "islands.json")
+    m = _BUILDABILITY_MARGIN
+    bbox = (int(isl["min_x"]) - m, int(isl["min_z"]) - m,
+            int(isl["max_x"]) + m, int(isl["max_z"]) + m) if isl else None
+    result = compute_buildability(data, _y0_columns(out_dir), bbox, m)
+
+    min_x, min_z, max_x, max_z = result["bbox"]
+    rows = ["".join(map(str, row)) for row in result["verdict"].tolist()]
+    payload = BuildabilityResponse.model_validate({
+        "bbox": {"min_x": min_x, "min_z": min_z, "max_x": max_x, "max_z": max_z},
+        "width": result["width"], "height": result["height"],
+        "classes": CLASSES, "colors": CLASS_COLORS, "counts": result["counts"],
+        "rows": rows, "has_y0": result["has_y0"],
+    })
     return jsonify(payload.model_dump())
 
 

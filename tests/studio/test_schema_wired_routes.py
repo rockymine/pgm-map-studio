@@ -56,6 +56,27 @@ def test_regions_tree_returns_schema_conformant_payload(client):
     assert any(n.id == "blue-spawn" for g in parsed.groups for n in g.regions)
 
 
+def test_buildability_returns_verdict_grid(client):
+    c, root = client
+    map_dir = root / "demo"
+    map_dir.mkdir()
+    (map_dir / "xml_data.json").write_text(json.dumps({
+        "regions": {"spawn": {"id": "spawn", "type": "rectangle",
+                              "bounds_2d": {"min": {"x": -5, "z": -5}, "max": {"x": 5, "z": 5}}}},
+        "apply_rules": [{"id": "r1", "region": "spawn", "block": "never"}],
+    }), encoding="utf-8")
+    (map_dir / "islands.json").write_text(json.dumps([{"bounds": [-20, -20, 20, 20]}]), "utf-8")
+
+    resp = c.get("/api/map/demo/buildability")
+    assert resp.status_code == 200
+    from pgm_map_studio.schemas import BuildabilityResponse
+    parsed = BuildabilityResponse.model_validate(resp.get_json())
+    assert parsed.has_y0 is False                       # no layer_y0.parquet
+    assert parsed.counts["never"] > 0                   # the spawn region
+    assert len(parsed.rows) == parsed.height
+    assert parsed.classes[1] == "never" and parsed.colors["never"] == "#c62828"
+
+
 def test_regions_authoring_returns_split_payload(client):
     c, root = client
     map_dir = root / "demo"
