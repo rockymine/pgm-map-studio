@@ -129,6 +129,15 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   review**. *Remaining: counterparts for filters/apply-rules/objectives/spawns + the map-level relation
   index + dedup wiring into create_counterpart + the canvas accept/reject UI (D-series); rot_90 bake of
   compound sources.*
+- [~] **C14. Build-area buildability preview (map-correctness).** Show where players can/can't build.
+  Buildability = region geometry × the **Y=0 layer** × block apply-rules (last-wins): `never`,
+  `deny(void)`/`not(void)` (void = no block at Y=0), **region-as-filter gate** (build only *inside* a
+  region — e.g. vertex `playable-area`), and **global** (region-less) rules; clipped to the map bbox
+  (void/negatives are unbounded). **Done:** `tools/buildability_preview.py` — visual-debug PNG,
+  validated on outback (void+positive), golden_drought_ii (partial void moats + carved bridging paths),
+  vertex (region-gate, no void) — the three authoring approaches. *Next: lift the compute into a
+  service + `GET /buildability` route returning the typed per-column verdict, oracle fixtures + tests;
+  then the live canvas overlay (D-series UI).*
 
 ## Workstream D — UI migration (Phase 4)
 
