@@ -170,4 +170,34 @@ class WoolSuggestionsResponse(BaseModel):
     have_layers: bool
 
 
+# ── traversability (validation-invariants §B) — mirrors `services.traversability` ─
+
+class NavPoint(BaseModel):
+    """A spawn or wool location and the navigability component it lands in."""
+    kind: str            # "spawn" | "wool"
+    name: str
+    x: int
+    z: int
+    component: int
+
+
+class IsolatedPoint(BaseModel):
+    kind: str
+    name: str
+
+
+class TraversabilityResponse(BaseModel):
+    """`GET /api/map/:name/traversability` — is the spawn↔wool chain connected
+    over the navigability map (walkable surface ∪ bridgeable buildable)?
+    `warning` (not error) if some point is unreachable. `have_layers` false when
+    the surface layer is absent (needs a full pipeline run)."""
+    connected: bool
+    component_count: int
+    severity: str
+    message: str
+    have_layers: bool
+    points: list[NavPoint]
+    isolated: list[IsolatedPoint]
+
+
 RegionTreeNode.model_rebuild()

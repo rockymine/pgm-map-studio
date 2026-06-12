@@ -15,6 +15,9 @@ from pgm_map_studio.schemas.view import (
     RegionGroup,
     RegionTreeNode,
     RegionTreeResponse,
+    IsolatedPoint,
+    NavPoint,
+    TraversabilityResponse,
     WiringEntry,
     WoolAvailabilityEntry,
     WoolAvailabilityResponse,
@@ -66,6 +69,7 @@ TS_CONTRACT_MODELS = [
     WoolSource, WoolColorSummary, WoolSourcesResponse,
     WoolAvailabilityEntry, WoolAvailabilityResponse,
     WoolSuggestion, WoolSuggestionsResponse,
+    NavPoint, IsolatedPoint, TraversabilityResponse,
     # persisted (B1)
     XZ, XYZ, Bounds2d, Team, Author, KitItem, KitArmor, Kit, Region, Spawn,
     Monument, Wool, DropItem, Spawner, Renewable, BlockDropRule, Filter,

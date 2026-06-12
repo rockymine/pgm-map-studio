@@ -122,6 +122,29 @@ export interface WoolSuggestionsResponse {
   have_layers: boolean;
 }
 
+export interface NavPoint {
+  kind: string;
+  name: string;
+  x: number;
+  z: number;
+  component: number;
+}
+
+export interface IsolatedPoint {
+  kind: string;
+  name: string;
+}
+
+export interface TraversabilityResponse {
+  connected: boolean;
+  component_count: number;
+  severity: string;
+  message: string;
+  have_layers: boolean;
+  points: NavPoint[];
+  isolated: IsolatedPoint[];
+}
+
 export interface XZ {
   x?: number | string | null;
   z?: number | string | null;

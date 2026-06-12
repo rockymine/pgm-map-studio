@@ -19,10 +19,12 @@ from pgm_map_studio.studio.services.region_encoder import (
     encode_region_authoring,
     encode_region_tree,
 )
+from pgm_map_studio.studio.services.traversability import check_traversability
 from pgm_map_studio.schemas import (
     BuildabilityResponse,
     RegionAuthoringResponse,
     RegionTreeResponse,
+    TraversabilityResponse,
 )
 
 _BUILDABILITY_MARGIN = 16
@@ -137,14 +139,32 @@ def get_regions_authoring(name: str):
     return jsonify(payload.model_dump())
 
 
-def _y0_columns(out_dir: Path):
-    """Set of (x,z) columns with a block at Y=0, or None when the layer is absent."""
-    p = out_dir / "layer_y0.parquet"
+def _layer_columns(out_dir: Path, layer: str):
+    """Set of (x,z) columns present in a layer parquet, or None when absent."""
+    p = out_dir / f"layer_{layer}.parquet"
     if not p.exists():
         return None
     import pandas as pd
     df = pd.read_parquet(p, columns=["world_x", "world_z"])
     return set(zip(df["world_x"].tolist(), df["world_z"].tolist()))
+
+
+def _y0_columns(out_dir: Path):
+    return _layer_columns(out_dir, "y0")
+
+
+@bp.route("/<name>/traversability")
+def get_traversability(name: str):
+    """Is the spawn↔wool chain connected over navigability (surface ∪ buildable)?"""
+    data, _ = load_xml_data(name)
+    out_dir = get_output_root() / name
+    isl = _islands_bounding_box(out_dir / "islands.json")
+    m = _BUILDABILITY_MARGIN
+    bbox = (int(isl["min_x"]) - m, int(isl["min_z"]) - m,
+            int(isl["max_x"]) + m, int(isl["max_z"]) + m) if isl else None
+    result = check_traversability(data, _layer_columns(out_dir, "surface"),
+                                  _y0_columns(out_dir), bbox, m)
+    return jsonify(TraversabilityResponse.model_validate(result).model_dump())
 
 
 @bp.route("/<name>/buildability")

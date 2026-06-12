@@ -152,8 +152,17 @@ Make `xml_data.json ↔ MapXml ↔ map.xml` lossless again. Each item: fix + tes
   (→ `contract.ts`, `api.fetchBuildability`) + `GET /buildability` (per-column verdict grid). Keeps the
   **4-class story** (buildable/never/void_denied/restricted) with canonical `CLASS_COLORS` surfaced in
   the payload, so the UI legend reads identically. Hermetic tests + corpus oracle
-  (`tools/gen_buildability_oracle.py`, `tests/fixtures/buildability/`). *Next: the live canvas overlay
-  (D-series UI).*
+  (`tools/gen_buildability_oracle.py`, `tests/fixtures/buildability/`). *Next: the live canvas overlay (D-series UI).*
+  - [~] **C15. Objective-chain traversability (backend done).** The deferred WARN invariant
+  (`validation-invariants.md` §B): is `spawn → enemy wool → return` physically runnable?
+  `services/traversability.py` builds a **navigability map** — walkable (a block in `layer_surface`,
+  **not** Y=0: golden_drought bases/wool-paths sit above Y=0) ∪ bridgeable (the C14 buildability
+  verdict) — runs connected components (`scipy.ndimage`, 4-conn), and warns if any spawn/wool point
+  isn't in the one shared component. Typed `TraversabilityResponse` (→ `contract.ts`,
+  `api.fetchTraversability`) + `GET /traversability`; debug viz `tools/traversability_preview.py`
+  (validated on golden_drought — elevated bases walkable, void battlefield bridged → connected).
+  Hermetic tests (connected / bridgeable-gap / never-wall-disconnects). *Next: the readiness-panel UI
+  + finer team→specific-wool targeting + route-gating (locked/team-only edges) — D-series.*
 
 ## Workstream D — UI migration (Phase 4)
 

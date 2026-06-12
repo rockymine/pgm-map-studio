@@ -137,6 +137,13 @@ export async function fetchRegionsAuthoring(mapName) {
   return r.json();
 }
 
+// traversability: spawn<->wool connectivity over navigability (surface u buildable)
+export async function fetchTraversability(mapName) {
+  const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/traversability`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to load traversability (${r.status})`);
+  return r.json();
+}
+
 // C14 buildability: per-column verdict grid { bbox, width, height, classes, colors, counts, rows, has_y0 }
 export async function fetchBuildability(mapName) {
   const r = await fetch(`/api/map/${encodeURIComponent(mapName)}/buildability`, { cache: "no-store" });

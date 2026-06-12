@@ -22,6 +22,7 @@ def app():
     ("GET",    "/api/map/m/regions/authoring",     "map_api.get_regions_authoring"),
     ("GET",    "/api/map/m/regions/tree",          "map_api.get_regions_tree"),
     ("GET",    "/api/map/m/buildability",          "map_api.get_buildability"),
+    ("GET",    "/api/map/m/traversability",         "map_api.get_traversability"),
     ("PATCH",  "/api/map/m/regions/r1",            "regions.patch_region"),
     ("DELETE", "/api/map/m/regions/r1",            "regions.delete_region"),
     ("POST",   "/api/map/m/regions/group",         "regions.group_regions"),
